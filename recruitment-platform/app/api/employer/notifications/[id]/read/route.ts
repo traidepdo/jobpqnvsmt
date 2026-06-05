@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireEmployer } from "@/lib/requireEmployer";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     try {
         const app = await requireEmployer();
         if (app.error) return app.error;
 
         const notification = await prisma.notification.updateMany({
             where: {
-                id: params.id,
+                id: id,
                 userId: app.payload.id,
             },
             data: { isRead: true },

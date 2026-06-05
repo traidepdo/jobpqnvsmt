@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { requireCandidate } from '@/lib/requireCandidate';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'candidate');
 
 export async function POST(req: NextRequest) {
     // 1. Auth
@@ -43,31 +46,35 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    // 5. Ensure upload dir exists
-    if (!existsSync(UPLOAD_DIR)) {
-        await mkdir(UPLOAD_DIR, { recursive: true });
+    try {
+        // 5. Convert file → base64 data URI
+        const bytes = await file.arrayBuffer();
+        const base64 = Buffer.from(bytes).toString('base64');
+        const dataUri = `data:${file.type};base64,${base64}`;
+
+        // 6. Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataUri, {
+            folder: 'candidate-avatars',
+            transformation: [
+                { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+                { quality: 'auto', fetch_format: 'auto' },
+            ],
+        });
+
+        const avatarUrl = result.secure_url;
+
+        // 7. Update DB
+        await prisma.user.update({
+            where: { id: auth.payload.id },
+            data: { avatar: avatarUrl },
+        });
+
+        return NextResponse.json(
+            { message: 'Cập nhật ảnh đại diện thành công.', avatarUrl },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Cloudinary upload avatar error:", error);
+        return NextResponse.json({ message: 'Upload ảnh đại diện thất bại' }, { status: 500 });
     }
-
-    // 6. Build unique filename: {userId}_{timestamp}.{ext}
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const filename = `${auth.payload.id}_${Date.now()}.${ext}`;
-    const filePath = path.join(UPLOAD_DIR, filename);
-
-    // 7. Write file to disk
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
-
-    // 8. Public URL to store in DB
-    const avatarUrl = `/candidate/${filename}`;
-
-    // 9. Update DB
-    await prisma.user.update({
-        where: { id: auth.payload.id },
-        data: { avatar: avatarUrl },
-    });
-
-    return NextResponse.json(
-        { message: 'Cập nhật ảnh đại diện thành công.', avatarUrl },
-        { status: 200 }
-    );
 }

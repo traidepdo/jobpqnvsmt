@@ -671,7 +671,7 @@ export default function PhuQuocJobs() {
                             </span>
                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 px-2.5 py-1 rounded-lg"
                               style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.2)' }}>
-                              {formatSalary(job.salaryMin, job.salaryMax)}
+                              {formatSalary(job.salaryMin ?? null, job.salaryMax ?? null)}
                             </span>
                           </div>
                         </div>

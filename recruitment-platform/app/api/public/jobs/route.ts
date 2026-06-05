@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { JobStatus } from '@prisma/client';
-import { companyCardSelect, fixInvalidCompanySize } from '@/lib/prismaSafe';
+import { companyCardSelect } from '@/lib/prismaSafe';
 
 export async function GET(req: Request) {
   try {
-    await fixInvalidCompanySize(prisma);
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '12', 10)));

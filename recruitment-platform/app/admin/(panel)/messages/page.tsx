@@ -26,7 +26,7 @@ interface Conversation {
 export default function AdminMessagesPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [activeConv, setActiveConv] = useState<{ employer: { name: string; email: string } } | null>(null);
+    const [activeConv, setActiveConv] = useState<{ employer: { id: string; name: string; email: string } } | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [content, setContent] = useState('');
     const [sending, setSending] = useState(false);

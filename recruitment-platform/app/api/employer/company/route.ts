@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
-import { fixInvalidCompanySize } from '@/lib/prismaSafe';
 import { CompanySize } from '@prisma/client';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const SIZE_LABELS: Record<string, string> = {
   SMALL: '1 - 50 nhân viên',
@@ -16,32 +20,28 @@ const SIZE_LABELS: Record<string, string> = {
 const VALID_SIZES: CompanySize[] = ['SMALL', 'MEDIUM', 'LARGE', 'ENTERPRISE'];
 
 // ── Lưu ảnh vào public/uploads/logos/ ────────────────────────────────────────
-async function saveLogoLocally(base64DataUrl: string, companyId: string): Promise<string> {
-  // Tách header: "data:image/png;base64,xxxx"
+// ── Upload logo lên Cloudinary ────────────────────────────────────────
+async function saveLogoToCloudinary(base64DataUrl: string, companyId: string): Promise<string> {
   const matches = base64DataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
   if (!matches) throw new Error('Định dạng ảnh không hợp lệ');
 
-  const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
   const base64Data = matches[2];
   const buffer = Buffer.from(base64Data, 'base64');
 
-  // Giới hạn 2MB
-  if (buffer.length > 2 * 1024 * 1024) {
-    throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 2MB');
+  // Giới hạn 5MB
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 5MB');
   }
 
-  // Tạo thư mục nếu chưa có
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'logos');
-  await mkdir(uploadDir, { recursive: true });
+  const result = await cloudinary.uploader.upload(base64DataUrl, {
+    folder: 'company-logos',
+    transformation: [
+      { width: 500, height: 500, crop: 'limit' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+  });
 
-  // Tên file: logo-{companyId}-{timestamp}.{ext}
-  const filename = `logo-${companyId}-${Date.now()}.${ext}`;
-  const filepath = path.join(uploadDir, filename);
-
-  await writeFile(filepath, buffer);
-
-  // Trả về đường dẫn public (truy cập được qua browser)
-  return `/uploads/logos/${filename}`;
+  return result.secure_url;
 }
 
 function isBase64DataUrl(value: string): boolean {
@@ -61,8 +61,6 @@ function isValidHttpUrl(value: string): boolean {
 export async function GET() {
   const auth = await requireEmployer();
   if (auth.error) return auth.error;
-
-  await fixInvalidCompanySize(prisma);
 
   const row = await prisma.company.findUnique({
     where: { id: auth.company.id },
@@ -111,7 +109,7 @@ export async function PUT(req: Request) {
       if (isBase64DataUrl(logo)) {
         // Ảnh tải lên từ máy → lưu vào public/uploads/logos/
         try {
-          resolvedLogo = await saveLogoLocally(logo, auth.company.id);
+          resolvedLogo = await saveLogoToCloudinary(logo, auth.company.id);
         } catch (err: any) {
           return NextResponse.json({ error: err.message || 'Không thể lưu ảnh' }, { status: 400 });
         }

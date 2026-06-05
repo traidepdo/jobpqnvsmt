@@ -40,11 +40,11 @@ export async function GET(req: Request) {
     // ── Chart: jobs mới theo ngày ──────────────────────────────
     const rawJobs = await prisma.$queryRaw<{ date: string; count: bigint }[]>`
     SELECT
-        DATE_FORMAT(DATE_ADD(createdAt, INTERVAL 7 HOUR), '%Y-%m-%d') AS date,
+        to_char("createdAt" + INTERVAL '7 hour', 'YYYY-MM-DD') AS date,
         COUNT(*) AS count
     FROM jobs
-    WHERE createdAt >= ${since}
-    GROUP BY DATE_FORMAT(DATE_ADD(createdAt, INTERVAL 7 HOUR), '%Y-%m-%d')
+    WHERE "createdAt" >= ${since}
+    GROUP BY to_char("createdAt" + INTERVAL '7 hour', 'YYYY-MM-DD')
     ORDER BY date ASC
 `;
 

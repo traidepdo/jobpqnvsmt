@@ -97,6 +97,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState(0);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -113,11 +115,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             .catch(() => { });
     };
 
+    const loadNotifications = () => {
+        fetch('/api/admin/notifications')
+            .then(r => r.json())
+            .then(d => {
+                setNotifications(d.notifications ?? []);
+            })
+            .catch(() => { });
+    };
+
     useEffect(() => {
         loadUnread();
         const interval = setInterval(loadUnread, pathname.startsWith('/admin/messages') ? 3000 : 15000);
         return () => clearInterval(interval);
     }, [pathname]);
+
+    useEffect(() => {
+        loadNotifications();
+        const interval = setInterval(loadNotifications, 15000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
+
+    const handleNotificationClick = async (notif: any) => {
+        if (!notif.isRead) {
+            await fetch(`/api/admin/notifications/${notif.id}/read`, { method: 'PATCH' });
+            loadNotifications();
+        }
+        setShowNotifications(false);
+        if (notif.title.includes('Doanh nghiệp')) {
+            router.push('/admin/companies');
+        } else if (notif.title.includes('Tin tuyển dụng')) {
+            router.push('/admin/jobs');
+        }
+    };
 
     // Reset unread khi vào trang messages
     useEffect(() => {
@@ -224,7 +256,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* MAIN */}
             <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-                <header className="h-[60px] flex items-center gap-4 px-6 border-b border-white/[0.07] bg-[#060810]/80 backdrop-blur-xl flex-shrink-0">
+                <header className="relative z-20 h-[60px] flex items-center gap-4 px-6 border-b border-white/[0.07] bg-[#060810]/80 backdrop-blur-xl flex-shrink-0">
                     <button
                         onClick={() => setMobileOpen(o => !o)}
                         className="lg:hidden flex items-center justify-center w-9 h-9 rounded-[9px] border border-white/[0.07] bg-white/[0.03] text-white text-base"
@@ -247,9 +279,59 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         />
                     </div>
 
-                    <div className="relative w-9 h-9 flex items-center justify-center rounded-[9px] border border-white/[0.07] bg-white/[0.03] text-white/50 hover:text-white hover:border-white/15 cursor-pointer transition-all text-base">
-                        🔔
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-[#070a14]" />
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(prev => !prev)}
+                            className="relative w-9 h-9 flex items-center justify-center rounded-[9px] border border-white/[0.07] bg-white/[0.03] text-white/50 hover:text-white hover:border-white/15 cursor-pointer transition-all text-base"
+                        >
+                            🔔
+                            {unreadNotificationsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-[10px] text-white font-bold flex items-center justify-center px-1">
+                                    {unreadNotificationsCount}
+                                </span>
+                            )}
+                        </button>
+                        
+                        {showNotifications && (
+                            <div className="absolute right-0 mt-2 w-80 bg-black border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden text-left">
+                                <div className="px-4 py-3 border-b border-white/[0.08] flex justify-between items-center">
+                                    <span className="font-semibold text-xs text-white">Thông báo ({unreadNotificationsCount})</span>
+                                    {unreadNotificationsCount > 0 && (
+                                        <button 
+                                            onClick={async () => {
+                                                const unread = notifications.filter(notif => !notif.isRead);
+                                                await Promise.all(unread.map(n => 
+                                                    fetch(`/api/admin/notifications/${n.id}/read`, { method: 'PATCH' })
+                                                ));
+                                                loadNotifications();
+                                            }}
+                                            className="text-[10px] text-indigo-400 hover:text-indigo-300 hover:underline"
+                                        >
+                                            Đọc tất cả
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-64 overflow-y-auto divide-y divide-white/[0.04]">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center text-xs text-white/40">Không có thông báo nào</div>
+                                    ) : (
+                                        notifications.map(n => (
+                                            <div 
+                                                key={n.id} 
+                                                onClick={() => handleNotificationClick(n)}
+                                                className={`px-4 py-3 text-xs cursor-pointer hover:bg-white/[0.03] transition-colors ${!n.isRead ? 'bg-indigo-500/[0.03]' : ''}`}
+                                            >
+                                                <div className="flex justify-between items-start mb-1 gap-2">
+                                                    <span className={`font-semibold ${!n.isRead ? 'text-indigo-300' : 'text-white/80'}`}>{n.title}</span>
+                                                    <span className="text-[10px] text-white/30 whitespace-nowrap">{new Date(n.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                                <p className="text-white/60 leading-relaxed truncate">{n.content}</p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </header>
 

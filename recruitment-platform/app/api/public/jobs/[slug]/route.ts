@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { companyPublicSelect, fixInvalidCompanySize } from "@/lib/prismaSafe";
+import { companyPublicSelect } from "@/lib/prismaSafe";
 
 
 
@@ -9,7 +9,6 @@ export async function GET(
     { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
-        await fixInvalidCompanySize(prisma);
         const { slug } = await params;
         const job = await prisma.job.findUnique({
             where: { slug },

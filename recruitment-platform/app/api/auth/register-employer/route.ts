@@ -42,7 +42,7 @@ export async function POST(req: Request) {
                     role: 'EMPLOYER',
                 },
             });
-            await tx.company.create({
+            const company = await tx.company.create({
                 data: {
                     name: companyName,
                     slug: slugify(companyName),
@@ -56,6 +56,24 @@ export async function POST(req: Request) {
                     isApproved: false,
                 },
             });
+
+            // Gửi thông báo cho Admin
+            const admins = await tx.user.findMany({
+                where: { role: 'ADMIN' },
+                select: { id: true }
+            });
+            if (admins.length > 0) {
+                await tx.notification.createMany({
+                    data: admins.map(admin => ({
+                        userId: admin.id,
+                        type: 'SYSTEM',
+                        title: 'Doanh nghiệp đăng ký mới',
+                        content: `Doanh nghiệp "${companyName}" đăng ký tài khoản nhà tuyển dụng mới (đại diện: ${name}) và đang chờ phê duyệt.`,
+                        refId: company.id,
+                    }))
+                });
+            }
+
             return newUser;
         });
 

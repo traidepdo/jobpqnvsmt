@@ -1,14 +1,15 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 
-const adapter = new PrismaMariaDb({
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME,
-    connectionLimit: 5,
-});
+neonConfig.webSocketConstructor = ws;
+
+console.log("DATABASE_URL inside scratch-fix:", process.env.DATABASE_URL);
+
+const connectionString = process.env.DATABASE_URL;
+const adapter = new PrismaNeon({ connectionString });
 
 const prisma = new PrismaClient({ adapter });
 

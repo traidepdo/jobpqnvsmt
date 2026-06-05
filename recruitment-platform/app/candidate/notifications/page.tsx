@@ -29,10 +29,10 @@ export default function NotificationsPage() {
 
     const getNotificationLink = (n: Notification) => {
         if (!n.refId) return null;
-        if (n.type === "NEW_MESSAGE") {
+        if (n.type === "NEW_MESSAGE" || n.type === "APPLICATION_STATUS_CHANGED") {
             return `/candidate/messages?id=${n.refId}`;
         }
-        if (n.type === "APPLICATION_STATUS_CHANGED" || n.type === "APPLICATION_RECEIVED") {
+        if (n.type === "APPLICATION_RECEIVED") {
             return `/candidate/applications`;
         }
         if (n.type === "JOB_APPROVED" || n.type === "JOB_DEADLINE") {
@@ -52,14 +52,14 @@ export default function NotificationsPage() {
 
     const markAsRead = async (id: string) => {
         await fetch(`/api/candidate/notifications/${id}/read`, { method: "PATCH" });
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-        setSelected(prev => prev?.id === id ? { ...prev, read: true } : prev);
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        setSelected(prev => prev?.id === id ? { ...prev, isRead: true } : prev);
     };
 
     const markAllAsRead = async () => {
         await fetch("/api/candidate/notifications/read-all", { method: "PATCH" });
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        if (selected) setSelected(prev => prev ? { ...prev, read: true } : null);
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        if (selected) setSelected(prev => prev ? { ...prev, isRead: true } : null);
     };
 
     const openNotification = (n: Notification) => {

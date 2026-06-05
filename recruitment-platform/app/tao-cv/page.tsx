@@ -467,9 +467,9 @@ export default function TaoCvPage() {
           summary,
           degree,
           languages,
-          education: education.filter(item => Object.values(item).some(v => v.trim() !== '')),
-          experience: experience.filter(item => Object.values(item).some(v => v.trim() !== '')),
-          projects: projects.filter(item => Object.values(item).some(v => v.trim() !== '')),
+          education: education.filter(item => Object.values(item).some(v => (v as string).trim() !== '')),
+          experience: experience.filter(item => Object.values(item).some(v => (v as string).trim() !== '')),
+          projects: projects.filter(item => Object.values(item).some(v => (v as string).trim() !== '')),
           cvData: Object.keys(cvData).length > 0 ? cvData : null,
         }),
       });

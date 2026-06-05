@@ -63,8 +63,15 @@ export default function EmployerDashboardPage() {
 
   useEffect(() => {
     fetch('/api/employer/stats')
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('Unauthorized or server error');
+        return r.json();
+      })
       .then(setData)
+      .catch(err => {
+        console.error(err);
+        setData(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 

@@ -62,11 +62,17 @@ export default function ChatbotWidget() {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          setIsLoggedIn(true);
-          const resumeRes = await fetch('/api/candidate/resumes');
-          if (resumeRes.ok) {
-            const data = await resumeRes.json();
-            setUserResumes(data.resumes || []);
+          const authData = await res.json();
+          if (authData.user) {
+            setIsLoggedIn(true);
+            const resumeRes = await fetch('/api/candidate/resumes');
+            if (resumeRes.ok) {
+              const data = await resumeRes.json();
+              setUserResumes(data.resumes || []);
+            }
+          } else {
+            setIsLoggedIn(false);
+            setUserResumes([]);
           }
         }
       } catch (e) {
@@ -227,7 +233,7 @@ export default function ChatbotWidget() {
     if (!min && !max) return 'Thỏa thuận';
     if (min && max) return `${(min / 1000000).toFixed(0)}tr - ${(max / 1000000).toFixed(0)}tr`;
     if (min) return `Từ ${(min / 1000000).toFixed(0)}tr`;
-    return `Đến ${(max / 1000000).toFixed(0)}tr`;
+    return `Đến ${((max as number) / 1000000).toFixed(0)}tr`;
   };
 
   return (

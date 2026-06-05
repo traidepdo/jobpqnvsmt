@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-    const { payload: user } = await requireCandidate();
-    if (!user) return new NextResponse("Unauthorized", { status: 401 });
+    const auth = await requireCandidate();
+    if (auth.error) return auth.error;
+    const user = auth.payload;
 
     const notifications = await prisma.notification.findMany({
         where: { userId: user.id },

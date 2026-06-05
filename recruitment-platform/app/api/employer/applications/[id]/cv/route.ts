@@ -110,7 +110,7 @@ export async function PATCH(
       where: { applicationId: id },
       create: {
         applicationId: id,
-        employerId: auth.user.id,
+        employerId: auth.payload.id,
         candidateId: application.userId,
       },
       update: {},

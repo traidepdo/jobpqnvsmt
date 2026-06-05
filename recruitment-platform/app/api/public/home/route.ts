@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { companyCardSelect, fixInvalidCompanySize } from "@/lib/prismaSafe";
 
+let isAlreadySeeded = false;
+
 // Helper to seed data if database is empty
 async function ensureSeededData() {
+    if (isAlreadySeeded) return;
     try {
         await fixInvalidCompanySize(prisma);
         // 1. Seed Province, District, Ward if Wards are empty
@@ -39,25 +42,35 @@ async function ensureSeededData() {
         const wardMap = new Map(wards.map(w => [w.name, w.id]));
 
         // 2. Seed Users if empty
-        let employerUser = await prisma.user.findFirst({ where: { role: "EMPLOYER" } });
-        let candidateUser = await prisma.user.findFirst({ where: { role: "CANDIDATE" } });
-
-        if (!employerUser) {
-            const hashedPassword = await bcrypt.hash("Password123", 10);
-            employerUser = await prisma.user.create({
-                data: {
-                    name: "Sun Group HR",
-                    email: "employer@phuquocjobs.com",
-                    password: hashedPassword,
-                    role: "EMPLOYER",
-                    phone: "0987654321",
-                    isActive: true
-                }
-            });
+        const employerEmails = [
+            "employer@phuquocjobs.com",
+            "employer2@phuquocjobs.com",
+            "employer3@phuquocjobs.com",
+            "employer4@phuquocjobs.com"
+        ];
+        const employers = [];
+        const hashedPassword = await bcrypt.hash("Password123", 10);
+        
+        for (let i = 0; i < employerEmails.length; i++) {
+            const email = employerEmails[i];
+            let user = await prisma.user.findUnique({ where: { email } });
+            if (!user) {
+                user = await prisma.user.create({
+                    data: {
+                        name: i === 0 ? "Sun Group HR" : `Employer HR ${i + 1}`,
+                        email,
+                        password: hashedPassword,
+                        role: "EMPLOYER",
+                        phone: `098765432${i + 1}`,
+                        isActive: true
+                    }
+                });
+            }
+            employers.push(user);
         }
 
+        let candidateUser = await prisma.user.findFirst({ where: { role: "CANDIDATE" } });
         if (!candidateUser) {
-            const hashedPassword = await bcrypt.hash("Password123", 10);
             candidateUser = await prisma.user.create({
                 data: {
                     name: "Nguyễn Văn A",
@@ -101,7 +114,7 @@ async function ensureSeededData() {
                         addressDetail: "Khu Bãi Dài, Gành Dầu, Phú Quốc",
                         size: "ENTERPRISE",
                         industry: "Vui chơi & Giải trí",
-                        ownerId: employerUser.id,
+                        ownerId: employers[1].id,
                         isApproved: true,
                         isActive: true
                     },
@@ -115,7 +128,7 @@ async function ensureSeededData() {
                         addressDetail: "Bãi Đất Đỏ, An Thới, Phú Quốc",
                         size: "ENTERPRISE",
                         industry: "Khách sạn & Du lịch",
-                        ownerId: employerUser.id,
+                        ownerId: employers[0].id,
                         isApproved: true,
                         isActive: true
                     },
@@ -129,7 +142,7 @@ async function ensureSeededData() {
                         addressDetail: "Rạch Hàm, Hàm Ninh, Phú Quốc",
                         size: "MEDIUM",
                         industry: "Nhà hàng & F&B",
-                        ownerId: employerUser.id,
+                        ownerId: employers[2].id,
                         isApproved: true,
                         isActive: true
                     },
@@ -143,7 +156,7 @@ async function ensureSeededData() {
                         addressDetail: "Trần Hưng Đạo, Dương Đông, Phú Quốc",
                         size: "SMALL",
                         industry: "Du lịch & Lữ hành",
-                        ownerId: employerUser.id,
+                        ownerId: employers[3].id,
                         isApproved: true,
                         isActive: true
                     }
@@ -343,15 +356,15 @@ async function ensureSeededData() {
                 ]
             });
         }
-
+        isAlreadySeeded = true;
     } catch (e) {
         console.error("Seeding error:", e);
     }
 }
 
 export async function GET() {
+    console.log("DATABASE_URL:", process.env.DATABASE_URL ? "CÓ ✅" : "KHÔNG ❌");
     try {
-        await fixInvalidCompanySize(prisma);
         // Ensure seeded data is present first
         await ensureSeededData();
 

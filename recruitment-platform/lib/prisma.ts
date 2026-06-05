@@ -1,16 +1,25 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import { neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
 
-const adapter = new PrismaMariaDb({
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME,
-    connectionLimit: 5,
-});
+declare global {
+  var __prisma: PrismaClient | undefined;
+}
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+function createPrismaClient(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL!;
+  
+  if (typeof window === 'undefined') {
+    neonConfig.webSocketConstructor = ws;
+  }
 
-export const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
+  const adapter = new PrismaNeon({ connectionString });
+  return new PrismaClient({ adapter });
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const prisma = global.__prisma ?? createPrismaClient();
+
+if (process.env.NODE_ENV !== 'production') {
+  global.__prisma = prisma;
+}

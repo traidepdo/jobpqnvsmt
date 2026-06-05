@@ -114,6 +114,29 @@ export async function POST(req: Request) {
       },
     });
 
+    // Gửi thông báo cho Admin nếu tin ở trạng thái PENDING
+    if (status === 'PENDING') {
+      try {
+        const admins = await prisma.user.findMany({
+          where: { role: 'ADMIN' },
+          select: { id: true }
+        });
+        if (admins.length > 0) {
+          await prisma.notification.createMany({
+            data: admins.map(admin => ({
+              userId: admin.id,
+              type: 'SYSTEM',
+              title: 'Tin tuyển dụng mới cần duyệt',
+              content: `Doanh nghiệp "${auth.company.name}" vừa đăng tin tuyển dụng mới: "${job.title}" và đang chờ phê duyệt.`,
+              refId: job.id,
+            }))
+          });
+        }
+      } catch (err) {
+        console.error('Failed to notify admins of new job:', err);
+      }
+    }
+
     return NextResponse.json({ job }, { status: 201 });
   } catch (error) {
     console.error('Create job error:', error);

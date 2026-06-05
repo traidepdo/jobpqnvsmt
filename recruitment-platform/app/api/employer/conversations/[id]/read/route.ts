@@ -25,5 +25,16 @@ export async function PATCH(_: Request, { params }: { params: Promise<{ id: stri
         data: { readAt: new Date() },
     });
 
+    // Đồng bộ thông báo tin nhắn của Employer
+    await prisma.notification.updateMany({
+        where: {
+            userId: auth.payload.id as string,
+            type: "NEW_MESSAGE",
+            refId: id,
+            isRead: false,
+        },
+        data: { isRead: true },
+    });
+
     return NextResponse.json({ markedRead: count });
 }
