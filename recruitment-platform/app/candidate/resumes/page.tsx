@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { formatDateVi } from '@/lib/jobLabels';
+import PrintCvButton from '@/components/PrintCvButton';
 
 interface Resume {
   id: string;
@@ -74,44 +75,86 @@ export default function CandidateResumesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {resumes.map(r => (
-            <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <div className="h-32 bg-gradient-to-br from-[#00b14f]/10 to-[#041b3c]/5 flex items-center justify-center border-b border-gray-50">
-                {r.template?.thumbnailUrl ? (
-                  <img src={r.template.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="material-symbols-outlined text-5xl text-[#00b14f]/40">description</span>
-                )}
-              </div>
-              <div className="p-5">
-                <h3 className="font-bold text-[#041b3c] truncate">{r.title}</h3>
-                {r.template && (
-                  <p className="text-xs text-[#00b14f] font-medium mt-0.5">Mẫu: {r.template.name}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-2">
-                  Cập nhật {formatDateVi(r.updatedAt)} · {r._count.applications} lần ứng tuyển
-                </p>
-                {r.summary && (
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{r.summary}</p>
-                )}
-                <div className="flex gap-2 mt-4">
-                  <a
-                    href={`/api/resumes/${r.id}/render`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#00b14f] rounded-lg hover:bg-[#009940] transition-colors"
-                  >
-                    Xem CV
-                  </a>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    disabled={deleting === r.id}
-                    className="px-3 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer disabled:opacity-50"
-                  >
-                    {deleting === r.id ? '...' : 'Xóa'}
-                  </button>
+            <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between">
+              <div>
+                <div className="flex gap-4 items-start">
+                  <div className="w-16 h-20 bg-gradient-to-br from-[#00b14f]/10 to-[#041b3c]/5 rounded-lg flex items-center justify-center border border-gray-100 shrink-0 overflow-hidden">
+                    {r.template?.thumbnailUrl ? (
+                      <img src={r.template.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-3xl text-[#00b14f]">description</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-base md:text-lg text-[#041b3c] truncate hover:text-[#00b14f] transition-colors">
+                      <a href={`/cv/${r.id}`} target="_blank" rel="noreferrer" title={r.title}>
+                        {r.title}
+                      </a>
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mt-1.5 items-center">
+                      {r.template && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#00b14f]/10 text-[#00b14f]">
+                          Mẫu: {r.template.name}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center text-xs text-gray-400">
+                        <span className="material-symbols-outlined text-xs mr-1 text-[14px]">history</span>
+                        {formatDateVi(r.updatedAt)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span className="material-symbols-outlined text-sm mr-2 text-[18px] text-gray-400">send</span>
+                    <span>Đã ứng tuyển: <strong className="text-[#041b3c]">{r._count.applications} lần</strong></span>
+                  </div>
+                  {r.address && (
+                    <div className="flex items-center text-sm text-gray-500 truncate">
+                      <span className="material-symbols-outlined text-sm mr-2 text-[18px] text-gray-400">location_on</span>
+                      <span>{r.address}</span>
+                    </div>
+                  )}
+                  {r.summary && (
+                    <p className="text-sm text-gray-500 line-clamp-2 mt-2 leading-relaxed bg-gray-50/50 p-2.5 rounded-lg border border-gray-50">
+                      {r.summary}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-6 pt-4 border-t border-gray-100 flex-wrap">
+                <a
+                  href={`/cv/${r.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 min-w-[70px] inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-[#00b14f] rounded-xl hover:bg-[#009940] transition-all shadow-sm shadow-[#00b14f]/10 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">visibility</span>
+                  Xem CV
+                </a>
+                <Link
+                  href={`/sua-cv/${r.id}`}
+                  className="flex-1 min-w-[70px] inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200/60 rounded-xl hover:bg-gray-100 transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit</span>
+                  Sửa
+                </Link>
+                <PrintCvButton
+                  resumeId={r.id}
+                  className="flex-1 min-w-[70px] inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-[#00b14f] bg-white border border-[#00b14f]/30 rounded-xl hover:bg-[#00b14f]/5 transition-all cursor-pointer disabled:opacity-50"
+                />
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  disabled={deleting === r.id}
+                  className="px-3 py-2 text-xs font-semibold text-red-500 bg-red-50/60 hover:bg-red-50 hover:text-red-600 rounded-xl border border-red-100 transition-all cursor-pointer disabled:opacity-50"
+                  title="Xóa CV"
+                >
+                  <span className="material-symbols-outlined text-[16px]">{deleting === r.id ? 'sync' : 'delete'}</span>
+                </button>
               </div>
             </div>
           ))}

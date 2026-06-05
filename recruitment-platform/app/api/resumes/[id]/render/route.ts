@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { renderTemplate, ResumeData } from "@/lib/template-engine";
+import { renderReactTemplate } from "@/lib/renderResumeServer";
 
 export async function GET(
     _req: NextRequest,
@@ -16,7 +16,7 @@ export async function GET(
             where: { id },
             include: {
                 user: { select: { name: true, email: true, phone: true, avatar: true } },
-                template: { select: { htmlContent: true, cssContent: true } },
+                template: { select: { slug: true } },
             },
         });
 
@@ -24,29 +24,17 @@ export async function GET(
             return NextResponse.json({ error: "Không tìm thấy resume" }, { status: 404 });
         }
 
-        if (!resume.template) {
-            return NextResponse.json({ error: "Resume này chưa chọn template" }, { status: 400 });
-        }
+        const slug = resume.template?.slug || "classic";
 
-        const data: ResumeData = {
-            name: resume.user.name,
-            email: resume.user.email,
-            phone: resume.user.phone || "",
-            avatar: resume.user.avatar || "",
-            address: resume.address || "",
-            summary: resume.summary || "",
-            degree: resume.degree || "",
-            languages: resume.languages || "",
-            socialLinks: (resume.socialLinks as ResumeData["socialLinks"]) || [],
-            education: (resume.education as ResumeData["education"]) || [],
-            experience: (resume.experience as ResumeData["experience"]) || [],
-            projects: (resume.projects as ResumeData["projects"]) || [],
-        };
-
-        const html = renderTemplate(
-            resume.template.htmlContent,
-            resume.template.cssContent,
-            data
+        const html = renderReactTemplate(
+            slug,
+            {
+                name: resume.user.name,
+                email: resume.user.email,
+                phone: resume.user.phone || "",
+                avatar: resume.avatarUrl || resume.user.avatar || "",
+            },
+            resume
         );
 
         return new NextResponse(html, {

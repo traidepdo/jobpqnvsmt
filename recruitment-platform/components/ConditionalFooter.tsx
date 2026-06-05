@@ -9,7 +9,10 @@ const HIDDEN_FOOTER_PREFIXES = [
     "/register/employer",
     "/blogs",
     "/login",
-    "/register"
+    "/register",
+    "/cv",
+    "/sua-cv",
+    "/tao-cv/",
 ];
 
 export default function ConditionalFooter() {

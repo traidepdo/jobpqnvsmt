@@ -80,12 +80,13 @@ export default function CvPreviewModal({
                 </a>
               )}
             </div>
-          ) : previewDocument ? (
+          ) : previewDocument || cvUrl ? (
             <iframe
               title="CV Preview"
-              srcDoc={previewDocument}
+              src={cvUrl || undefined}
+              srcDoc={previewDocument || undefined}
               className="w-full h-full min-h-[500px] border-0 bg-white"
-              sandbox="allow-same-origin"
+              sandbox="allow-same-origin allow-scripts"
             />
           ) : null}
         </div>

@@ -196,3 +196,4 @@ export function buildResumePreview(
   const css = template?.cssContent ?? '';
   return buildPreviewDocument(html, css);
 }
+

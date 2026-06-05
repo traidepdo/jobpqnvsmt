@@ -81,3 +81,41 @@ body {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
+
+@media print {
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset min-h-screen/height attributes that trigger blank pages */
+  .min-h-screen, [class*="min-h-screen"] {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Hide print-hidden classes and components */
+  .print\:hidden,
+  [class*="print:hidden"],
+  button,
+  footer,
+  aside,
+  nav {
+    display: none !important;
+  }
+
+  /* Force A4 print style with zero margins */
+  @page {
+    size: A4;
+    margin: 0mm;
+  }
+}

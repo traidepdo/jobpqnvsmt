@@ -50,7 +50,7 @@ async function ensureSeededData() {
         ];
         const employers = [];
         const hashedPassword = await bcrypt.hash("Password123", 10);
-        
+
         for (let i = 0; i < employerEmails.length; i++) {
             const email = employerEmails[i];
             let user = await prisma.user.findUnique({ where: { email } });
@@ -250,110 +250,81 @@ async function ensureSeededData() {
             });
         }
 
-        // 6. Seed Resume Templates if empty
-        let templatesCount = await prisma.resumeTemplate.count();
-        if (templatesCount === 0) {
-            await prisma.resumeTemplate.createMany({
-                data: [
-                    {
-                        name: "Mẫu Đảo Ngọc Sang Trọng (Modern)",
-                        slug: "mau-dao-ngoc-sang-trong",
-                        description: "Thiết kế hiện đại, phối màu biển khơi dịu mát rất thích hợp cho ngành nhà hàng, du lịch dịch vụ cao cấp.",
-                        thumbnailUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&auto=format&fit=crop&q=60",
-                        htmlContent: `
-                            <div class="resume-wrapper p-8 bg-white border border-[#edf0ff] rounded-xl shadow-sm text-on-surface" style="font-family: 'Inter', sans-serif;">
-                                <div class="flex flex-col md:flex-row justify-between items-start border-b-2 border-primary pb-6 mb-6">
-                                    <div>
-                                        <h1 class="text-3xl font-extrabold text-primary mb-1">{{name}}</h1>
-                                        <p class="text-lg font-semibold text-secondary mb-2">{{title}}</p>
-                                        <p class="text-sm text-outline flex items-center gap-1">
-                                            <span class="material-symbols-outlined text-[16px]">location_on</span> {{address}}
-                                        </p>
-                                    </div>
-                                    <div class="mt-4 md:mt-0 text-sm text-on-surface-variant flex flex-col gap-1.5 md:items-end">
-                                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">mail</span> {{email}}</span>
-                                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">phone</span> {{phone}}</span>
-                                    </div>
-                                </div>
-                                <div class="mb-6">
-                                    <h2 class="text-lg font-bold text-primary border-b border-outline-variant pb-1.5 mb-3">Tóm tắt nghề nghiệp</h2>
-                                    <p class="text-body-md text-on-surface-variant leading-relaxed">{{summary}}</p>
-                                </div>
-                                <div class="mb-6">
-                                    <h2 class="text-lg font-bold text-primary border-b border-outline-variant pb-1.5 mb-3">Học vấn</h2>
-                                    {{#each education}}
-                                    <div class="mb-3">
-                                        <div class="flex justify-between font-semibold">
-                                            <span>{{school}} - {{degree}}</span>
-                                            <span class="text-sm text-outline">{{startYear}} - {{endYear}}</span>
-                                        </div>
-                                        <p class="text-sm text-on-surface-variant mt-0.5">{{field}} {{#if GPA}}(GPA: {{GPA}}){{/if}}</p>
-                                        <p class="text-sm text-outline mt-1">{{description}}</p>
-                                    </div>
-                                    {{/each}}
-                                </div>
-                                <div>
-                                    <h2 class="text-lg font-bold text-primary border-b border-outline-variant pb-1.5 mb-3">Kinh nghiệm làm việc</h2>
-                                    {{#each experience}}
-                                    <div class="mb-3">
-                                        <div class="flex justify-between font-semibold">
-                                            <span>{{company}} - {{position}}</span>
-                                            <span class="text-sm text-outline">{{startYear}} - {{endYear}}</span>
-                                        </div>
-                                        <p class="text-sm text-on-surface-variant mt-1">{{description}}</p>
-                                    </div>
-                                    {{/each}}
-                                </div>
-                            </div>
-                        `,
-                        cssContent: `
-                            .resume-wrapper { max-width: 800px; margin: auto; }
-                        `,
-                        category: "MODERN",
-                        isActive: true
-                    },
-                    {
-                        name: "Mẫu Thanh Lịch Tối Giản (Minimalist)",
-                        slug: "mau-thanh-lich-toi-gian",
-                        description: "Giao diện tối giản, tập trung tối đa vào thông tin chuyên môn, hoàn hảo cho các vị trí quản lý hoặc kỹ thuật.",
-                        thumbnailUrl: "https://images.unsplash.com/photo-1626197031507-c1709955b04a?w=400&auto=format&fit=crop&q=60",
-                        htmlContent: `
-                            <div class="resume-wrapper p-8 bg-white border border-gray-200 text-[#212f3f]" style="font-family: Arial, sans-serif;">
-                                <div class="text-center border-b border-gray-300 pb-6 mb-6">
-                                    <h1 class="text-3xl font-bold uppercase tracking-wider text-gray-800">{{name}}</h1>
-                                    <p class="text-md text-gray-600 font-medium mt-1">{{title}}</p>
-                                    <div class="flex justify-center gap-6 mt-3 text-sm text-gray-500">
-                                        <span>{{email}}</span>
-                                        <span>•</span>
-                                        <span>{{phone}}</span>
-                                        <span>•</span>
-                                        <span>{{address}}</span>
-                                    </div>
-                                </div>
-                                <div class="mb-6">
-                                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-800 border-l-4 border-gray-800 pl-2 mb-3">Mục tiêu</h2>
-                                    <p class="text-sm text-gray-600 leading-relaxed">{{summary}}</p>
-                                </div>
-                                <div class="mb-6">
-                                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-800 border-l-4 border-gray-800 pl-2 mb-3">Kinh nghiệm</h2>
-                                    {{#each experience}}
-                                    <div class="mb-4">
-                                        <div class="flex justify-between text-sm font-bold">
-                                            <span>{{company}}</span>
-                                            <span>{{startYear}} - {{endYear}}</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 italic mt-0.5">{{position}}</p>
-                                        <p class="text-sm text-gray-600 mt-1">{{description}}</p>
-                                    </div>
-                                    {{/each}}
-                                </div>
-                            </div>
-                        `,
-                        cssContent: "",
-                        category: "PROFESSIONAL",
-                        isActive: true
-                    }
-                ]
+        // 6. Seed Resume Templates
+        const defaultTemplates = [
+            {
+                name: "Mẫu Cổ điển (Classic)",
+                slug: "classic",
+                description: "Phong cách thanh lịch, truyền thống. Thích hợp cho mọi ngành nghề.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "BASIC" as const,
+                isActive: true
+            },
+            {
+                name: "Mẫu Hiện đại (Modern)",
+                slug: "modern",
+                description: "Thiết kế hiện đại, phối màu thanh lịch, tối giản và sắc nét.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1626197031507-c1709955b04a?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "MODERN" as const,
+                isActive: true
+            },
+            {
+                name: "Mẫu Sáng tạo (Creative)",
+                slug: "creative",
+                description: "Phối màu cá tính, bố cục độc đáo giúp bạn nổi bật.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1616628188506-4bd8d62c9088?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "CREATIVE" as const,
+                isActive: true
+            },
+            {
+                name: "Mẫu Thanh lịch (Elegant)",
+                slug: "elegant",
+                description: "Thiết kế mềm mại, tinh tế, phù hợp các công việc dịch vụ, nghệ thuật.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "PROFESSIONAL" as const,
+                isActive: true
+            },
+            {
+                name: "Mẫu Tương lai (Futuristic)",
+                slug: "futuristic",
+                description: "Phong cách công nghệ cao, hiện đại và đột phá.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "CREATIVE" as const,
+                isActive: true
+            },
+            {
+                name: "Mẫu Tối giản Modern (Minimalist)",
+                slug: "minimalist",
+                description: "Tối giản thông tin, gọn gàng, bố cục rõ ràng chuyên nghiệp.",
+                thumbnailUrl: "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?w=400&auto=format&fit=crop&q=60",
+                htmlContent: "",
+                cssContent: "",
+                category: "BASIC" as const,
+                isActive: true
+            }
+        ];
+
+        for (const t of defaultTemplates) {
+            await prisma.resumeTemplate.upsert({
+                where: { slug: t.slug },
+                update: {
+                    name: t.name,
+                    description: t.description,
+                    thumbnailUrl: t.thumbnailUrl,
+                    category: t.category,
+                    isActive: t.isActive,
+                },
+                create: t,
             });
         }
         isAlreadySeeded = true;
@@ -363,7 +334,6 @@ async function ensureSeededData() {
 }
 
 export async function GET() {
-    console.log("DATABASE_URL:", process.env.DATABASE_URL ? "CÓ ✅" : "KHÔNG ❌");
     try {
         // Ensure seeded data is present first
         await ensureSeededData();

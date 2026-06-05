@@ -241,7 +241,7 @@ export default function ChatbotWidget() {
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#00b14f] hover:bg-[#009940] text-white rounded-full flex items-center justify-center shadow-xl cursor-pointer transition-all duration-300 transform hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#00b14f] hover:bg-[#009940] text-white rounded-full flex items-center justify-center shadow-xl cursor-pointer transition-all duration-300 transform hover:scale-105 print:hidden"
         title="Trợ lý tìm việc AI"
       >
         {isOpen ? (
@@ -264,7 +264,7 @@ export default function ChatbotWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[420px] h-[550px] bg-white rounded-3xl border border-gray-150 shadow-2xl flex flex-col overflow-hidden animate-[slideIn_0.3s_ease] font-sans">
+        <div className="fixed bottom-24 right-6 z-50 w-full max-w-[420px] h-[550px] bg-white rounded-3xl border border-gray-150 shadow-2xl flex flex-col overflow-hidden animate-[slideIn_0.3s_ease] font-sans print:hidden">
           <style>{`
             @keyframes slideIn {
               from { opacity: 0; transform: translateY(20px); }

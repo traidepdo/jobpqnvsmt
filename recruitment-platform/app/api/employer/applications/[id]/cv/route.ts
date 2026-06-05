@@ -2,11 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
 import {
-  buildResumePreview,
   parseResumeJson,
   type EducationItem,
   type ExperienceItem,
-  type ResumeRenderData,
 } from '@/lib/renderResume';
 
 export async function GET(
@@ -26,7 +24,7 @@ export async function GET(
       resume: {
         include: {
           template: {
-            select: { htmlContent: true, cssContent: true, name: true },
+            select: { slug: true, name: true },
           },
         },
       },
@@ -52,27 +50,10 @@ export async function GET(
   }
 
   const resume = application.resume;
-  const data: ResumeRenderData = {
-    name: application.user.name,
-    title: application.job.title,
-    email: application.user.email,
-    phone: application.user.phone || '',
-    address: resume.address || '',
-    summary: resume.summary || '',
-    education: parseResumeJson<EducationItem>(resume.education),
-    experience: parseResumeJson<ExperienceItem>(resume.experience),
-  };
-
-  const previewDocument = buildResumePreview(
-    data,
-    resume.template
-      ? { htmlContent: resume.template.htmlContent, cssContent: resume.template.cssContent }
-      : null,
-  );
 
   return NextResponse.json({
     hasResume: true,
-    previewDocument,
+    cvUrl: `/cv/${resume.id}`,
     resumeTitle: resume.title,
     templateName: resume.template?.name ?? null,
     candidateName: application.user.name,

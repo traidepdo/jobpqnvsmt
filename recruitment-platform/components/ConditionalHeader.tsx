@@ -9,6 +9,9 @@ const HIDDEN_HEADER_PREFIXES = [
     "/register/employer",
     "/login",
     "/register",
+    "/cv",
+    "/sua-cv",
+    "/tao-cv/",
 ];
 
 export default function ConditionalHeader() {
