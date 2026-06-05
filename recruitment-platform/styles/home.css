@@ -1,0 +1,34 @@
+body {
+    background: #ffff;
+}
+
+.header-home {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    background-image:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 1) 100%),
+        url('https://phongvu.vn/cong-nghe/wp-content/uploads/2026/03/hinh-nen-phong-canh-2-1.jpg');
+
+    background-size: cover;
+    background-position: center;
+
+}
+
+.card:hover .icon-card {
+    background-color: #3870EA;
+    color: white;
+    font-weight: 700;
+}
+
+.card:hover .info h3 {
+    color: white;
+}
+
+.card:hover .info span {
+    color: rgb(209, 209, 209);
+}

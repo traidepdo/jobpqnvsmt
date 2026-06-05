@@ -1,0 +1,553 @@
+// ============================================
+// Job Recruitment Platform - Prisma Schema
+// Generated from DBML
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+// ============================================
+// ENUMS
+// ============================================
+enum InterviewType {
+  ONLINE
+  OFFLINE
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+enum BlogType {
+  RICH_TEXT
+  HTML_PAGE
+}
+
+
+enum Role {
+  ADMIN
+  EMPLOYER
+  CANDIDATE
+}
+
+enum CompanySize {
+  SMALL      // 1-50
+  MEDIUM     // 51-200
+  LARGE      // 201-500
+  ENTERPRISE // 500+
+}
+
+enum TagType {
+  SKILL
+  BENEFIT
+  WORK_TYPE
+  SOFT_SKILL
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  REMOTE
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum ExperienceLevel {
+  NO_EXPERIENCE
+  UNDER_1_YEAR
+  ONE_TO_THREE_YEARS
+  THREE_TO_FIVE_YEARS
+  OVER_FIVE_YEARS
+}
+
+enum JobLevel {
+  INTERN
+  FRESHER
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+  DIRECTOR
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  CLOSED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  ACCEPTED
+  REJECTED
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_STATUS_CHANGED
+  JOB_APPROVED
+  COMPANY_APPROVED
+  NEW_MESSAGE
+  JOB_DEADLINE
+  SYSTEM
+}
+enum TemplateCategory {
+  BASIC
+  PROFESSIONAL
+  CREATIVE
+  MODERN
+  ACADEMIC
+}
+
+model ResumeTemplate {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?          @db.Text
+  thumbnailUrl String?
+
+  // Nội dung template
+  htmlContent String           @db.LongText  // HTML layout với placeholder variables
+  cssContent  String           @db.LongText  // CSS riêng của template
+
+  category    TemplateCategory @default(BASIC)
+
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  resumes     Resume[]
+
+  @@map("resume_templates")
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CANDIDATE)
+  avatar    String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  isLocked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  company        Company?
+  resumes        Resume[]
+  applications   Application[]
+  savedJobs      SavedJob[]
+  savedCompanies SavedCompany[]
+  notifications  Notification[]
+  blogs          Blog[]
+  employerConversations Conversation[] @relation("EmployerConversations")
+  candidateConversations Conversation[] @relation("CandidateConversations")
+  messages              Message[]
+  adminConversations AdminConversation[] @relation("EmployerAdminConversations")
+  adminMessages      AdminMessage[]      @relation("AdminMessageSender")
+  groupConversations GroupConversation[]
+  groupMembers       GroupMember[]
+  groupMessages      GroupMessage[]
+  @@map("users")
+}
+
+model Province {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+
+  districts District[]
+
+  @@map("provinces")
+}
+
+model District {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String
+  provinceId String
+  createdAt  DateTime @default(now())
+
+  province Province @relation(fields: [provinceId], references: [id])
+  wards    Ward[]
+
+  @@map("districts")
+}
+
+model Ward {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String
+  districtId String
+  createdAt  DateTime @default(now())
+
+  district  District  @relation(fields: [districtId], references: [id])
+  companies Company[]
+  jobs      Job[]
+
+  @@map("wards")
+}
+
+model Company {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  logo          String?
+  website       String?
+  description   String?     @db.Text
+  wardId        String?
+  addressDetail String?
+  size          CompanySize?
+  industry      String?
+  ownerId       String      @unique
+  isApproved    Boolean     @default(false)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  owner          User           @relation(fields: [ownerId], references: [id])
+  ward           Ward?          @relation(fields: [wardId], references: [id])
+  jobs           Job[]
+  savedByUsers   SavedCompany[]
+
+  @@map("companies")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  type      TagType?
+  createdAt DateTime @default(now())
+
+  jobTags  JobTag[]
+  blogTags BlogTag[]
+
+  @@map("tags")
+}
+
+model Job {
+  id            String           @id @default(cuid())
+  title         String
+  slug          String           @unique
+  description   String           @db.LongText
+  benefits      String?          @db.Text
+  requirements  String?          @db.Text
+  quantity      Int              @default(1)
+  salaryMin     Int?
+  salaryMax     Int?
+  wardId        String?
+  addressDetail String?
+  type          JobType          @default(FULL_TIME)
+  experience    ExperienceLevel?
+  level         JobLevel?
+  status        JobStatus        @default(PENDING)
+  deadline      DateTime?
+  isVisible     Boolean          @default(true)
+  categoryId    String
+  companyId     String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  category     Category      @relation(fields: [categoryId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id])
+  ward         Ward?         @relation(fields: [wardId], references: [id])
+  tags         JobTag[]
+  applications Application[]
+  savedByUsers SavedJob[]
+
+  @@map("jobs")
+}
+
+model JobTag {
+  id    String @id @default(cuid())
+  jobId String
+  tagId String
+
+  job Job @relation(fields: [jobId], references: [id])
+  tag Tag @relation(fields: [tagId], references: [id])
+
+  @@unique([jobId, tagId])
+  @@map("job_tags")
+}
+
+model Application {
+  id           String            @id @default(cuid())
+  userId       String
+  jobId        String
+  cvUrl        String?
+  resumeId     String?
+  coverLetter  String?           @db.Text
+  status       ApplicationStatus @default(PENDING)
+  isBookmarked Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  conversation Conversation?
+  interview    Interview?
+
+  user   User    @relation(fields: [userId], references: [id])
+  job    Job     @relation(fields: [jobId], references: [id])
+  resume Resume? @relation(fields: [resumeId], references: [id])
+
+  @@unique([userId, jobId])
+  @@map("applications")
+}
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String   @default("Hồ sơ của tôi")
+  address     String?
+  summary     String?  @db.Text
+  socialLinks Json?    @map("socicallink") // [{platform, url}]
+  education   Json?    // [{school, degree, field, startYear, endYear, description, GPA}]
+  experience  Json?    // [{company, position, startYear, endYear, description}]
+  projects    Json?    // [{name, position, link, description}]
+  degree      String?
+  templateId  String?          // nullable — resume cũ không cần template
+  template    ResumeTemplate?  @relation(fields: [templateId], references: [id])
+  languages   String?
+  cvData     Json?
+  avatarUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  applications Application[]
+
+  @@map("resumes")
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  job  Job  @relation(fields: [jobId], references: [id])
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
+}
+
+model SavedCompany {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@unique([userId, companyId])
+  @@map("saved_companies")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  content   String           @db.Text
+  refId     String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model BlogCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  blogs Blog[]
+
+  @@map("blog_categories")
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.LongText
+  thumbnail   String?
+  excerpt     String?  @db.Text
+  categoryId  String?
+  authorId    String
+  views       Int      @default(0)
+  isPublished Boolean  @default(false)
+  type        BlogType  @default(RICH_TEXT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id])
+  category BlogCategory? @relation(fields: [categoryId], references: [id])
+  tags     BlogTag[]
+
+  @@map("blogs")
+}
+
+model BlogTag {
+  id     String @id @default(cuid())
+  blogId String
+  tagId  String
+
+  blog Blog @relation(fields: [blogId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@unique([blogId, tagId])
+  @@map("blog_tags")
+}
+model Conversation {
+    id            String    @id @default(cuid())
+    applicationId String    @unique
+    employerId    String
+    candidateId   String
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    application   Application @relation(fields: [applicationId], references: [id])
+    employer      User        @relation("EmployerConversations", fields: [employerId], references: [id])
+    candidate     User        @relation("CandidateConversations", fields: [candidateId], references: [id])
+    messages      Message[]
+    @@map("conversations")
+}
+
+model Message {
+    id             String       @id @default(cuid())
+    conversationId String
+    senderId       String
+    content        String
+    createdAt      DateTime     @default(now())
+  readAt         DateTime?
+    conversation   Conversation @relation(fields: [conversationId], references: [id])
+    sender         User         @relation(fields: [senderId], references: [id])
+    @@map("messages")
+}
+
+enum CandidateInterviewStatus {
+  PENDING    // Chờ candidate xác nhận
+  CONFIRMED  // Candidate đồng ý
+  DECLINED   // Candidate từ chối
+}
+
+model Interview {
+  id              String                  @id @default(cuid())
+  applicationId   String                  @unique
+  scheduledAt     DateTime
+  type            InterviewType           @default(ONLINE)
+  location        String
+  notes           String?                 @db.Text
+  status          InterviewStatus         @default(SCHEDULED)
+  candidateStatus CandidateInterviewStatus @default(PENDING) // thêm dòng này
+  declineReason   String?                 @db.Text           // lý do từ chối
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("interviews")
+}
+
+
+
+model AdminConversation {
+  id               String         @id @default(cuid())
+  employerId       String         @unique   // mỗi employer chỉ có 1 thread
+  claimedByAdminId String?                  // admin nào đã nhận xử lý
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  employer         User           @relation("EmployerAdminConversations", fields: [employerId], references: [id])
+  messages         AdminMessage[]
+
+  @@map("admin_conversations")
+}
+
+model AdminMessage {
+  id             String            @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime          @default(now())
+  readAt         DateTime?
+
+  conversation   AdminConversation @relation(fields: [conversationId], references: [id])
+  sender         User              @relation("AdminMessageSender", fields: [senderId], references: [id])
+
+  @@map("admin_messages")
+}
+
+model GroupConversation {
+  id         String   @id @default(cuid())
+  name       String
+  employerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employer  User     @relation(fields: [employerId], references: [id])
+  members   GroupMember[]
+  messages  GroupMessage[]
+
+  @@map("group_conversations")
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  group GroupConversation @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User              @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  senderId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  group  GroupConversation @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User              @relation(fields: [senderId], references: [id])
+
+  @@map("group_messages")
+}
