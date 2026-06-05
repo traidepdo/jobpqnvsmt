@@ -1,0 +1,21 @@
+# Python Virtual Environment
+SeverAI/env/
+**/__pycache__/
+*.pyc
+
+# Local Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+SeverAI/.env
+recruitment-platform/.env
+
+# Next.js build and cache
+recruitment-platform/.next/
+recruitment-platform/out/
+
+# Node modules
+node_modules/
+recruitment-platform/node_modules/
