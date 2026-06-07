@@ -253,9 +253,10 @@ export default function JobMapDisplay({
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distance = (R * c).toFixed(1);
 
+      const durationMinutes = Math.round((parseFloat(distance) / 40) * 60);
       setResult({
         distance: `${distance} km (đường chim bay)`,
-        duration: 'Đang tính toán',
+        duration: `${durationMinutes} phút (ước lượng - 40km/h)`,
       });
 
       const polyline = L.polyline([[fromLat, fromLng], [latitude, longitude]], {

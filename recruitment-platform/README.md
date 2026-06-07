@@ -117,7 +117,9 @@ Tính năng này tích hợp bản đồ tương tác mã nguồn mở (100% mi�
   - Lấy GPS hiện tại từ trình duyệt (`navigator.geolocation`).
   - Gõ địa chỉ nhà riêng hoặc tự điền tọa độ thủ công.
 - **Vẽ hành trình thực tế (Glowing Route Path)**: Hệ thống gọi API định tuyến miễn phí OSRM để vẽ đường đi thực tế dưới dạng **đường viền phát sáng Glowing Route** nối từ vị trí ứng viên **🏠 (Home)** đến nơi làm việc **🏢 (Office)**, đồng thời hiển thị khoảng cách lái xe (km) và thời gian di chuyển dự kiến (phút).
+  - *Tốc độ tính toán*: OSRM sử dụng tốc độ định tuyến đường bộ thực tế dựa trên phân loại đường của Phú Quốc (trục chính ĐT45/ĐT47: 50-60 km/h; nội thị Dương Đông/An Thới: 30-40 km/h; đường dân sinh nhỏ: 15-25 km/h).
 - **Cơ chế dự phòng (Fallback)**: Nếu dịch vụ OSRM không phản hồi, bản đồ sẽ tự vẽ đường thẳng (đường chim bay) và tính khoảng cách theo công thức lượng giác Haversine để đảm bảo trải nghiệm không bị gián đoạn.
+  - *Thời gian dự phòng*: Nếu OSRM bị ngắt kết nối, hệ thống sẽ sử dụng tốc độ xe máy trung bình trên đảo là **40 km/h** để ước lượng thời gian đi làm dự phòng.
 
 ### Luồng Dữ liệu & Hoạt động (Data Flow)
 
