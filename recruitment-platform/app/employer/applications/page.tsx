@@ -24,6 +24,8 @@ interface Application {
   } | null;
   cvUrl?: string | null;
   conversationId?: string | null;
+  quizScore?: number | null;
+  quizDuration?: number | null;
 }
 
 export default function EmployerApplicationsPage() {
@@ -186,6 +188,12 @@ export default function EmployerApplicationsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {app.quizScore !== undefined && app.quizScore !== null && (
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">assignment</span>
+                      Test: {app.quizScore}%
+                    </span>
+                  )}
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusStyle[app.status]}`}>
                     {getApplicationStatusLabel(app.status)}
                   </span>
@@ -209,6 +217,30 @@ export default function EmployerApplicationsPage() {
 
               {expanded === app.id && (
                 <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-4">
+                  {app.quizScore !== undefined && app.quizScore !== null && (
+                    <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
+                          <span className="material-symbols-outlined text-[20px]">assignment</span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium">Kết quả bài trắc nghiệm năng lực</p>
+                          <p className="text-sm font-bold text-blue-800 mt-0.5">
+                            Điểm số: {app.quizScore}%
+                          </p>
+                        </div>
+                      </div>
+                      {app.quizDuration !== undefined && app.quizDuration !== null && (
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 font-medium">Thời gian làm bài</p>
+                          <p className="text-xs font-bold text-gray-700 mt-0.5">
+                            {Math.floor(app.quizDuration / 60) > 0 ? `${Math.floor(app.quizDuration / 60)} phút ` : ''}
+                            {app.quizDuration % 60} giây
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {app.coverLetter && (
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-1">Thư giới thiệu</p>

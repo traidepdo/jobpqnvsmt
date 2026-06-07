@@ -3,6 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formatSalary } from '@/lib/jobLabels';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const JobMapDisplay = dynamic(() => import('@/components/public/JobMapDisplay'), {
+  ssr: false,
+  loading: () => <div className="h-48 w-full bg-gray-50 border border-dashed rounded-xl flex items-center justify-center text-xs text-gray-400 mt-3">Đang tải bản đồ địa điểm...</div>
+});
 
 interface JobDetails {
   id: string;
@@ -33,6 +39,9 @@ interface JobDetails {
   category: { name: string };
   ward: { name: string } | null;
   addressDetail: string | null;
+  quizId: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const getJobTypeLabel = (type?: string) => {
@@ -77,6 +86,15 @@ export default function JobViewPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [relatedJobs, setRelatedJobs] = useState<any[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
+
+  // Quiz states
+  const [quizPhase, setQuizPhase] = useState<'none' | 'info' | 'quiz'>('none');
+  const [quizData, setQuizData] = useState<any>(null);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [questionId: string]: number }>({});
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadJob(): Promise<JobDetails | null> {
@@ -173,17 +191,42 @@ export default function JobViewPage() {
     finally { setSaveLoading(false); }
   };
 
-  const handleApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isAuthenticated) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
-    if (!selectedResumeId && !cvFile) { alert('Vui lòng chọn CV hoặc tải file lên.'); return; }
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleQuizSubmit = (auto = false) => {
+    const answersList = quizQuestions.map(q => ({
+      questionId: q.id,
+      selectedOption: selectedAnswers[q.id] !== undefined ? selectedAnswers[q.id] : -1,
+    }));
+    submitApplication(answersList);
+  };
+
+  const submitApplication = async (answersList?: any[]) => {
     setApplyLoading(true);
     try {
+      const payload: any = {
+        jobId: job?.id,
+        coverLetter,
+        resumeId: selectedResumeId || null,
+      };
+
+      if (job?.quizId && answersList) {
+        payload.quizAnswers = answersList;
+        if (quizStartTime) {
+          payload.quizDuration = Math.round((Date.now() - quizStartTime) / 1000);
+        }
+      }
+
       const res = await fetch('/api/candidate/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: job?.id, coverLetter, resumeId: selectedResumeId || null }),
+        body: JSON.stringify(payload),
       });
+
       if (res.ok) {
         setApplySuccess(true);
         setTimeout(() => {
@@ -191,14 +234,67 @@ export default function JobViewPage() {
           setApplySuccess(false);
           setCoverLetter('');
           setSelectedResumeId('');
+          setQuizPhase('none');
+          setQuizData(null);
+          setQuizQuestions([]);
+          setSelectedAnswers({});
+          setCurrentQuestionIndex(0);
         }, 2500);
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.error || 'Không thể nộp hồ sơ. Vui lòng thử lại.');
       }
-    } catch (e) { alert('Đã xảy ra lỗi khi nộp hồ sơ.'); }
-    finally { setApplyLoading(false); }
+    } catch (e) {
+      alert('Đã xảy ra lỗi khi nộp hồ sơ.');
+    } finally {
+      setApplyLoading(false);
+    }
   };
+
+  const handleApplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
+    if (!selectedResumeId && !cvFile) { alert('Vui lòng chọn CV hoặc tải file lên.'); return; }
+    
+    if (job?.quizId) {
+      setApplyLoading(true);
+      try {
+        const res = await fetch(`/api/candidate/quizzes/${job.quizId}`);
+        if (!res.ok) throw new Error('Không thể tải bài kiểm tra');
+        const data = await res.json();
+        if (data.quiz) {
+          setQuizData(data.quiz);
+          setQuizQuestions(data.quiz.questions || []);
+          setQuizPhase('info');
+        } else {
+          throw new Error('Dữ liệu bài thi không hợp lệ');
+        }
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải bài thi. Vui lòng thử lại.');
+      } finally {
+        setApplyLoading(false);
+      }
+      return;
+    }
+
+    submitApplication();
+  };
+
+  useEffect(() => {
+    if (quizPhase !== 'quiz' || timeLeft <= 0) {
+      if (quizPhase === 'quiz' && timeLeft <= 0) {
+        alert('Hết thời gian làm bài! Hệ thống tự động nộp bài thi của bạn.');
+        handleQuizSubmit(true);
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [quizPhase, timeLeft]);
 
   if (loading) {
     return (
@@ -553,6 +649,14 @@ export default function JobViewPage() {
                 <p className="text-sm text-gray-600">
                   {[job.addressDetail, job.ward?.name, 'Phú Quốc', 'Kiên Giang'].filter(Boolean).join(', ')}
                 </p>
+                {job.latitude !== null && job.longitude !== null && (
+                  <JobMapDisplay
+                    latitude={job.latitude}
+                    longitude={job.longitude}
+                    companyName={job.company.name}
+                    address={[job.addressDetail, job.ward?.name].filter(Boolean).join(', ')}
+                  />
+                )}
               </div>
             </div>
 
@@ -694,6 +798,150 @@ export default function JobViewPage() {
                   <h4 className="text-base font-bold text-gray-900">Ứng tuyển thành công!</h4>
                   <p className="text-sm text-gray-500">Hồ sơ đã được gửi. Nhà tuyển dụng sẽ liên hệ sớm nhất.</p>
                 </div>
+              ) : quizPhase === 'info' ? (
+                <div className="p-6 flex flex-col gap-5 text-center">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0052CC]">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth={2} />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">Yêu cầu kiểm tra năng lực</h4>
+                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                      Để ứng tuyển vị trí này, nhà tuyển dụng yêu cầu bạn hoàn thành một bài trắc nghiệm nhanh. Kết quả sẽ được lưu cùng hồ sơ ứng tuyển của bạn.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl text-left">
+                    <div>
+                      <span className="text-[10px] text-gray-400 font-semibold block uppercase">Tên bài thi</span>
+                      <span className="text-xs font-bold text-gray-800">{quizData?.title}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 font-semibold block uppercase">Thời gian làm bài</span>
+                      <span className="text-xs font-bold text-gray-800">{quizData?.timeLimit} phút</span>
+                    </div>
+                    <div className="col-span-2 border-t border-gray-150 pt-2.5 mt-1">
+                      <span className="text-[10px] text-gray-400 font-semibold block uppercase">Số lượng câu hỏi</span>
+                      <span className="text-xs font-bold text-gray-800">{quizQuestions.length} câu hỏi trắc nghiệm</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setQuizPhase('none')}
+                      className="flex-1 py-3 border border-gray-200 rounded-xl text-sm text-gray-600 font-semibold hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      Quay lại
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeLeft(quizData.timeLimit * 60);
+                        setQuizPhase('quiz');
+                        setQuizStartTime(Date.now());
+                        setCurrentQuestionIndex(0);
+                      }}
+                      className="flex-1 py-3 bg-[#00b14f] hover:bg-[#009940] text-white rounded-xl text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2"
+                    >
+                      Bắt đầu làm bài
+                    </button>
+                  </div>
+                </div>
+              ) : quizPhase === 'quiz' && quizQuestions.length > 0 ? (
+                <div className="p-6 flex flex-col gap-4">
+                  {/* Timer & Progress */}
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-xs font-semibold text-gray-500">
+                      Câu hỏi {currentQuestionIndex + 1} / {quizQuestions.length}
+                    </span>
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                      timeLeft < 60 ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-blue-50 text-blue-600'
+                    }`}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                        <path d="M12 6v6l4 2" strokeWidth={2} />
+                      </svg>
+                      {formatTime(timeLeft)}
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#00b14f] h-full transition-all duration-300"
+                      style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Question Box */}
+                  <div className="my-2">
+                    <h4 className="text-sm font-bold text-gray-900 leading-snug mb-4">
+                      {quizQuestions[currentQuestionIndex].content}
+                    </h4>
+
+                    {/* Options */}
+                    <div className="flex flex-col gap-2.5">
+                      {quizQuestions[currentQuestionIndex].options.map((opt: string, idx: number) => {
+                        const qId = quizQuestions[currentQuestionIndex].id;
+                        const isSelected = selectedAnswers[qId] === idx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedAnswers(prev => ({ ...prev, [qId]: idx }))}
+                            className={`w-full text-left p-3.5 rounded-xl border text-xs transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? 'border-[#00b14f] bg-green-50/40 text-[#00b14f] font-semibold'
+                                : 'border-gray-150 hover:border-gray-300 hover:bg-gray-50/50 text-gray-700'
+                            }`}
+                          >
+                            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full border mr-3 text-[10px] font-bold transition-colors ${
+                              isSelected ? 'border-[#00b14f] bg-[#00b14f] text-white' : 'border-gray-300 text-gray-400 bg-white'
+                            }`}>
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Navigation footer */}
+                  <div className="flex gap-3 pt-3 border-t border-gray-100 mt-2">
+                    <button
+                      type="button"
+                      disabled={currentQuestionIndex === 0}
+                      onClick={() => setCurrentQuestionIndex(prev => prev - 1)}
+                      className="px-4 py-3 border border-gray-200 rounded-xl text-xs text-gray-600 font-semibold hover:bg-gray-50 disabled:opacity-45 cursor-pointer transition-colors"
+                    >
+                      Quay lại
+                    </button>
+
+                    <div className="flex-1" />
+
+                    {currentQuestionIndex < quizQuestions.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
+                        className="px-6 py-3 bg-[#00b14f] hover:bg-[#009940] text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        Tiếp theo
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleQuizSubmit(false)}
+                        disabled={applyLoading}
+                        className="px-6 py-3 bg-[#00b14f] hover:bg-[#009940] text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                      >
+                        {applyLoading ? 'Đang nộp...' : 'Nộp bài & Ứng tuyển'}
+                      </button>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <form onSubmit={handleApplySubmit} className="p-6 flex flex-col gap-4">
 
@@ -754,8 +1002,8 @@ export default function JobViewPage() {
                       disabled={applyLoading || (!selectedResumeId && !cvFile)}
                       className="flex-1 py-3 bg-[#00b14f] hover:bg-[#009940] text-white rounded-xl text-sm font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                       {applyLoading ? (
-                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang gửi...</>
-                      ) : 'Gửi hồ sơ'}
+                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang tải bài thi...</>
+                      ) : (job?.quizId ? 'Tiếp tục làm bài test' : 'Gửi hồ sơ')}
                     </button>
                   </div>
                 </form>

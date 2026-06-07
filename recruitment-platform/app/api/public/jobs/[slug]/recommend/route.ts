@@ -12,35 +12,53 @@ export async function GET(
         // 1. Find the target job ID
         const job = await prisma.job.findUnique({
             where: { slug },
-            select: { id: true }
+            select: { id: true, categoryId: true }
         });
 
         if (!job) {
             return NextResponse.json({ error: "Không tìm thấy công việc gốc" }, { status: 404 });
         }
 
-        // 2. Query Django recommender API
-        const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            next: { revalidate: 60 } // Cache recommendations for 60s
-        });
+        let recommendedIds: string[] = [];
 
-        if (!response.ok) {
-            throw new Error("Không thể kết nối đến Django Recommender API");
+        // 2. Query Django recommender API (with fallback on failure)
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                next: { revalidate: 60 } // Cache recommendations for 60s
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const recommendations = data.recommendations || [];
+                recommendedIds = recommendations.map((r: any) => r.id);
+            }
+        } catch (fetchError) {
+            console.warn("Django Recommender API is offline. Falling back to DB-based recommendation.");
         }
 
-        const data = await response.json();
-        const recommendations = data.recommendations || [];
-        const recommendedIds = recommendations.map((r: any) => r.id);
-
+        // 3. Fallback: Query jobs in the same category if Django recommendations are empty or service is offline
         if (recommendedIds.length === 0) {
-            return NextResponse.json([], { status: 200 });
+            const fallbackJobs = await prisma.job.findMany({
+                where: {
+                    categoryId: job.categoryId,
+                    id: { not: job.id },
+                    isVisible: true
+                },
+                take: 4,
+                include: {
+                    company: { select: companyPublicSelect },
+                    category: { select: { name: true } },
+                    ward: { select: { name: true } }
+                }
+            });
+            return NextResponse.json(fallbackJobs, { status: 200 });
         }
 
-        // 3. Query rich details from Prisma for these IDs
+        // 4. Query rich details from Prisma for these IDs
         const relatedJobs = await prisma.job.findMany({
             where: {
                 id: { in: recommendedIds },

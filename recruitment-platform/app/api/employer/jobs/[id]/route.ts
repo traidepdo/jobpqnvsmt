@@ -61,6 +61,9 @@ export async function PUT(
       deadline,
       categoryId,
       status,
+      quizId,
+      latitude,
+      longitude,
     } = body;
 
     const targetStatus = status
@@ -80,11 +83,14 @@ export async function PUT(
         wardId: wardId ?? undefined,
         addressDetail: addressDetail ?? undefined,
         ...(type && { type: type as JobType }),
-        ...(experience !== undefined && { experience: experience as ExperienceLevel | null }),
-        ...(level !== undefined && { level: level as JobLevel | null }),
+        ...(experience !== undefined && { experience: (experience || null) as ExperienceLevel | null }),
+        ...(level !== undefined && { level: (level || null) as JobLevel | null }),
         ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
         ...(categoryId && { categoryId }),
         ...(targetStatus && { status: targetStatus }),
+        quizId: quizId !== undefined ? (quizId || null) : undefined,
+        latitude: latitude !== undefined ? (latitude !== null && latitude !== '' ? Number(latitude) : null) : undefined,
+        longitude: longitude !== undefined ? (longitude !== null && longitude !== '' ? Number(longitude) : null) : undefined,
       },
       include: {
         category: { select: { id: true, name: true } },

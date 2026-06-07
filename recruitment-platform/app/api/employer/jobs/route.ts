@@ -79,6 +79,9 @@ export async function POST(req: Request) {
       deadline,
       categoryId,
       status: jobStatus,
+      quizId,
+      latitude,
+      longitude,
     } = body;
 
     if (!title?.trim() || !description?.trim() || !categoryId) {
@@ -106,6 +109,9 @@ export async function POST(req: Request) {
         deadline: deadline ? new Date(deadline) : null,
         categoryId,
         companyId: auth.company.id,
+        quizId: quizId || null,
+        latitude: (latitude !== undefined && latitude !== null && latitude !== '') ? Number(latitude) : null,
+        longitude: (longitude !== undefined && longitude !== null && longitude !== '') ? Number(longitude) : null,
         status,
       },
       include: {

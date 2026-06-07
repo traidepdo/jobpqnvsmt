@@ -165,6 +165,7 @@ model User {
   groupConversations GroupConversation[]
   groupMembers       GroupMember[]
   groupMessages      GroupMessage[]
+  quizzes            Quiz[]
   @@map("users")
 }
 
@@ -277,11 +278,15 @@ model Job {
   isVisible     Boolean          @default(true)
   categoryId    String
   companyId     String
+  quizId        String?
+  latitude      Float?
+  longitude     Float?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   category     Category      @relation(fields: [categoryId], references: [id])
   company      Company       @relation(fields: [companyId], references: [id])
   ward         Ward?         @relation(fields: [wardId], references: [id])
+  quiz         Quiz?         @relation(fields: [quizId], references: [id])
   tags         JobTag[]
   applications Application[]
   savedByUsers SavedJob[]
@@ -314,6 +319,8 @@ model Application {
   coverLetter  String?           @db.Text
   status       ApplicationStatus @default(PENDING)
   isBookmarked Boolean           @default(false)
+  quizScore    Int?
+  quizDuration Int?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   conversation Conversation?
@@ -559,3 +566,32 @@ model GroupMessage {
 
   @@map("group_messages")
 }
+
+model Quiz {
+  id          String     @id @default(cuid())
+  title       String
+  description String?    @db.Text
+  timeLimit   Int        @default(15) // giới hạn thời gian (phút)
+  employerId  String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  employer    User       @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  jobs        Job[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  quizId        String
+  content       String   @db.Text
+  options       Json     // Danh sách các câu trả lời dạng mảng chuỗi ["A", "B", "C", "D"]
+  correctOption Int      // Chỉ số của câu trả lời đúng (0, 1, 2, 3)
+
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("questions")
+}
+

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (auth.error) return auth.error;
 
   try {
-    const { jobId, resumeId, coverLetter } = await req.json();
+    const { jobId, resumeId, coverLetter, quizAnswers, quizDuration } = await req.json();
 
     if (!jobId) {
       return NextResponse.json({ error: 'Thiếu jobId' }, { status: 400 });
@@ -60,6 +60,32 @@ export async function POST(req: Request) {
       }
     }
 
+    // Chấm điểm bài thi trắc nghiệm (nếu có)
+    let quizScore: number | null = null;
+    let finalDuration: number | null = null;
+    if (job.quizId) {
+      if (!Array.isArray(quizAnswers)) {
+        return NextResponse.json({ error: 'Vị trí tuyển dụng này yêu cầu làm bài kiểm tra năng lực trực tuyến.' }, { status: 400 });
+      }
+
+      const quiz = await prisma.quiz.findUnique({
+        where: { id: job.quizId },
+        include: { questions: true },
+      });
+
+      if (quiz && quiz.questions.length > 0) {
+        let correctCount = 0;
+        quiz.questions.forEach((q) => {
+          const answer = quizAnswers.find((ans: any) => ans.questionId === q.id);
+          if (answer && answer.selectedOption === q.correctOption) {
+            correctCount++;
+          }
+        });
+        quizScore = Math.round((correctCount / quiz.questions.length) * 100);
+        finalDuration = typeof quizDuration === 'number' ? quizDuration : null;
+      }
+    }
+
     const application = await prisma.$transaction(async (tx) => {
       const app = await tx.application.create({
         data: {
@@ -67,8 +93,10 @@ export async function POST(req: Request) {
           jobId,
           resumeId: resumeId || null,
           coverLetter: coverLetter || null,
+          quizScore,
+          quizDuration: finalDuration,
         },
-        include: { // ← thiếu cái này
+        include: {
           job: {
             select: {
               title: true,
@@ -84,7 +112,9 @@ export async function POST(req: Request) {
           userId: auth.payload.id,
           type: 'APPLICATION_RECEIVED',
           title: 'Ứng tuyển thành công',
-          content: `Bạn đã ứng tuyển vị trí ${app.job.title} tại ${app.job.company.name} thành công!`,
+          content: quizScore !== null 
+            ? `Bạn đã ứng tuyển vị trí ${app.job.title} tại ${app.job.company.name} thành công! (Điểm bài test: ${quizScore}%)`
+            : `Bạn đã ứng tuyển vị trí ${app.job.title} tại ${app.job.company.name} thành công!`,
           refId: jobId,
         },
       });
@@ -92,11 +122,13 @@ export async function POST(req: Request) {
       // Thông báo cho công ty
       await tx.notification.create({
         data: {
-          userId: app.job.company.ownerId, // ← gửi đến tài khoản employer
+          userId: app.job.company.ownerId,
           type: 'APPLICATION_RECEIVED',
           title: 'Có ứng viên mới',
-          content: `Có người vừa ứng tuyển vị trí ${app.job.title}`,
-          refId: app.id, // ← refId là applicationId để employer click vào xem
+          content: quizScore !== null
+            ? `Có người vừa ứng tuyển vị trí ${app.job.title} (Điểm bài test: ${quizScore}%)`
+            : `Có người vừa ứng tuyển vị trí ${app.job.title}`,
+          refId: app.id,
         },
       });
 

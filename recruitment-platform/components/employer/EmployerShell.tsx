@@ -15,6 +15,7 @@ const NAV = [
   { href: '/employer/dashboard', label: 'Tổng quan', icon: 'dashboard' },
   { href: '/employer/jobs', label: 'Tin tuyển dụng', icon: 'work' },
   { href: '/employer/jobs/new', label: 'Đăng tin mới', icon: 'add_circle' },
+  { href: '/employer/quizzes', label: 'Quản lý bài test', icon: 'quiz' },
   { href: '/employer/applications', label: 'Đơn ứng tuyển', icon: 'inbox' },
   { href: '/employer/interviews', label: 'Lịch phỏng vấn', icon: 'calendar_today' },
   { href: '/employer/candidates', label: 'Ứng viên tiềm năng', icon: 'people' },

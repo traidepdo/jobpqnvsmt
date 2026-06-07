@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const JobMapPicker = dynamic(() => import('./JobMapPicker'), {
+  ssr: false,
+  loading: () => <div className="h-48 w-full bg-gray-50 border border-dashed rounded-xl flex items-center justify-center text-xs text-gray-400">Đang tải bản đồ định vị...</div>
+});
 
 export interface JobFormValues {
   title: string;
@@ -18,6 +24,9 @@ export interface JobFormValues {
   deadline: string;
   categoryId: string;
   status: string;
+  quizId: string;
+  latitude: string;
+  longitude: string;
 }
 
 const empty: JobFormValues = {
@@ -36,6 +45,9 @@ const empty: JobFormValues = {
   deadline: '',
   categoryId: '',
   status: 'ACTIVE',
+  quizId: '',
+  latitude: '',
+  longitude: '',
 };
 
 interface Meta {
@@ -56,11 +68,16 @@ export default function JobForm({
 }) {
   const [form, setForm] = useState<JobFormValues>({ ...empty, ...initial });
   const [meta, setMeta] = useState<Meta>({ categories: [], wards: [] });
+  const [quizzes, setQuizzes] = useState<{ id: string; title: string }[]>([]);
 
   useEffect(() => {
     fetch('/api/employer/meta')
       .then(r => r.json())
       .then(d => setMeta({ categories: d.categories || [], wards: d.wards || [] }));
+
+    fetch('/api/employer/quizzes')
+      .then(r => r.json())
+      .then(d => setQuizzes(d.quizzes || []));
   }, []);
 
   const set = (k: keyof JobFormValues, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -144,6 +161,17 @@ export default function JobForm({
           <label className="block text-xs font-semibold text-gray-500 mb-1">Địa chỉ chi tiết</label>
           <input className={inputCls} value={form.addressDetail} onChange={e => set('addressDetail', e.target.value)} placeholder="Số nhà, đường..." />
         </div>
+        <div className="pt-2">
+          <label className="block text-xs font-semibold text-gray-500 mb-2">Định vị trên bản đồ (OpenStreetMap)</label>
+          <JobMapPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onChange={(lat, lng) => {
+              setForm(f => ({ ...f, latitude: lat, longitude: lng }));
+            }}
+            addressDetail={form.addressDetail}
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
@@ -190,6 +218,16 @@ export default function JobForm({
               <option value="LEAD">Lead</option>
               <option value="MANAGER">Manager</option>
             </select>
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Đính kèm bài kiểm tra năng lực (Quiz trắc nghiệm)</label>
+            <select className={inputCls} value={form.quizId} onChange={e => set('quizId', e.target.value)}>
+              <option value="">Không đính kèm bài kiểm tra</option>
+              {quizzes.map(q => (
+                <option key={q.id} value={q.id}>{q.title}</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-gray-400 mt-1">Ứng viên sẽ phải hoàn thành bài test này khi nộp đơn ứng tuyển.</p>
           </div>
         </div>
       </div>

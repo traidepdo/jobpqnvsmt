@@ -18,8 +18,19 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = global.__prisma ?? createPrismaClient();
+const basePrisma = global.__prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
-  global.__prisma = prisma;
+  global.__prisma = basePrisma;
 }
+
+export const prisma = new Proxy(basePrisma, {
+  get(target, prop) {
+    let currentPrisma = global.__prisma ?? createPrismaClient();
+    if (prop === 'quiz' && (currentPrisma as any).quiz === undefined) {
+      currentPrisma = createPrismaClient();
+      global.__prisma = currentPrisma;
+    }
+    return (currentPrisma as any)[prop];
+  }
+});

@@ -6,15 +6,25 @@ import React, { useState, useEffect } from "react";
  * TemplateModern — Phong cách hiện đại, bold, single-column (Form nhập liệu)
  * Accent màu xanh dương đậm, typography sắc nét
  */
-export default function TemplateModern({ user = {}, resume = {}, onSave }) {
-    const [userData, setUserData] = useState({
+export default function TemplateModern({
+    user = {},
+    resume = {},
+    onSave,
+    isControlled = false,
+    controlledUserData,
+    controlledResumeData,
+    onControlledChangeUser,
+    onControlledChangeResume,
+    sectionOrder
+}) {
+    const [localUserData, setLocalUserData] = useState({
         name: user.name || "Họ và Tên",
         email: user.email || "",
         phone: user.phone || "",
         avatar: user.avatar || "https://i.pravatar.cc/150?img=12",
     });
 
-    const [resumeData, setResumeData] = useState({
+    const [localResumeData, setLocalResumeData] = useState({
         address: resume.address || "",
         summary: resume.summary || "",
         degree: resume.degree || "",
@@ -25,28 +35,34 @@ export default function TemplateModern({ user = {}, resume = {}, onSave }) {
         projects: resume.projects || [],
     });
 
+    const userData = isControlled ? controlledUserData : localUserData;
+    const resumeData = isControlled ? controlledResumeData : localResumeData;
+
+    const setUserData = isControlled ? onControlledChangeUser : setLocalUserData;
+    const setResumeData = isControlled ? onControlledChangeResume : setLocalResumeData;
+
     const [showSaveToast, setShowSaveToast] = useState(false);
 
     // Load saved data on mount
     useEffect(() => {
-        if (resume?.id) return;
+        if (isControlled || resume?.id) return;
         const savedUser = localStorage.getItem("pqjobs_cv_user");
         const savedResume = localStorage.getItem("pqjobs_cv_resume");
         if (savedUser) {
             try {
-                setUserData(JSON.parse(savedUser));
+                setLocalUserData(JSON.parse(savedUser));
             } catch (e) {
                 console.error("Failed to parse saved user data", e);
             }
         }
         if (savedResume) {
             try {
-                setResumeData(JSON.parse(savedResume));
+                setLocalResumeData(JSON.parse(savedResume));
             } catch (e) {
                 console.error("Failed to parse saved resume data", e);
             }
         }
-    }, []);
+    }, [isControlled, resume?.id]);
 
     const handleSave = () => {
         if (onSave) {
@@ -230,221 +246,235 @@ export default function TemplateModern({ user = {}, resume = {}, onSave }) {
                 </header>
 
                 {/* ── Content ────────────────────────────────────────────── */}
-                <div className="mx-auto max-w-4xl px-12 py-10 space-y-10">
-                    {/* Summary */}
-                    <Block title="Về tôi" accent>
-                        <textarea
-                            value={resumeData.summary}
-                            onChange={(e) => handleResumeChange("summary", e.target.value)}
-                            className="bg-transparent border-none outline-none text-sm leading-relaxed text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
-                            placeholder="Nhập phần tóm tắt nghề nghiệp..."
-                            rows={3}
-                        />
-                    </Block>
-
-                    {/* Experience */}
-                    <Block
-                        title="Kinh nghiệm"
-                        onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Công ty", startYear: "2023", endYear: "", description: "" })}
-                    >
-                        <div className="space-y-6">
-                            {resumeData.experience.map((exp, i) => (
-                                <div key={i} className="flex gap-4 relative group/item border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
-                                    <div className="flex flex-col items-center pt-1 shrink-0">
-                                        <div className="h-3 w-3 rounded-full bg-blue-600" />
-                                        <div className="flex-1 w-px bg-blue-100 mt-1" />
-                                    </div>
-                                    <div className="flex-grow">
-                                        <div className="flex flex-wrap justify-between items-baseline gap-2">
-                                            <input
-                                                type="text"
-                                                value={exp.position}
-                                                onChange={(eVal) => handleArrayChange("experience", i, "position", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none font-bold text-gray-800 text-sm focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-1/2"
-                                                placeholder="Chức danh"
-                                            />
-                                            <div className="flex gap-1 text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-slate-100">
+                {(() => {
+                    const sectionsMap = {
+                        summary: (
+                            <Block key="summary" title="Về tôi" accent>
+                                <textarea
+                                    value={resumeData.summary}
+                                    onChange={(e) => handleResumeChange("summary", e.target.value)}
+                                    className="bg-transparent border-none outline-none text-sm leading-relaxed text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
+                                    placeholder="Nhập phần tóm tắt nghề nghiệp..."
+                                    rows={3}
+                                />
+                            </Block>
+                        ),
+                        experience: (
+                            <Block
+                                key="experience"
+                                title="Kinh nghiệm"
+                                onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Công ty", startYear: "2023", endYear: "", description: "" })}
+                            >
+                                <div className="space-y-6">
+                                    {resumeData.experience.map((exp, i) => (
+                                        <div key={i} className="flex gap-4 relative group/item border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
+                                            <div className="flex flex-col items-center pt-1 shrink-0">
+                                                <div className="h-3 w-3 rounded-full bg-blue-600" />
+                                                <div className="flex-1 w-px bg-blue-100 mt-1" />
+                                            </div>
+                                            <div className="flex-grow">
+                                                <div className="flex flex-wrap justify-between items-baseline gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={exp.position}
+                                                        onChange={(eVal) => handleArrayChange("experience", i, "position", eVal.target.value)}
+                                                        className="bg-transparent border-none outline-none font-bold text-gray-800 text-sm focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-1/2"
+                                                        placeholder="Chức danh"
+                                                    />
+                                                    <div className="flex gap-1 text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-slate-100">
+                                                        <input
+                                                            type="text"
+                                                            value={exp.startYear}
+                                                            onChange={(eVal) => handleArrayChange("experience", i, "startYear", eVal.target.value)}
+                                                            className="bg-transparent border-none outline-none w-14 text-right"
+                                                            placeholder="Bắt đầu"
+                                                        />
+                                                        <span>–</span>
+                                                        <input
+                                                            type="text"
+                                                            value={exp.endYear || ""}
+                                                            onChange={(eVal) => handleArrayChange("experience", i, "endYear", eVal.target.value)}
+                                                            className="bg-transparent border-none outline-none w-14"
+                                                            placeholder="nay"
+                                                        />
+                                                    </div>
+                                                </div>
                                                 <input
                                                     type="text"
-                                                    value={exp.startYear}
-                                                    onChange={(eVal) => handleArrayChange("experience", i, "startYear", eVal.target.value)}
-                                                    className="bg-transparent border-none outline-none w-14 text-right"
-                                                    placeholder="Bắt đầu"
+                                                    value={exp.company}
+                                                    onChange={(eVal) => handleArrayChange("experience", i, "company", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none text-xs text-blue-600 italic font-semibold mt-0.5 focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-64"
+                                                    placeholder="Tên công ty"
+                                                />
+                                                <textarea
+                                                    value={exp.description || ""}
+                                                    onChange={(eVal) => handleArrayChange("experience", i, "description", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none mt-2 text-sm text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
+                                                    placeholder="Mô tả chi tiết..."
+                                                    rows={3}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeArrayItem("experience", i)}
+                                                className="absolute right-0 top-0 text-red-500 hover:text-red-700 text-xs font-semibold opacity-0 group-hover/item:opacity-100 transition-opacity print:hidden"
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Block>
+                        ),
+                        education: (
+                            <Block
+                                key="education"
+                                title="Học vấn"
+                                onAdd={() => addArrayItem("education", { school: "Trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
+                            >
+                                <div className="space-y-6">
+                                    {resumeData.education.map((e, i) => (
+                                        <div key={i} className="relative group/edu border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
+                                            <input
+                                                type="text"
+                                                value={e.school}
+                                                onChange={(eVal) => handleArrayChange("education", i, "school", eVal.target.value)}
+                                                className="bg-transparent border-none outline-none font-bold text-gray-800 text-sm focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-full"
+                                                placeholder="Tên trường học"
+                                            />
+                                            <div className="flex gap-1 mt-0.5 text-xs text-gray-500">
+                                                <input
+                                                    type="text"
+                                                    value={e.degree}
+                                                    onChange={(eVal) => handleArrayChange("education", i, "degree", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none focus:bg-slate-50 rounded px-1 -mx-1 w-1/2"
+                                                    placeholder="Bằng cấp"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={e.field}
+                                                    onChange={(eVal) => handleArrayChange("education", i, "field", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none focus:bg-slate-50 rounded px-1 -mx-1 w-1/2"
+                                                    placeholder="Ngành"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                                                <input
+                                                    type="text"
+                                                    value={e.startYear}
+                                                    onChange={(eVal) => handleArrayChange("education", i, "startYear", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none w-12"
+                                                    placeholder="2018"
                                                 />
                                                 <span>–</span>
                                                 <input
                                                     type="text"
-                                                    value={exp.endYear || ""}
-                                                    onChange={(eVal) => handleArrayChange("experience", i, "endYear", eVal.target.value)}
-                                                    className="bg-transparent border-none outline-none w-14"
-                                                    placeholder="nay"
+                                                    value={e.endYear || ""}
+                                                    onChange={(eVal) => handleArrayChange("education", i, "endYear", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none w-12"
+                                                    placeholder="2022"
+                                                />
+                                                <span className="ml-1">· GPA:</span>
+                                                <input
+                                                    type="text"
+                                                    value={e.GPA || ""}
+                                                    onChange={(eVal) => handleArrayChange("education", i, "GPA", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none w-12"
+                                                    placeholder="3.5"
                                                 />
                                             </div>
+                                            <textarea
+                                                value={e.description || ""}
+                                                onChange={(eVal) => handleArrayChange("education", i, "description", eVal.target.value)}
+                                                className="bg-transparent border-none outline-none text-xs text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 mt-1 resize-y"
+                                                placeholder="Chi tiết học vấn..."
+                                                rows={2}
+                                            />
+                                            <button
+                                                onClick={() => removeArrayItem("education", i)}
+                                                className="absolute right-0 top-0 text-red-500 hover:text-red-700 text-[10px] font-semibold opacity-0 group-hover/edu:opacity-100 transition-opacity print:hidden"
+                                            >
+                                                Xóa
+                                            </button>
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={exp.company}
-                                            onChange={(eVal) => handleArrayChange("experience", i, "company", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none text-xs text-blue-600 italic font-semibold mt-0.5 focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-64"
-                                            placeholder="Tên công ty"
-                                        />
-                                        <textarea
-                                            value={exp.description || ""}
-                                            onChange={(eVal) => handleArrayChange("experience", i, "description", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none mt-2 text-sm text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
-                                            placeholder="Mô tả chi tiết..."
-                                            rows={3}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => removeArrayItem("experience", i)}
-                                        className="absolute right-0 top-0 text-red-500 hover:text-red-700 text-xs font-semibold opacity-0 group-hover/item:opacity-100 transition-opacity print:hidden"
-                                    >
-                                        Xóa
-                                    </button>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </Block>
-
-                    {/* Two-col: Education + Skills */}
-                    <div className="grid grid-cols-2 gap-8">
-                        <Block
-                            title="Học vấn"
-                            onAdd={() => addArrayItem("education", { school: "Trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
-                        >
-                            <div className="space-y-6">
-                                {resumeData.education.map((e, i) => (
-                                    <div key={i} className="relative group/edu border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
-                                        <input
-                                            type="text"
-                                            value={e.school}
-                                            onChange={(eVal) => handleArrayChange("education", i, "school", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none font-bold text-gray-800 text-sm focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-full"
-                                            placeholder="Tên trường học"
-                                        />
-                                        <div className="flex gap-1 mt-0.5 text-xs text-gray-500">
-                                            <input
-                                                type="text"
-                                                value={e.degree}
-                                                onChange={(eVal) => handleArrayChange("education", i, "degree", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none focus:bg-slate-50 rounded px-1 -mx-1 w-1/2"
-                                                placeholder="Bằng cấp"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={e.field}
-                                                onChange={(eVal) => handleArrayChange("education", i, "field", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none focus:bg-slate-50 rounded px-1 -mx-1 w-1/2"
-                                                placeholder="Ngành"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                                            <input
-                                                type="text"
-                                                value={e.startYear}
-                                                onChange={(eVal) => handleArrayChange("education", i, "startYear", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none w-12"
-                                                placeholder="2018"
-                                            />
-                                            <span>–</span>
-                                            <input
-                                                type="text"
-                                                value={e.endYear || ""}
-                                                onChange={(eVal) => handleArrayChange("education", i, "endYear", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none w-12"
-                                                placeholder="2022"
-                                            />
-                                            <span className="ml-1">· GPA:</span>
-                                            <input
-                                                type="text"
-                                                value={e.GPA || ""}
-                                                onChange={(eVal) => handleArrayChange("education", i, "GPA", eVal.target.value)}
-                                                className="bg-transparent border-none outline-none w-12"
-                                                placeholder="3.5"
-                                            />
-                                        </div>
-                                        <textarea
-                                            value={e.description || ""}
-                                            onChange={(eVal) => handleArrayChange("education", i, "description", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none text-xs text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 mt-1 resize-y"
-                                            placeholder="Chi tiết học vấn..."
-                                            rows={2}
-                                        />
-                                        <button
-                                            onClick={() => removeArrayItem("education", i)}
-                                            className="absolute right-0 top-0 text-red-500 hover:text-red-700 text-[10px] font-semibold opacity-0 group-hover/edu:opacity-100 transition-opacity print:hidden"
+                            </Block>
+                        ),
+                        languages: (
+                            <Block key="languages" title="Ngôn ngữ & kỹ năng">
+                                <textarea
+                                    value={resumeData.languages}
+                                    onChange={(e) => handleResumeChange("languages", e.target.value)}
+                                    className="bg-transparent border-none outline-none text-sm text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
+                                    placeholder="Nhập ngôn ngữ và kỹ năng..."
+                                    rows={8}
+                                />
+                            </Block>
+                        ),
+                        projects: (
+                            <Block
+                                key="projects"
+                                title="Dự án nổi bật"
+                                onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
+                            >
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    {resumeData.projects.map((p, i) => (
+                                        <div
+                                            key={i}
+                                            className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 hover:shadow-md transition relative group/proj"
                                         >
-                                            Xóa
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </Block>
-
-                        <Block title="Ngôn ngữ & kỹ năng">
-                            <textarea
-                                value={resumeData.languages}
-                                onChange={(e) => handleResumeChange("languages", e.target.value)}
-                                className="bg-transparent border-none outline-none text-sm text-gray-600 w-full focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 resize-y"
-                                placeholder="Nhập ngôn ngữ và kỹ năng..."
-                                rows={8}
-                            />
-                        </Block>
-                    </div>
-
-                    {/* Projects */}
-                    <Block
-                        title="Dự án nổi bật"
-                        onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
-                    >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            {resumeData.projects.map((p, i) => (
-                                <div
-                                    key={i}
-                                    className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 hover:shadow-md transition relative group/proj"
-                                >
-                                    <button
-                                        onClick={() => removeArrayItem("projects", i)}
-                                        className="absolute right-3 top-3 text-red-500 hover:text-red-700 text-xs font-semibold opacity-0 group-hover/proj:opacity-100 transition-opacity print:hidden"
-                                    >
-                                        ✕
-                                    </button>
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="text"
-                                            value={p.name}
-                                            onChange={(eVal) => handleArrayChange("projects", i, "name", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none font-bold text-blue-800 text-sm focus:bg-white rounded px-1 -mx-1 w-5/6"
-                                            placeholder="Tên dự án"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={p.link || ""}
-                                            onChange={(eVal) => handleArrayChange("projects", i, "link", eVal.target.value)}
-                                            className="bg-transparent border-none outline-none text-xs text-blue-500 underline focus:bg-white rounded px-1 -mx-1"
-                                            placeholder="Link dự án"
-                                        />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={p.position || ""}
-                                        onChange={(eVal) => handleArrayChange("projects", i, "position", eVal.target.value)}
-                                        className="bg-transparent border-none outline-none text-xs text-blue-600 mt-1 focus:bg-white rounded px-1 -mx-1 w-full"
-                                        placeholder="Vai trò"
-                                    />
-                                    <textarea
-                                        value={p.description || ""}
-                                        onChange={(eVal) => handleArrayChange("projects", i, "description", eVal.target.value)}
-                                        className="bg-transparent border-none outline-none mt-2 text-xs text-gray-600 w-full focus:bg-white rounded px-1 -mx-1 resize-y"
-                                        placeholder="Mô tả dự án..."
-                                        rows={3}
-                                    />
+                                            <button
+                                                onClick={() => removeArrayItem("projects", i)}
+                                                className="absolute right-3 top-3 text-red-500 hover:text-red-700 text-xs font-semibold opacity-0 group-hover/proj:opacity-100 transition-opacity print:hidden"
+                                            >
+                                                ✕
+                                            </button>
+                                            <div className="flex flex-col gap-1">
+                                                <input
+                                                    type="text"
+                                                    value={p.name}
+                                                    onChange={(eVal) => handleArrayChange("projects", i, "name", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none font-bold text-blue-800 text-sm focus:bg-white rounded px-1 -mx-1 w-5/6"
+                                                    placeholder="Tên dự án"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={p.link || ""}
+                                                    onChange={(eVal) => handleArrayChange("projects", i, "link", eVal.target.value)}
+                                                    className="bg-transparent border-none outline-none text-xs text-blue-500 underline focus:bg-white rounded px-1 -mx-1"
+                                                    placeholder="Link dự án"
+                                                />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={p.position || ""}
+                                                onChange={(eVal) => handleArrayChange("projects", i, "position", eVal.target.value)}
+                                                className="bg-transparent border-none outline-none text-xs text-blue-600 mt-1 focus:bg-white rounded px-1 -mx-1 w-full"
+                                                placeholder="Vai trò"
+                                            />
+                                            <textarea
+                                                value={p.description || ""}
+                                                onChange={(eVal) => handleArrayChange("projects", i, "description", eVal.target.value)}
+                                                className="bg-transparent border-none outline-none mt-2 text-xs text-gray-600 w-full focus:bg-white rounded px-1 -mx-1 resize-y"
+                                                placeholder="Mô tả dự án..."
+                                                rows={3}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </Block>
+                        )
+                    };
+
+                    const defaultOrder = ['summary', 'experience', 'education', 'languages', 'projects'];
+                    const currentOrder = sectionOrder || defaultOrder;
+
+                    return (
+                        <div className="mx-auto max-w-4xl px-12 py-10 space-y-10">
+                            {currentOrder.map(id => sectionsMap[id])}
                         </div>
-                    </Block>
-                </div>
+                    );
+                })()}
             </div>
             {showSaveToast && (
                 <div className="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-bounce print:hidden">

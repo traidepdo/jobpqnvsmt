@@ -34,6 +34,9 @@ export default function EmployerEditJobPage() {
             deadline: j.deadline ? j.deadline.slice(0, 10) : '',
             categoryId: j.categoryId || j.category?.id || '',
             status: j.status,
+            quizId: j.quizId || '',
+            latitude: j.latitude != null ? String(j.latitude) : '',
+            longitude: j.longitude != null ? String(j.longitude) : '',
           });
         }
       })
