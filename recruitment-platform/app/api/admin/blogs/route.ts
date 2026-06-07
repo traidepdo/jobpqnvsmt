@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const auth = await requireAdmin();
-        if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 });
+        if (auth.error) return auth.error;
 
         const { title, slug, excerpt, content, thumbnail, isPublished, categoryId, type } = await req.json();
 

@@ -20,6 +20,7 @@ export async function GET() {
     company,
     recentJobs,
     recentApplications,
+    upcomingInterviews,
   ] = await Promise.all([
     // Tin đang tuyển
     prisma.job.count({
@@ -85,6 +86,17 @@ export async function GET() {
         job: { select: { title: true } },
       },
     }),
+
+    // Lịch phỏng vấn sắp diễn ra (trong tương lai và ở trạng thái SCHEDULED)
+    prisma.interview.count({
+      where: {
+        application: {
+          job: { companyId },
+        },
+        scheduledAt: { gte: now },
+        status: 'SCHEDULED',
+      },
+    }),
   ]);
 
   return NextResponse.json({
@@ -92,6 +104,7 @@ export async function GET() {
     totalApplications,
     todayApplications,
     expiringSoon,
+    upcomingInterviews,
     companyApproved: company?.isApproved ?? false,
     recentJobs,
     recentApplications,

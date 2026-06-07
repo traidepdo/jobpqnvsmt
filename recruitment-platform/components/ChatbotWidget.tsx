@@ -53,8 +53,62 @@ export default function ChatbotWidget() {
   const [userResumes, setUserResumes] = useState<any[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || loading) return;
+
+    const userMsg = inputValue.trim();
+    setInputValue('');
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: 'user', text: userMsg },
+      { sender: 'ai', text: 'Đang phản hồi...', isLoader: true },
+    ]);
+    setLoading(true);
+
+    try {
+      const filteredHistory = messages
+        .filter((m) => !m.isLoader)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+
+      const response = await fetch('/api/public/chatbot/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          history: filteredHistory,
+        }),
+      });
+
+      const data = await response.json();
+      setMessages((prev) => prev.filter((m) => !m.isLoader));
+
+      if (response.ok) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'ai', text: data.response },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'ai', text: data.error || 'Có lỗi xảy ra trong quá trình phản hồi.' },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => prev.filter((m) => !m.isLoader));
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Check authentication and load user resumes
@@ -449,6 +503,25 @@ export default function ChatbotWidget() {
                 Đăng nhập để chọn trực tiếp các hồ sơ CV bạn đã tạo trực tuyến.
               </p>
             )}
+
+            {/* Form nhập câu hỏi */}
+            <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-gray-100 pt-3 mt-1">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                disabled={loading}
+                placeholder="Nhập câu hỏi của bạn..."
+                className="flex-1 border border-gray-200 focus:border-[#00b14f] focus:outline-none rounded-xl px-3 py-2 text-xs text-gray-800 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={loading || !inputValue.trim()}
+                className="bg-[#00b14f] hover:bg-[#009940] text-white rounded-xl px-4 py-2 text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 flex items-center justify-center"
+              >
+                Gửi
+              </button>
+            </form>
           </div>
         </div>
       )}

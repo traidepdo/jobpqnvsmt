@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: NextRequest, { params }: RouteParams) {
     try {
         const auth = await requireAdmin();
-        if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 });
+        if (auth.error) return auth.error;
 
         const { id } = await params;
         const { title, slug, excerpt, content, thumbnail, isPublished, categoryId, type } = await req.json();
@@ -70,9 +70,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
     try {
         const auth = await requireAdmin();
-        if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 });
+        if (auth.error) return auth.error;
 
         const { id } = await params;
+        // Xóa tất cả các tag liên kết trước để tránh lỗi khóa ngoại (Foreign Key Constraint)
+        await prisma.blogTag.deleteMany({ where: { blogId: id } });
+        
         await prisma.blog.delete({ where: { id } });
         return NextResponse.json({ ok: true, message: 'Đã xóa bài viết' });
     } catch (e: any) {

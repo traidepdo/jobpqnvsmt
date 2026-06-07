@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from .recommender import get_related_jobs
-from .chatbot import extract_text_from_pdf, parse_db_resume, get_gemini_recommendations
+from .chatbot import extract_text_from_pdf, parse_db_resume, get_gemini_recommendations, get_general_chat_response
 
 @require_GET
 def recommend_jobs_api(request, job_id):
@@ -72,3 +72,26 @@ def chatbot_recommend_api(request):
     # 3. Call AI matching logic
     recommendations_result = get_gemini_recommendations(cv_text)
     return JsonResponse(recommendations_result)
+
+@csrf_exempt
+def chatbot_chat_api(request):
+    """
+    API endpoint: POST /api/chatbot/chat/
+    Accepts user message and history.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed.'}, status=405)
+        
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '')
+        history = data.get('history', [])
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+        
+    if not message or not message.strip():
+        return JsonResponse({'error': 'Message cannot be empty.'}, status=400)
+        
+    response_result = get_general_chat_response(message, history)
+    return JsonResponse(response_result)
+

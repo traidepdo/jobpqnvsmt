@@ -35,7 +35,7 @@ export async function PATCH(
         ...(isBookmarked !== undefined && { isBookmarked }),
       },
       include: {
-        user: { select: { id: true, name: true, email: true, phone: true } },
+        user: { select: { id: true, name: true, email: true, phone: true, avatar: true } },
         job: { select: { title: true } },
         resume: { select: { id: true, title: true, summary: true, education: true, experience: true } },
       },

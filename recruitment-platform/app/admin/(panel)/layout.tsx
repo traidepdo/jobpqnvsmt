@@ -36,7 +36,6 @@ const NAV_GROUPS: NavGroup[] = [
             { href: '/admin/blog-categories', icon: '☰', label: 'Danh mục bài viết' },
             { href: '/admin/blogs', icon: '▤', label: 'Bài viết' },
             { href: '/admin/categories', icon: '⊞', label: 'Danh mục' },
-            { href: '/admin/templates', icon: '▣', label: 'Mẫu CV' },
             { href: '/admin/messages', icon: '☗', label: 'Tin nhắn' },
         ],
     },
@@ -291,16 +290,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 </span>
                             )}
                         </button>
-                        
+
                         {showNotifications && (
                             <div className="absolute right-0 mt-2 w-80 bg-black border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden text-left">
                                 <div className="px-4 py-3 border-b border-white/[0.08] flex justify-between items-center">
                                     <span className="font-semibold text-xs text-white">Thông báo ({unreadNotificationsCount})</span>
                                     {unreadNotificationsCount > 0 && (
-                                        <button 
+                                        <button
                                             onClick={async () => {
                                                 const unread = notifications.filter(notif => !notif.isRead);
-                                                await Promise.all(unread.map(n => 
+                                                await Promise.all(unread.map(n =>
                                                     fetch(`/api/admin/notifications/${n.id}/read`, { method: 'PATCH' })
                                                 ));
                                                 loadNotifications();
@@ -316,8 +315,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         <div className="px-4 py-8 text-center text-xs text-white/40">Không có thông báo nào</div>
                                     ) : (
                                         notifications.map(n => (
-                                            <div 
-                                                key={n.id} 
+                                            <div
+                                                key={n.id}
                                                 onClick={() => handleNotificationClick(n)}
                                                 className={`px-4 py-3 text-xs cursor-pointer hover:bg-white/[0.03] transition-colors ${!n.isRead ? 'bg-indigo-500/[0.03]' : ''}`}
                                             >

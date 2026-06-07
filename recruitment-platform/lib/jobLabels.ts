@@ -37,7 +37,7 @@ export function getJobStatusLabel(status: string): string {
 export function getApplicationStatusLabel(status: string): string {
   const map: Record<string, string> = {
     PENDING: 'Chờ xem xét',
-    REVIEWING: 'Bỏ chấp nhận',
+    REVIEWING: 'Đang xem xét',
     ACCEPTED: 'Đã chấp nhận',
     REJECTED: 'Từ chối',
   };

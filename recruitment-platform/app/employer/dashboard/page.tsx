@@ -9,6 +9,7 @@ type DashboardData = {
   totalApplications: number;
   todayApplications: number;
   expiringSoon: number;
+  upcomingInterviews: number;
   companyApproved: boolean;
   recentJobs: {
     id: string;
@@ -41,11 +42,11 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`bg-gray-100 animate-pulse rounded-lg ${className}`} />;
 }
 
-function StatCard({ label, value, icon, color }: {
-  label: string; value: number; icon: string; color: string;
+function StatCard({ label, value, icon, color, href }: {
+  label: string; value: number; icon: string; color: string; href?: string;
 }) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4">
+  const content = (
+    <>
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
         <span className="material-symbols-outlined text-[22px]">{icon}</span>
       </div>
@@ -53,6 +54,24 @@ function StatCard({ label, value, icon, color }: {
         <p className="text-2xl font-extrabold text-[#041b3c]">{value}</p>
         <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       </div>
+    </>
+  );
+
+  const className = `bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4 transition-all duration-200 ${
+    href ? 'hover:shadow-md hover:border-blue-200 hover:scale-[1.02] cursor-pointer' : ''
+  }`;
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }
@@ -79,8 +98,8 @@ export default function EmployerDashboardPage() {
     return (
       <div className="space-y-6 max-w-6xl">
         <Skeleton className="h-32 rounded-2xl" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Skeleton className="h-64" />
@@ -140,11 +159,12 @@ export default function EmployerDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Tin đang tuyển" value={data.activeJobs} icon="work" color="bg-blue-50 text-[#0052CC]" />
-        <StatCard label="Tổng đơn ứng tuyển" value={data.totalApplications} icon="inbox" color="bg-indigo-50 text-indigo-600" />
-        <StatCard label="Đơn mới hôm nay" value={data.todayApplications} icon="mark_email_unread" color="bg-green-50 text-green-600" />
-        <StatCard label="Tin sắp hết hạn" value={data.expiringSoon} icon="schedule" color="bg-amber-50 text-amber-600" />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard label="Tin đang tuyển" value={data.activeJobs} icon="work" color="bg-blue-50 text-[#0052CC]" href="/employer/jobs" />
+        <StatCard label="Tổng đơn ứng tuyển" value={data.totalApplications} icon="inbox" color="bg-indigo-50 text-indigo-600" href="/employer/applications" />
+        <StatCard label="Đơn mới hôm nay" value={data.todayApplications} icon="mark_email_unread" color="bg-green-50 text-green-600" href="/employer/applications?status=PENDING" />
+        <StatCard label="Lịch phỏng vấn sắp tới" value={data.upcomingInterviews} icon="calendar_today" color="bg-purple-50 text-purple-600" href="/employer/interviews" />
+        <StatCard label="Tin sắp hết hạn" value={data.expiringSoon} icon="schedule" color="bg-amber-50 text-amber-600" href="/employer/jobs" />
       </div>
 
       {/* Tables */}

@@ -131,4 +131,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Gemini API Key configuration
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-

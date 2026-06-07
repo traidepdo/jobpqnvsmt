@@ -190,7 +190,7 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
 """
 
     # 4. Call Gemini API
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -223,3 +223,61 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
         "recommended_jobs": fallback_recs,
         "message": "Đã xảy ra sự cố khi kết nối với AI. Dưới đây là các vị trí được khớp tự động dựa trên hồ sơ của bạn:"
     }
+
+def get_general_chat_response(message, history=None):
+    """
+    Generate a direct response from Gemini based on user's message and chat history.
+    """
+    api_key = getattr(settings, 'GEMINI_API_KEY', '')
+    if not api_key:
+        return {"response": "Xin lỗi, hệ thống AI hiện chưa được cấu hình khóa API (API Key)."}
+
+    # Format history and user prompt
+    contents = []
+    if history:
+        for turn in history:
+            role = "user" if turn.get("sender") == "user" else "model"
+            # Ensure text is not empty
+            text = turn.get("text", "")
+            if text:
+                contents.append({
+                    "role": role,
+                    "parts": [{"text": text}]
+                })
+    
+    # Append the new user message
+    contents.append({
+        "role": "user",
+        "parts": [{"text": message}]
+    })
+
+    # System instruction or prefix context to guide the model to act as a career helper
+    system_instruction = (
+        "Bạn là một trợ lý tư vấn tuyển dụng và hỗ trợ việc làm thông minh, thân thiện. "
+        "Hãy trả lời các câu hỏi của ứng viên liên quan đến công việc, CV, kinh nghiệm, kỹ năng, định hướng nghề nghiệp, hoặc hỗ trợ sử dụng website tuyển dụng này. "
+        "Xưng hô thân mật là 'bạn' và 'tôi' hoặc 'mình'. Hãy trả lời ngắn gọn, súc tích và có cấu trúc rõ ràng."
+    )
+
+    payload = {
+        "contents": contents,
+        "systemInstruction": {
+            "parts": [{"text": system_instruction}]
+        }
+    }
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        if response.ok:
+            resp_data = response.json()
+            raw_text = resp_data['candidates'][0]['content']['parts'][0]['text']
+            return {"response": raw_text}
+        else:
+            print(f"Gemini API returned error: {response.status_code} - {response.text}")
+            return {"response": "Hệ thống AI đang quá tải hoặc gặp sự cố tạm thời. Xin vui lòng thử lại sau ít phút!"}
+    except Exception as e:
+        print(f"Error calling Gemini API: {e}")
+        return {"response": "Không thể kết nối với hệ thống AI. Vui lòng kiểm tra lại kết nối mạng."}
+

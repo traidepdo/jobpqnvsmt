@@ -12,7 +12,7 @@ interface Application {
   coverLetter: string | null;
   createdAt: string;
   isBookmarked: boolean;
-  user: { id: string; name: string; email: string; phone: string | null };
+  user: { id: string; name: string; email: string; phone: string | null; avatar: string | null };
   job: { id: string; title: string; slug: string };
   resume: {
     id: string;
@@ -174,7 +174,7 @@ export default function EmployerApplicationsPage() {
                 onClick={() => setExpanded(expanded === app.id ? null : app.id)}
               >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {app.user.name[0]}
+                  {app.user.avatar ? <img src={app.user.avatar} alt="" className='w-12 h-12 rounded-full object-cover' /> : app.user.name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-[#041b3c]">{app.isBookmarked ? <span className="material-symbols-outlined text-amber-500 mr-2">star</span> : ""}{app.user.name}</p>

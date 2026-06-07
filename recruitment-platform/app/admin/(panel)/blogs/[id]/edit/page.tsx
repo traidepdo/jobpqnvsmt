@@ -401,7 +401,7 @@ export default function BlogEditorPage() {
                         value={title}
                         onChange={e => handleTitleChange(e.target.value)}
                         placeholder="Tiêu đề bài viết..."
-                        className="w-full text-2xl font-bold text-gray-900 bg-white border border-gray-100 rounded-2xl px-6 py-4 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/10 transition placeholder-gray-200"
+                        className="w-full text-2xl font-bold text-black bg-white border border-gray-100 rounded-2xl px-6 py-4 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/10 transition placeholder-gray-200"
                     />
 
                     {/* Type switcher */}
@@ -443,7 +443,7 @@ export default function BlogEditorPage() {
                             <div>
                                 <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Trạng thái</label>
                                 <select value={String(isPublished)} onChange={e => setIsPublished(e.target.value === 'true')}
-                                    className="w-full h-9 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] cursor-pointer transition">
+                                    className="w-full h-9 px-3 text-sm bg-gray-50 text-black border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] cursor-pointer transition">
                                     <option value="false">📝 Nháp</option>
                                     <option value="true">✅ Đăng ngay</option>
                                 </select>
@@ -452,12 +452,12 @@ export default function BlogEditorPage() {
                                 <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Slug *</label>
                                 <input value={slug} onChange={e => setSlug(e.target.value)}
                                     placeholder="slug-bai-viet"
-                                    className="w-full h-9 px-3 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition" />
+                                    className="w-full h-9 px-3 text-sm font-mono bg-gray-50 text-black border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition" />
                             </div>
                             <div>
                                 <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Danh mục</label>
                                 <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-                                    className="w-full h-9 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] cursor-pointer transition">
+                                    className="w-full h-9 px-3 text-sm bg-gray-50 text-black border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] cursor-pointer transition">
                                     <option value="">— Không có danh mục —</option>
                                     {categories.map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -468,101 +468,99 @@ export default function BlogEditorPage() {
                     </div>
 
                     {/* ── Thumbnail với Cloudinary upload ── */}
-                    {blogType === 'RICH_TEXT' && (
-                        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Ảnh đại diện</p>
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Ảnh đại diện</p>
 
-                            {/* Preview ảnh */}
-                            {thumbnail ? (
-                                <div className="mb-3 rounded-xl overflow-hidden border border-gray-100 relative group">
-                                    <img src={thumbnail} alt="thumbnail" className="w-full h-32 object-cover" />
-                                    {/* Nút xoá */}
-                                    <button
-                                        type="button"
-                                        onClick={() => setThumbnail('')}
-                                        className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer hover:bg-black/70"
-                                        title="Xoá ảnh"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ) : (
-                                /* Drop zone khi chưa có ảnh */
-                                <div
-                                    className="mb-3 h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-300 cursor-pointer hover:border-[#00b14f] hover:text-[#00b14f] transition-colors"
-                                    onClick={() => !uploading && fileInputRef.current?.click()}
+                        {/* Preview ảnh */}
+                        {thumbnail ? (
+                            <div className="mb-3 rounded-xl overflow-hidden border border-gray-100 relative group">
+                                <img src={thumbnail} alt="thumbnail" className="w-full h-32 object-cover" />
+                                {/* Nút xoá */}
+                                <button
+                                    type="button"
+                                    onClick={() => setThumbnail('')}
+                                    className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer hover:bg-black/70"
+                                    title="Xoá ảnh"
                                 >
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span className="text-xs font-medium">Click để chọn ảnh</span>
-                                </div>
-                            )}
-
-                            {/* Hidden file input */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
-                                className="hidden"
-                                onChange={e => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleThumbnailUpload(file);
-                                    e.target.value = ''; // reset để có thể chọn lại cùng file
-                                }}
-                            />
-
-                            {/* Upload button */}
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploading}
-                                className="w-full h-9 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-[#00b14f] hover:text-[#00b14f] cursor-pointer transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {uploading ? (
-                                    <>
-                                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                                        </svg>
-                                        Đang upload lên Cloudinary...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                        </svg>
-                                        {thumbnail ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
-                                    </>
-                                )}
-                            </button>
-
-                            {/* Divider */}
-                            <div className="flex items-center gap-2 my-2">
-                                <div className="flex-1 h-px bg-gray-100" />
-                                <span className="text-[10px] text-gray-300 font-medium">hoặc</span>
-                                <div className="flex-1 h-px bg-gray-100" />
+                                    ✕
+                                </button>
                             </div>
+                        ) : (
+                            /* Drop zone khi chưa có ảnh */
+                            <div
+                                className="mb-3 h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-300 cursor-pointer hover:border-[#00b14f] hover:text-[#00b14f] transition-colors"
+                                onClick={() => !uploading && fileInputRef.current?.click()}
+                            >
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-xs font-medium">Click để chọn ảnh</span>
+                            </div>
+                        )}
 
-                            {/* Nhập URL thủ công */}
-                            <input
-                                value={thumbnail}
-                                onChange={e => setThumbnail(e.target.value)}
-                                placeholder="Dán URL ảnh trực tiếp..."
-                                className="w-full h-9 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition"
-                            />
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
+                            className="hidden"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) handleThumbnailUpload(file);
+                                e.target.value = ''; // reset để có thể chọn lại cùng file
+                            }}
+                        />
 
-                            {/* Hiển thị URL đã upload */}
-                            {thumbnail && thumbnail.includes('cloudinary.com') && (
-                                <p className="mt-2 text-[10px] text-emerald-600 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        {/* Upload button */}
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="w-full h-9 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-[#00b14f] hover:text-[#00b14f] cursor-pointer transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {uploading ? (
+                                <>
+                                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                                     </svg>
-                                    Đã upload lên Cloudinary
-                                </p>
+                                    Đang upload lên Cloudinary...
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    {thumbnail ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+                                </>
                             )}
+                        </button>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-2 my-2">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-[10px] text-gray-300 font-medium">hoặc</span>
+                            <div className="flex-1 h-px bg-gray-100" />
                         </div>
-                    )}
+
+                        {/* Nhập URL thủ công */}
+                        <input
+                            value={thumbnail}
+                            onChange={e => setThumbnail(e.target.value)}
+                            placeholder="Dán URL ảnh trực tiếp..."
+                            className="w-full h-9 px-3 text-sm bg-gray-50 text-black border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition"
+                        />
+
+                        {/* Hiển thị URL đã upload */}
+                        {thumbnail && thumbnail.includes('cloudinary.com') && (
+                            <p className="mt-2 text-[10px] text-emerald-600 flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Đã upload lên Cloudinary
+                            </p>
+                        )}
+                    </div>
 
                     {/* Excerpt */}
                     <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -570,7 +568,7 @@ export default function BlogEditorPage() {
                         <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)}
                             placeholder="Tóm tắt nội dung bài viết, hiển thị ở trang danh sách..."
                             rows={4}
-                            className="w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition resize-none" />
+                            className="w-full px-3 py-2.5 text-sm bg-gray-50 text-black border border-gray-200 rounded-lg outline-none focus:border-[#00b14f] transition resize-none" />
                     </div>
 
                     {/* Hướng dẫn nếu là HTML_PAGE */}
