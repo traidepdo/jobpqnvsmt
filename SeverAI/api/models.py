@@ -55,3 +55,19 @@ class Resume(models.Model):
     def __str__(self):
         return self.title
 
+class Application(models.Model):
+    id = models.CharField(primary_key=True, max_length=191)
+    userid = models.CharField(db_column='userId', max_length=191)
+    jobid = models.CharField(db_column='jobId', max_length=191)
+    cvurl = models.CharField(db_column='cvUrl', max_length=255, blank=True, null=True)
+    resumeid = models.CharField(db_column='resumeId', max_length=191, blank=True, null=True)
+    status = models.CharField(max_length=50)
+    matchscore = models.IntegerField(db_column='matchScore', blank=True, null=True)
+    createdat = models.DateTimeField(db_column='createdAt')
+    updatedat = models.DateTimeField(db_column='updatedAt')
+
+    class Meta:
+        managed = False
+        db_table = 'applications'
+
+

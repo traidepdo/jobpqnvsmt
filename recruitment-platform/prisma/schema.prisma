@@ -322,6 +322,7 @@ model Application {
   isBookmarked Boolean           @default(false)
   quizScore    Int?
   quizDuration Int?
+  matchScore   Int?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   conversation Conversation?

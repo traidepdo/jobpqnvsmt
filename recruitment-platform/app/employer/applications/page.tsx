@@ -26,6 +26,7 @@ interface Application {
   conversationId?: string | null;
   quizScore?: number | null;
   quizDuration?: number | null;
+  matchScore?: number | null;
 }
 
 export default function EmployerApplicationsPage() {
@@ -36,6 +37,32 @@ export default function EmployerApplicationsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [cvModal, setCvModal] = useState<{ id: string; name: string } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [evaluatingId, setEvaluatingId] = useState<string | null>(null);
+
+  const handleEvaluate = async (id: string) => {
+    setEvaluatingId(id);
+    try {
+      const res = await fetch(`/api/employer/applications/${id}/evaluate`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApps(prev =>
+          prev.map(app =>
+            app.id === id ? { ...app, matchScore: data.score } : app
+          )
+        );
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Lỗi khi chấm điểm CV.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Không thể kết nối đến máy chủ.');
+    } finally {
+      setEvaluatingId(null);
+    }
+  };
 
   const getStatusActions = (current: string): string[] => {
     const map: Record<string, string[]> = {
@@ -194,6 +221,18 @@ export default function EmployerApplicationsPage() {
                       Test: {app.quizScore}%
                     </span>
                   )}
+                  {app.matchScore !== undefined && app.matchScore !== null && (
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                      app.matchScore >= 75
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : app.matchScore >= 50
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}>
+                      <span className="material-symbols-outlined text-[13px]">psychology</span>
+                      AI Match: {app.matchScore}%
+                    </span>
+                  )}
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusStyle[app.status]}`}>
                     {getApplicationStatusLabel(app.status)}
                   </span>
@@ -217,6 +256,62 @@ export default function EmployerApplicationsPage() {
 
               {expanded === app.id && (
                 <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-4">
+                  {/* Khối Đánh giá độ tương thích AI */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                        app.matchScore !== undefined && app.matchScore !== null
+                          ? app.matchScore >= 75
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : app.matchScore >= 50
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-rose-100 text-rose-700'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        <span className="material-symbols-outlined text-[20px]">psychology</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Độ tương thích hồ sơ (AI Match)</p>
+                        <p className="text-sm font-bold text-gray-800 mt-0.5">
+                          {app.matchScore !== undefined && app.matchScore !== null ? (
+                            <>
+                              Điểm số: <span className={
+                                app.matchScore >= 75 ? 'text-emerald-600' : app.matchScore >= 50 ? 'text-amber-600' : 'text-rose-600'
+                              }>{app.matchScore}%</span>
+                              <span className="text-xs font-normal text-gray-500 ml-2">
+                                ({app.matchScore >= 75 ? 'Rất phù hợp' : app.matchScore >= 50 ? 'Phù hợp trung bình' : 'Ít phù hợp'})
+                              </span>
+                            </>
+                          ) : (
+                            'Chưa được đánh giá'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={evaluatingId === app.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEvaluate(app.id);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer disabled:opacity-60 transition-all shadow-sm"
+                    >
+                      {evaluatingId === app.id ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Đang phân tích...
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-[16px]">neurology</span>
+                          {app.matchScore !== undefined && app.matchScore !== null ? 'Chấm điểm lại' : 'Chấm điểm CV'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   {app.quizScore !== undefined && app.quizScore !== null && (
                     <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">

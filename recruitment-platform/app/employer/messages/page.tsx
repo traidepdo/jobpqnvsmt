@@ -136,6 +136,51 @@ export default function EmployerMessagesPage() {
         }
     };
 
+    const handleDeleteMessage = async (msgId: string) => {
+        if (!confirm("Bạn có chắc chắn muốn xóa tin nhắn này không?")) return;
+        try {
+            const endpoint = activeType === "group"
+                ? `/api/employer/group-conversations/${activeId}/messages/${msgId}`
+                : `/api/employer/conversations/${activeId}/messages/${msgId}`;
+            const res = await fetch(endpoint, { method: "DELETE" });
+            if (res.ok) {
+                setMessages(prev => prev.filter(m => m.id !== msgId));
+            } else {
+                const err = await res.json();
+                alert(err.error || "Không thể xóa tin nhắn");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Lỗi khi xóa tin nhắn");
+        }
+    };
+
+    const handleDeleteConversation = async () => {
+        if (!activeId) return;
+        if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ cuộc hội thoại này không? Hành động này không thể hoàn tác.")) return;
+        try {
+            const endpoint = activeType === "group"
+                ? `/api/employer/group-conversations/${activeId}`
+                : `/api/employer/conversations/${activeId}`;
+            const res = await fetch(endpoint, { method: "DELETE" });
+            if (res.ok) {
+                router.push("/employer/messages", { scroll: false });
+                setMessages([]);
+                if (activeType === "group") {
+                    await loadGroupConversations();
+                } else {
+                    await loadConversations();
+                }
+            } else {
+                const err = await res.json();
+                alert(err.error || "Không thể xóa cuộc hội thoại");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Lỗi khi xóa cuộc hội thoại");
+        }
+    };
+
     useEffect(() => {
         loadConversations();
         loadGroupConversations();
@@ -441,32 +486,43 @@ export default function EmployerMessagesPage() {
             {activeId && (activeConv || activeGroup) ? (
                 <div className="flex-1 flex flex-col min-w-0 bg-white">
                     {/* Header */}
-                    <div className="h-16 px-5 border-b border-gray-100 flex items-center gap-3 flex-shrink-0 bg-white">
-                        {activeType === "group" && activeGroup ? (
-                            <>
-                                <GroupAvatar name={activeGroup.name} size={9} />
-                                <div className="min-w-0">
-                                    <p className="font-bold text-[#041b3c] text-sm truncate">{activeGroup.name}</p>
-                                    <p className="text-xs text-gray-400 truncate">
-                                        {activeGroup.members.map(m => m.user.name).join(", ")}
-                                    </p>
-                                </div>
-                            </>
-                        ) : activeConv ? (
-                            <>
-                                <Avatar name={activeConv.candidate.name} avatar={activeConv.candidate.avatar} size={9} />
-                                <div className="min-w-0">
-                                    <p className="font-bold text-[#041b3c] text-sm truncate">{activeConv.candidate.name}</p>
-                                    <Link
-                                        href={`/jobs/${activeConv.application.job.slug}`}
-                                        target="_blank"
-                                        className="text-xs text-[#0052CC] hover:underline truncate block"
-                                    >
-                                        {activeConv.application.job.title}
-                                    </Link>
-                                </div>
-                            </>
-                        ) : null}
+                    <div className="h-16 px-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0 bg-white">
+                        <div className="flex items-center gap-3 min-w-0">
+                            {activeType === "group" && activeGroup ? (
+                                <>
+                                    <GroupAvatar name={activeGroup.name} size={9} />
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-[#041b3c] text-sm truncate">{activeGroup.name}</p>
+                                        <p className="text-xs text-gray-400 truncate">
+                                            {activeGroup.members.map(m => m.user.name).join(", ")}
+                                        </p>
+                                    </div>
+                                </>
+                            ) : activeConv ? (
+                                <>
+                                    <Avatar name={activeConv.candidate.name} avatar={activeConv.candidate.avatar} size={9} />
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-[#041b3c] text-sm truncate">{activeConv.candidate.name}</p>
+                                        <Link
+                                            href={`/jobs/${activeConv.application.job.slug}`}
+                                            target="_blank"
+                                            className="text-xs text-[#0052CC] hover:underline truncate block"
+                                        >
+                                            {activeConv.application.job.title}
+                                        </Link>
+                                    </div>
+                                </>
+                            ) : null}
+                        </div>
+                        
+                        <button
+                            onClick={handleDeleteConversation}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                            title="Xóa cuộc hội thoại"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">delete_forever</span>
+                            Xóa hội thoại
+                        </button>
                     </div>
 
                     {/* Messages */}
@@ -491,18 +547,29 @@ export default function EmployerMessagesPage() {
                                             </span>
                                         </div>
                                     )}
-                                    <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                                    <div className={`flex items-end gap-2 group ${isMe ? "flex-row-reverse" : ""}`}>
                                         {!isMe && <Avatar name={msg.sender.name} avatar={msg.sender.avatar} size={7} />}
                                         <div className="max-w-[65%]">
                                             {!isMe && activeType === "group" && (
                                                 <p className="text-[10px] text-gray-400 mb-0.5 ml-1">{msg.sender.name}</p>
                                             )}
-                                            <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-                                                ${isMe
-                                                    ? "bg-[#0052CC] text-white rounded-br-sm"
-                                                    : "bg-white text-[#041b3c] rounded-bl-sm border border-gray-100 shadow-sm"
-                                                }`}>
-                                                {msg.content}
+                                            <div className="flex items-center gap-2">
+                                                {isMe && (
+                                                    <button
+                                                        onClick={() => handleDeleteMessage(msg.id)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 cursor-pointer flex-shrink-0"
+                                                        title="Xóa tin nhắn"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                    </button>
+                                                )}
+                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+                                                    ${isMe
+                                                        ? "bg-[#0052CC] text-white rounded-br-sm"
+                                                        : "bg-white text-[#041b3c] rounded-bl-sm border border-gray-100 shadow-sm"
+                                                    }`}>
+                                                    {msg.content}
+                                                </div>
                                             </div>
                                             <div className={`flex items-center gap-1 mt-1 ${isMe ? "flex-row-reverse" : ""}`}>
                                                 <span className="text-[10px] text-gray-400">{formatTime(msg.createdAt)}</span>

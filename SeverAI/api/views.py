@@ -95,3 +95,71 @@ def chatbot_chat_api(request):
     response_result = get_general_chat_response(message, history)
     return JsonResponse(response_result)
 
+@csrf_exempt
+def evaluate_cv_api(request):
+    """
+    API endpoint: POST /api/evaluate-cv/
+    Accepts application_id or (cv_text and job_text) in JSON body.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed.'}, status=405)
+        
+    try:
+        data = json.loads(request.body)
+        application_id = data.get('application_id')
+        cv_text = data.get('cv_text', '')
+        job_text = data.get('job_text', '')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+        
+    from .models import Application, Job
+    from .chatbot import parse_db_resume, extract_text_from_pdf
+    from .cross_encoder import calculate_match_score
+    import requests
+    
+    if application_id:
+        try:
+            app = Application.objects.get(id=application_id)
+            try:
+                job = Job.objects.get(id=app.jobid)
+            except Job.DoesNotExist:
+                return JsonResponse({'error': 'Không tìm thấy tin tuyển dụng tương ứng.'}, status=404)
+                
+            job_text = f"Tiêu đề: {job.title}\nMô tả công việc: {job.description or ''}\nYêu cầu: {job.requirements or ''}"
+            
+            cv_text = ""
+            if app.resumeid:
+                cv_text = parse_db_resume(app.resumeid)
+            
+            if app.cvurl:
+                try:
+                    headers = {'User-Agent': 'Mozilla/5.0'}
+                    resp = requests.get(app.cvurl, headers=headers, timeout=15)
+                    if resp.ok:
+                        pdf_text = extract_text_from_pdf(resp.content)
+                        if pdf_text:
+                            cv_text = (cv_text + "\n" + pdf_text).strip()
+                except Exception as e:
+                    print(f"Error downloading or parsing CV PDF from url {app.cvurl}: {e}")
+                    
+        except Application.DoesNotExist:
+            return JsonResponse({'error': 'Không tìm thấy đơn ứng tuyển.'}, status=404)
+
+    if not cv_text or not cv_text.strip():
+        return JsonResponse({'error': 'Không trích xuất được nội dung từ CV.'}, status=400)
+    if not job_text or not job_text.strip():
+        return JsonResponse({'error': 'Không tìm thấy nội dung tin tuyển dụng.'}, status=400)
+        
+    score = calculate_match_score(cv_text, job_text)
+    
+    if application_id:
+        try:
+            # Update matching score directly
+            Application.objects.filter(id=application_id).update(matchscore=score)
+        except Exception as e:
+            print(f"Error saving matchscore to DB: {e}")
+            
+    return JsonResponse({'score': score})
+
+
+
