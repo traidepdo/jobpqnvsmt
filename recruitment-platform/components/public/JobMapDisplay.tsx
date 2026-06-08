@@ -20,7 +20,7 @@ export default function JobMapDisplay({
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const routeLineRef = useRef<L.Polyline | null>(null);
+  const routeLineRef = useRef<L.Layer | null>(null);
 
   const [showCalculator, setShowCalculator] = useState(false);
   const [startAddress, setStartAddress] = useState('');
@@ -140,14 +140,17 @@ export default function JobMapDisplay({
     }
 
     setCalculating(true);
+    const map = leafletMapRef.current;
     try {
       const query = `${startAddress}, Phú Quốc, Kiên Giang, Việt Nam`;
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
       );
 
+      if (leafletMapRef.current !== map) return;
       if (!res.ok) throw new Error();
       const data = await res.json();
+      if (leafletMapRef.current !== map) return;
 
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);
@@ -160,21 +163,27 @@ export default function JobMapDisplay({
         const fallbackRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(startAddress)}&limit=1`
         );
+        if (leafletMapRef.current !== map) return;
         const fallbackData = await fallbackRes.json();
+        if (leafletMapRef.current !== map) return;
         if (fallbackData && fallbackData.length > 0) {
           const lat = parseFloat(fallbackData[0].lat);
           const lng = parseFloat(fallbackData[0].lon);
           setStartLat(lat.toFixed(6));
-          setStartLng(lng.toFixed(6));
+          setStartLng(leafletMapRef.current ? lng.toFixed(6) : '');
           calculateCommute(lat, lng);
         } else {
           setError('Không tìm thấy địa chỉ này ở Phú Quốc. Bạn có thể tự nhập vĩ độ/kinh độ.');
         }
       }
-    } catch (err) {
-      setError('Lỗi kết nối dịch vụ bản đồ địa điểm.');
+    } catch {
+      if (leafletMapRef.current === map) {
+        setError('Lỗi kết nối dịch vụ bản đồ địa điểm.');
+      }
     } finally {
-      setCalculating(false);
+      if (leafletMapRef.current === map) {
+        setCalculating(false);
+      }
     }
   };
 
@@ -204,8 +213,11 @@ export default function JobMapDisplay({
         `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${longitude},${latitude}?overview=full&geometries=geojson`
       );
 
+      if (leafletMapRef.current !== map) return;
+
       if (routeRes.ok) {
         const routeData = await routeRes.json();
+        if (leafletMapRef.current !== map) return;
         if (routeData.routes && routeData.routes.length > 0) {
           const route = routeData.routes[0];
           const distKm = (route.distance / 1000).toFixed(1);
@@ -217,7 +229,7 @@ export default function JobMapDisplay({
           });
 
           // Draw a beautiful glowing solid route path (like Google Maps)
-          const coords = route.geometry.coordinates.map((c: any) => [c[1], c[0]]);
+          const coords = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
           
           const routeBg = L.polyline(coords, {
             color: '#0052CC',
@@ -232,13 +244,15 @@ export default function JobMapDisplay({
           }).addTo(map);
 
           const routeGroup = L.featureGroup([routeBg, routeFg]).addTo(map);
-          routeLineRef.current = routeGroup as any;
+          routeLineRef.current = routeGroup;
 
           // Fit map boundaries to display both points
           map.fitBounds(routeGroup.getBounds(), { padding: [40, 40] });
           return;
         }
       }
+
+      if (leafletMapRef.current !== map) return;
 
       // Straight line fallback if OSRM fails
       const R = 6371; // Earth radius
@@ -268,10 +282,14 @@ export default function JobMapDisplay({
 
       map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
 
-    } catch (err) {
-      setError('Lỗi khi tính toán đường đi.');
+    } catch {
+      if (leafletMapRef.current === map) {
+        setError('Lỗi khi tính toán đường đi.');
+      }
     } finally {
-      setCalculating(false);
+      if (leafletMapRef.current === map) {
+        setCalculating(false);
+      }
     }
   };
 

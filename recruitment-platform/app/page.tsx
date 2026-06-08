@@ -24,6 +24,8 @@ interface Job {
   company: { name: string; logo?: string | null; slug?: string };
   category: { name: string };
   ward?: { name: string } | null;
+  salaryStatus?: 'good' | 'average' | 'bad' | null;
+  salaryDiff?: number;
 }
 
 interface Company {
@@ -669,10 +671,29 @@ export default function PhuQuocJobs() {
                               </svg>
                               {getJobTypeLabel(job.type)}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 px-2.5 py-1 rounded-lg"
+                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 px-2.5 py-1 rounded-lg"
                               style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.2)' }}>
                               {formatSalary(job.salaryMin ?? null, job.salaryMax ?? null)}
                             </span>
+
+                            {job.salaryStatus && (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${
+                                job.salaryStatus === 'good'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                  : job.salaryStatus === 'bad'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                    : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                              }`}>
+                                <span>{job.salaryStatus === 'good' ? '✨' : job.salaryStatus === 'bad' ? '⚠️' : 'ℹ️'}</span>
+                                <span>
+                                  {job.salaryStatus === 'good'
+                                    ? `Lương tốt (+${Math.abs(job.salaryDiff || 0)}%)`
+                                    : job.salaryStatus === 'bad'
+                                      ? `Lương thấp (-${Math.abs(job.salaryDiff || 0)}%)`
+                                      : 'Lương cạnh tranh'}
+                                </span>
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

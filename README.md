@@ -49,6 +49,8 @@ graph TD
 * Đăng ký, đăng nhập tài khoản và tạo/quản lý Hồ sơ CV trực tuyến.
 * Tìm kiếm việc làm linh hoạt theo tên, ngành nghề, địa điểm (Phú Quốc), mức lương và kinh nghiệm.
 * **Đề xuất việc làm bằng AI**: Tải lên file CV định dạng PDF để nhận ngay 3 công việc phù hợp nhất kèm giải thích lý do từ AI.
+* **Dự đoán mức lương đề xuất**: Xem mức lương ước tính do mô hình học máy gợi ý dựa trên thông tin bài tuyển dụng (kinh nghiệm, cấp bậc, loại hình công việc, khu vực, ngành nghề).
+* **Bản đồ việc làm trực quan**: Bản đồ hiển thị vị trí các công việc đang tuyển dụng trực quan ngay tại Phú Quốc.
 * Quản lý đơn ứng tuyển, nhận lịch phỏng vấn và phản hồi đồng ý/từ chối lịch phỏng vấn.
 * Trò chuyện nhắn tin thời gian thực với nhà tuyển dụng khi đơn ứng tuyển được duyệt.
 * Nhận thông báo tức thì (Thông báo tin nhắn, Đơn ứng tuyển thay đổi trạng thái).
@@ -56,6 +58,8 @@ graph TD
 ### 🏢 Dành cho Nhà tuyển dụng (Employer)
 * Đăng ký thông tin doanh nghiệp (chờ Admin duyệt).
 * Đăng tin tuyển dụng mới ở dạng Nháp (Draft) hoặc Chờ duyệt (Pending).
+* **Quản lý lý do từ chối**: Xem chi tiết lý do từ chối từ quản trị viên nếu bài đăng bị từ chối phê duyệt, đồng thời chỉnh sửa nội dung và gửi yêu cầu duyệt lại dễ dàng.
+* **Xem gợi ý lương khi đăng tuyển**: Hiển thị dự báo mức lương tối ưu khi tạo hoặc chỉnh sửa bài tuyển dụng dựa trên Ridge Regression để đưa ra mức lương thu hút ứng viên.
 * Quản lý danh sách đơn ứng tuyển của các ứng viên, xem trước CV PDF trực tuyến bằng công cụ render tùy chỉnh.
 * Duyệt/từ chối ứng viên. Khi duyệt sẽ tự động kích hoạt phòng chat riêng với ứng viên đó.
 * Lên lịch phỏng vấn (Online/Offline) và gửi thông báo trực tiếp đến ứng viên.
@@ -63,7 +67,8 @@ graph TD
 ### 🛡️ Dành cho Quản trị viên (Admin)
 * Thống kê tổng quan (Dashboard) số lượng người dùng, tin tuyển dụng, doanh nghiệp, CV.
 * Kiểm duyệt và phê duyệt trạng thái hoạt động của doanh nghiệp đăng ký mới.
-* Kiểm duyệt bài đăng tuyển dụng của nhà tuyển dụng.
+* **Phê duyệt & Từ chối bài đăng**: Phê duyệt bài tuyển dụng hoặc từ chối kèm lý do phản hồi chi tiết để nhà tuyển dụng chỉnh sửa lại.
+* **Quản lý mô hình dự báo lương**: Kích hoạt việc huấn luyện lại mô hình Ridge Regression từ dữ liệu thực tế ngay trên hệ thống.
 * Khóa/mở khóa tài khoản người dùng vi phạm quy tắc. Khi tài khoản bị khóa, mọi phiên đăng nhập của người dùng đó sẽ lập tức bị hủy bỏ và từ chối.
 * Nhận thông báo thời gian thực trên thanh Header khi có doanh nghiệp mới đăng ký hoặc tin tuyển dụng mới chờ duyệt.
 * Hỗ trợ giải quyết thắc mắc qua khung chat hỗ trợ.

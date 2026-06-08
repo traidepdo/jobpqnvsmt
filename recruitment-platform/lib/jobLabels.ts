@@ -53,10 +53,11 @@ export function formatSalary(min: number | null, max: number | null): string {
   if (!min && !max) return 'Thỏa thuận';
 
   const fmt = (n: number): string => {
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(n % 1_000_000_000 === 0 ? 0 : 1)} tỷ`;
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)} tr`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}k`;
-    return n.toLocaleString('vi-VN');
+    const val = n < 100000 ? n * 1_000_000 : n;
+    if (val >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(val % 1_000_000_000 === 0 ? 0 : 1)} tỷ`;
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(val % 1_000_000 === 0 ? 0 : 1)} triệu`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(val % 1_000 === 0 ? 0 : 1)}k`;
+    return val.toLocaleString('vi-VN');
   };
 
   if (min && max) return `${fmt(min)} – ${fmt(max)}`;

@@ -16,6 +16,7 @@ interface Job {
   ward: { name: string } | null;
   _count: { applications: number };
   isVisible: boolean;
+  rejectReason?: string | null;
 }
 
 interface Pagination {
@@ -33,6 +34,7 @@ const TABS: FilterTab[] = [
   { label: 'Tất cả' },
   { label: 'Đang hiển thị', status: 'ACTIVE' },
   { label: 'Chờ duyệt', status: 'PENDING' },
+  { label: 'Bị từ chối', status: 'REJECTED' },
   { label: 'Nháp', status: 'DRAFT' },
   { label: 'Đã đóng', status: 'CLOSED' },
   { label: 'Bị admin ẩn', isVisible: 'false' },
@@ -63,6 +65,7 @@ export default function EmployerJobsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load(TABS[activeTab], page);
   }, [activeTab, page]);
 
@@ -167,6 +170,14 @@ export default function EmployerJobsPage() {
                     <p className="text-xs text-orange-600 mt-1.5">
                       ⚠️ Tin này đang bị ẩn khỏi trang tìm kiếm. Vui lòng liên hệ admin để biết thêm chi tiết.
                     </p>
+                  )}
+                  {job.status === 'REJECTED' && job.rejectReason && (
+                    <div className="mt-2 text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg p-3">
+                      <strong>Lý do từ chối:</strong> {job.rejectReason}
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        Vui lòng nhấn nút <strong>Sửa</strong> để cập nhật lại thông tin tuyển dụng.
+                      </p>
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
-import { JobLevel, JobType, ExperienceLevel, JobStatus } from '@prisma/client';
+import { JobLevel, JobType, ExperienceLevel } from '@prisma/client';
 
 async function getOwnedJob(companyId: string, jobId: string) {
   return prisma.job.findFirst({
@@ -88,6 +88,7 @@ export async function PUT(
         ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
         ...(categoryId && { categoryId }),
         ...(targetStatus && { status: targetStatus }),
+        ...(targetStatus === 'PENDING' && { rejectReason: null }),
         quizId: quizId !== undefined ? (quizId || null) : undefined,
         latitude: latitude !== undefined ? (latitude !== null && latitude !== '' ? Number(latitude) : null) : undefined,
         longitude: longitude !== undefined ? (longitude !== null && longitude !== '' ? Number(longitude) : null) : undefined,

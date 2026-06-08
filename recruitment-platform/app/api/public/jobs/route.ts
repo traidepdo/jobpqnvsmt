@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { JobStatus } from '@prisma/client';
 import { companyCardSelect } from '@/lib/prismaSafe';
+import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
 
 export async function GET(req: Request) {
   try {
@@ -104,6 +105,8 @@ export async function GET(req: Request) {
           level: true,
           deadline: true,
           createdAt: true,
+          categoryId: true,
+          wardId: true,
           company: { select: companyCardSelect },
           category: { select: { name: true, slug: true } },
           ward: { select: { name: true } },
@@ -116,8 +119,55 @@ export async function GET(req: Request) {
       }),
     ]);
 
+    const model = await getLatestModel();
+    const jobsWithAnalysis = jobs.map(job => {
+      const min = job.salaryMin;
+      const max = job.salaryMax;
+      
+      let actualSalary: number | null = null;
+      if (min !== null && max !== null) {
+        actualSalary = (min + max) / 2;
+      } else if (min !== null) {
+        actualSalary = min;
+      } else if (max !== null) {
+        actualSalary = max;
+      }
+      
+      let salaryStatus: 'good' | 'average' | 'bad' | null = null;
+      let salaryDiff = 0;
+      
+      if (actualSalary !== null) {
+        if (actualSalary > 100000) {
+          actualSalary = actualSalary / 1000000;
+        }
+        
+        const predicted = predictSalary({
+          experience: job.experience,
+          level: job.level,
+          type: job.type,
+          categoryId: job.categoryId,
+          wardId: job.wardId,
+        }, model);
+        
+        salaryDiff = Math.round(((actualSalary - predicted) / predicted) * 100);
+        if (actualSalary >= 1.15 * predicted) {
+          salaryStatus = 'good';
+        } else if (actualSalary < 0.9 * predicted) {
+          salaryStatus = 'bad';
+        } else {
+          salaryStatus = 'average';
+        }
+      }
+      
+      return {
+        ...job,
+        salaryStatus,
+        salaryDiff
+      };
+    });
+
     return NextResponse.json({
-      jobs,
+      jobs: jobsWithAnalysis,
       total,
       page,
       totalPages: Math.ceil(total / limit),

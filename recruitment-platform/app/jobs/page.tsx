@@ -17,6 +17,8 @@ interface JobItem {
   company: { name: string; logo: string | null; slug: string };
   category: { name: string; slug: string };
   ward: { name: string } | null;
+  salaryStatus?: 'good' | 'average' | 'bad' | null;
+  salaryDiff?: number;
 }
 
 interface Category {
@@ -712,6 +714,25 @@ function JobsPageContent() {
                                 </svg>
                                 {formatSalary(job.salaryMin, job.salaryMax)}
                               </span>
+
+                              {job.salaryStatus && (
+                                <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${
+                                  job.salaryStatus === 'good'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                    : job.salaryStatus === 'bad'
+                                      ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                      : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                }`}>
+                                  <span>{job.salaryStatus === 'good' ? '✨' : job.salaryStatus === 'bad' ? '⚠️' : 'ℹ️'}</span>
+                                  <span>
+                                    {job.salaryStatus === 'good'
+                                      ? `Lương tốt (+${Math.abs(job.salaryDiff || 0)}%)`
+                                      : job.salaryStatus === 'bad'
+                                        ? `Lương thấp (-${Math.abs(job.salaryDiff || 0)}%)`
+                                        : 'Lương cạnh tranh'}
+                                  </span>
+                                </span>
+                              )}
 
                               <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md">
                                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

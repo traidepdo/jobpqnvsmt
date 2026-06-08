@@ -3,6 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const JobMapDisplay = dynamic(() => import('@/components/public/JobMapDisplay'), {
+    ssr: false,
+    loading: () => <div className="h-48 w-full bg-white/5 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-xs text-gray-400 mt-3">Đang tải bản đồ địa điểm...</div>
+});
 
 interface Job {
     id: string;
@@ -24,6 +30,9 @@ interface Job {
     updatedAt: string;
     company: { id: string; name: string };
     category: { id: string; name: string };
+    latitude?: number | null;
+    longitude?: number | null;
+    rejectReason?: string | null;
 }
 
 type ToastType = 'success' | 'error';
@@ -37,31 +46,36 @@ export default function JobDetailPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [toast, setToast] = useState<Toast | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectNote, setRejectNote] = useState('');
+    const [flaggedFields, setFlaggedFields] = useState<string[]>([]);
+
+    function showToast(message: string, type: ToastType) {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3500);
+    }
 
     useEffect(() => {
+        async function fetchJob() {
+            try {
+                const res = await fetch(`/api/admin/jobs/${id}`);
+                if (!res.ok) throw new Error('Failed to fetch job detail');
+                const data = await res.json();
+                if (!data.job) throw new Error('Job not found');
+                setJob(data.job);
+            } catch (err) {
+                console.error(err);
+                showToast('Không thể tải thông tin tin tuyển dụng', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoading(true);
         fetchJob();
     }, [id]);
 
-    const fetchJob = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/admin/jobs/${id}`);
-            if (!res.ok) throw new Error('Failed to fetch job detail');
-            const data = await res.json();
-            if (!data.job) throw new Error('Job not found');
-            setJob(data.job);
-        } catch (err) {
-            console.error(err);
-            showToast('Không thể tải thông tin tin tuyển dụng', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const showToast = (message: string, type: ToastType) => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3500);
-    };
 
     const handleToggleVisibility = async () => {
         if (!job) return;
@@ -117,6 +131,36 @@ export default function JobDetailPage() {
         }
     };
 
+    const handleRejectSubmit = async () => {
+        if (!job) return;
+        setActionLoading(true);
+        setShowRejectModal(false);
+
+        const reasonParts = [];
+        if (flaggedFields.length > 0) {
+            reasonParts.push(`Thông tin không phù hợp ở các phần: ${flaggedFields.join(', ')}`);
+        }
+        if (rejectNote.trim()) {
+            reasonParts.push(rejectNote.trim());
+        }
+        const finalReason = reasonParts.join('. ') || 'Tin tuyển dụng không đáp ứng tiêu chuẩn cộng đồng.';
+
+        try {
+            const res = await fetch(`/api/admin/jobs/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'REJECTED', rejectReason: finalReason }),
+            });
+            if (!res.ok) throw new Error();
+            setJob(prev => prev ? { ...prev, status: 'REJECTED', rejectReason: finalReason } : null);
+            showToast('Đã từ chối duyệt tin tuyển dụng thành công', 'success');
+        } catch {
+            showToast('Cập nhật trạng thái thất bại.', 'error');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return '—';
         const d = new Date(dateStr);
@@ -126,9 +170,15 @@ export default function JobDetailPage() {
 
     const formatSalary = (min?: number, max?: number) => {
         if (min == null && max == null) return 'Thỏa thuận';
-        if (min != null && max != null) return `${min} - ${max} triệu`;
-        if (min != null) return `Từ ${min} triệu`;
-        return `Lên đến ${max} triệu`;
+        const fmt = (n: number): string => {
+            if (n < 100000) return `${n}`;
+            return `${n / 1000000}`;
+        };
+        const minVal = min != null ? fmt(min) : null;
+        const maxVal = max != null ? fmt(max) : null;
+        if (minVal != null && maxVal != null) return `${minVal} - ${maxVal} triệu`;
+        if (minVal != null) return `Từ ${minVal} triệu`;
+        return `Lên đến ${maxVal} triệu`;
     };
 
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -229,7 +279,11 @@ export default function JobDetailPage() {
                     {/* Reject (Only for PENDING status) */}
                     {job.status === 'PENDING' && (
                         <button
-                            onClick={() => handleStatusChange('REJECTED')}
+                            onClick={() => {
+                                setRejectNote('');
+                                setFlaggedFields([]);
+                                setShowRejectModal(true);
+                            }}
                             disabled={actionLoading}
                             className="px-4 py-2 bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 text-rose-400 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5"
                         >
@@ -332,16 +386,26 @@ export default function JobDetailPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-3 md:col-span-2">
-                                <span className="text-xl">📍</span>
-                                <div>
-                                    <div className="text-white/40 text-xs">Địa điểm làm việc</div>
-                                    <div className="font-semibold text-white mt-0.5">
-                                        {job.addressDetail ? `${job.addressDetail}, ` : ''}
-                                        {job.company ? 'Phú Quốc' : ''}
-                                    </div>
-                                </div>
-                            </div>
+                             <div className="flex items-start gap-3 md:col-span-2">
+                                 <span className="text-xl">📍</span>
+                                 <div className="w-full">
+                                     <div className="text-white/40 text-xs">Địa điểm làm việc</div>
+                                     <div className="font-semibold text-white mt-0.5">
+                                         {job.addressDetail ? `${job.addressDetail}, ` : ''}
+                                         {job.company ? 'Phú Quốc' : ''}
+                                     </div>
+                                     {job.latitude !== null && job.longitude !== null && job.latitude !== undefined && job.longitude !== undefined && (
+                                         <div className="mt-3 overflow-hidden rounded-xl border border-white/10 h-48 w-full relative z-10">
+                                             <JobMapDisplay
+                                                 latitude={Number(job.latitude)}
+                                                 longitude={Number(job.longitude)}
+                                                 companyName={job.company.name}
+                                                 address={job.addressDetail || ''}
+                                             />
+                                         </div>
+                                     )}
+                                 </div>
+                             </div>
                         </div>
                     </div>
 
@@ -396,6 +460,67 @@ export default function JobDetailPage() {
                 </div>
             </div>
 
+            {/* Reject Confirmation Modal */}
+            {showRejectModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="rounded-2xl p-6 w-[440px] max-w-[92vw] shadow-2xl border border-white/10 bg-[#0f1420] space-y-4" onClick={e => e.stopPropagation()}>
+                        <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center text-xl mx-auto">✕</div>
+                        <h2 className="text-lg font-bold text-white text-center">Từ chối duyệt tin tuyển dụng</h2>
+                        <p className="text-xs text-gray-400 text-center leading-relaxed">
+                            Vui lòng chọn các trường thông tin không phù hợp và điền lý do chi tiết gửi đến nhà tuyển dụng.
+                        </p>
+                        
+                        {/* Checkboxes for inappropriate fields */}
+                        <div className="space-y-2 pt-2">
+                            <span className="text-xs font-bold text-white/50 block">Các thông tin không phù hợp:</span>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['Tiêu đề', 'Mô tả công việc', 'Yêu cầu ứng viên', 'Quyền lợi', 'Mức lương', 'Địa điểm'].map(field => {
+                                    const checked = flaggedFields.includes(field);
+                                    return (
+                                        <label key={field} className="flex items-center gap-2 text-xs text-white/80 cursor-pointer hover:text-white transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={checked}
+                                                onChange={() => {
+                                                    setFlaggedFields(prev => 
+                                                        checked ? prev.filter(f => f !== field) : [...prev, field]
+                                                    );
+                                                }}
+                                                className="rounded border-white/10 bg-white/5 text-rose-500 focus:ring-rose-500/20"
+                                            />
+                                            {field}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Textarea note */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-white/50 block">Ghi chú bổ sung:</label>
+                            <textarea
+                                value={rejectNote}
+                                onChange={e => setRejectNote(e.target.value)}
+                                placeholder="Nhập lý do chi tiết..."
+                                rows={3}
+                                className="w-full text-xs bg-white/5 border border-white/10 rounded-xl p-2.5 outline-none focus:border-rose-500/40 text-white placeholder-white/20 resize-none"
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button onClick={() => setShowRejectModal(false)}
+                                className="flex-1 py-2 rounded-xl bg-white/8 border border-white/10 text-gray-300 font-semibold text-xs hover:bg-white/12 transition-colors">
+                                Hủy
+                            </button>
+                            <button onClick={handleRejectSubmit}
+                                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors">
+                                Gửi từ chối
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -404,7 +529,7 @@ export default function JobDetailPage() {
                         <h2 className="text-lg font-bold text-white text-center mb-2">Xóa tin tuyển dụng?</h2>
                         <p className="text-sm text-gray-400 text-center leading-relaxed mb-6">
                             Bạn có chắc muốn xóa tin{' '}
-                            <span className="font-semibold text-white">"{job.title}"</span>?{' '}
+                            <span className="font-semibold text-white">&quot;{job.title}&quot;</span>?{' '}
                             Hành động này <span className="font-semibold text-red-400">không thể hoàn tác</span>.
                         </p>
                         <div className="flex gap-3">

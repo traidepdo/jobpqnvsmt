@@ -86,6 +86,12 @@ export default function JobViewPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [relatedJobs, setRelatedJobs] = useState<any[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
+  const [salaryAnalysis, setSalaryAnalysis] = useState<{
+    predictedSalary: number;
+    status: 'good' | 'average' | 'bad';
+    percentageDiff: number;
+    comparisonMessage: string;
+  } | null>(null);
 
   // Quiz states
   const [quizPhase, setQuizPhase] = useState<'none' | 'info' | 'quiz'>('none');
@@ -104,6 +110,27 @@ export default function JobViewPage() {
         const data = await res.json();
         setJob(data);
         fetchRelatedJobs(params.slug as string);
+
+        // Fetch salary analysis
+        fetch('/api/public/salary/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            experience: data.experience,
+            level: data.level,
+            type: data.type,
+            categoryId: data.categoryId,
+            wardId: data.wardId,
+            salaryMin: data.salaryMin,
+            salaryMax: data.salaryMax,
+          }),
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && !d.error) setSalaryAnalysis(d);
+          })
+          .catch((err) => console.error('Error analyzing salary:', err));
+
         return data;
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Lỗi tải công việc');
@@ -467,6 +494,26 @@ export default function JobViewPage() {
                   <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                     {getJobTypeLabel(job.type)}
                   </span>
+                  {salaryAnalysis && (
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                      salaryAnalysis.status === 'good'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : salaryAnalysis.status === 'bad'
+                          ? 'bg-amber-50 text-amber-700 border-amber-100'
+                          : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                    }`} title={salaryAnalysis.comparisonMessage}>
+                      <span>
+                        {salaryAnalysis.status === 'good' ? '✨' : salaryAnalysis.status === 'bad' ? '⚠️' : 'ℹ️'}
+                      </span>
+                      <span>
+                        {salaryAnalysis.status === 'good'
+                          ? `Lương tốt (+${Math.abs(salaryAnalysis.percentageDiff)}%)`
+                          : salaryAnalysis.status === 'bad'
+                            ? `Lương thấp hơn trung bình (-${Math.abs(salaryAnalysis.percentageDiff)}%)`
+                            : 'Lương cạnh tranh'}
+                      </span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -596,6 +643,46 @@ export default function JobViewPage() {
             </div>
           </div>
         </div>
+
+        {salaryAnalysis && (
+          <div className="max-w-5xl mx-auto px-4 md:px-6 mt-4">
+            <div className={`p-4 rounded-2xl border flex items-start gap-3 transition-all duration-300 ${
+              salaryAnalysis.status === 'good'
+                ? 'bg-[#E6F9F0]/60 border-[#B2ECD0] text-[#004D26]'
+                : salaryAnalysis.status === 'bad'
+                  ? 'bg-[#FFF9E6]/60 border-[#FFEBAA] text-[#664800]'
+                  : 'bg-[#EEF2FF]/60 border-[#C7D2FE] text-[#3730A3]'
+            }`}>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm ${
+                salaryAnalysis.status === 'good'
+                  ? 'bg-[#B2ECD0] text-[#008040]'
+                  : salaryAnalysis.status === 'bad'
+                    ? 'bg-[#FFEBAA] text-[#B37D00]'
+                    : 'bg-[#C7D2FE] text-[#4F46E5]'
+              }`}>
+                {salaryAnalysis.status === 'good' ? '✨' : salaryAnalysis.status === 'bad' ? '⚠️' : 'ℹ️'}
+              </div>
+              <div className="flex-1 text-xs">
+                <div className="font-bold flex items-center gap-1.5">
+                  Đánh giá mức lương
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
+                    salaryAnalysis.status === 'good'
+                      ? 'bg-[#B2ECD0] text-[#004D26]'
+                      : salaryAnalysis.status === 'bad'
+                        ? 'bg-[#FFEBAA] text-[#664800]'
+                        : 'bg-[#C7D2FE] text-[#3730A3]'
+                  }`}>
+                    {salaryAnalysis.status === 'good' ? 'Rất tốt' : salaryAnalysis.status === 'bad' ? 'Dưới trung bình' : 'Cạnh tranh'}
+                  </span>
+                </div>
+                <p className="mt-1 text-gray-600 leading-relaxed">{salaryAnalysis.comparisonMessage}</p>
+                <p className="mt-1.5 text-[10px] text-gray-400">
+                  Mô hình ước tính dựa trên dữ liệu hồi quy tuyến tính từ các tin tuyển dụng tương đồng về cấp bậc, ngành nghề, khu vực và kinh nghiệm trên hệ thống. Cập nhật tự động định kỳ 7 ngày.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Body ────────────────────────────────────── */}
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">

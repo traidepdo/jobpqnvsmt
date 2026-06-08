@@ -59,8 +59,14 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     const { id } = await params;
 
     const body = await req.json();
+    const { status, rejectReason } = body;
 
-    const existing = await prisma.job.findUnique({ where: { id } });
+    const existing = await prisma.job.findUnique({
+        where: { id },
+        include: {
+            company: { select: { ownerId: true, name: true } }
+        }
+    });
     if (!existing) {
         return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
@@ -73,6 +79,22 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
             category: { select: { id: true, name: true } },
         },
     });
+
+    if (status === 'REJECTED') {
+        try {
+            await prisma.notification.create({
+                data: {
+                    userId: existing.company.ownerId,
+                    type: 'SYSTEM',
+                    title: `Tin tuyển dụng "${existing.title}" bị từ chối duyệt`,
+                    content: `Tin tuyển dụng của bạn không được phê duyệt. Lý do: ${rejectReason || 'Không có lý do chi tiết.'}`,
+                    refId: id,
+                }
+            });
+        } catch (err) {
+            console.error("Failed to create rejection notification:", err);
+        }
+    }
 
     return NextResponse.json({ job: updated });
 }

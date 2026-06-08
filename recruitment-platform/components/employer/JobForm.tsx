@@ -80,6 +80,49 @@ export default function JobForm({
       .then(d => setQuizzes(d.quizzes || []));
   }, []);
 
+  const [salaryAnalysis, setSalaryAnalysis] = useState<{
+    predictedSalary: number;
+    status: 'good' | 'average' | 'bad';
+    percentageDiff: number;
+    comparisonMessage: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const min = form.salaryMin;
+    const max = form.salaryMax;
+    if (!min && !max) {
+      setTimeout(() => {
+        setSalaryAnalysis(prev => prev === null ? null : null);
+      }, 0);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetch('/api/public/salary/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          experience: form.experience,
+          level: form.level,
+          type: form.type,
+          categoryId: form.categoryId,
+          wardId: form.wardId,
+          salaryMin: min,
+          salaryMax: max,
+        }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d && !d.error) {
+            setSalaryAnalysis(d);
+          }
+        })
+        .catch(err => console.error("Error analyzing salary:", err));
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [form.salaryMin, form.salaryMax, form.experience, form.level, form.type, form.categoryId, form.wardId]);
+
   const set = (k: keyof JobFormValues, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const inputCls =
@@ -134,14 +177,37 @@ export default function JobForm({
         <h3 className="font-bold text-[#041b3c]">Lương & địa điểm</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối thiểu (triệu)</label>
-            <input type="number" className={inputCls} value={form.salaryMin} onChange={e => set('salaryMin', e.target.value)} />
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối thiểu (VNĐ)</label>
+            <input type="number" className={inputCls} value={form.salaryMin} onChange={e => set('salaryMin', e.target.value)} placeholder="VD: 10000000 (10 triệu)" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối đa (triệu)</label>
-            <input type="number" className={inputCls} value={form.salaryMax} onChange={e => set('salaryMax', e.target.value)} />
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối đa (VNĐ)</label>
+            <input type="number" className={inputCls} value={form.salaryMax} onChange={e => set('salaryMax', e.target.value)} placeholder="VD: 20000000 (20 triệu)" />
           </div>
         </div>
+
+        {salaryAnalysis && (
+          <div className={`text-xs p-3 rounded-lg border transition-all duration-200 ${
+            salaryAnalysis.status === 'bad' 
+              ? 'bg-[#FFF9E6] border-[#FFE599] text-[#805B00]' 
+              : salaryAnalysis.status === 'good'
+                ? 'bg-[#E6F9F0] border-[#99E6C4] text-[#006633]'
+                : 'bg-[#E6F0FF] border-[#99C2FF] text-[#004080]'
+          }`}>
+            <div className="flex items-start gap-2">
+              <span className="text-sm">
+                {salaryAnalysis.status === 'bad' ? '⚠️' : salaryAnalysis.status === 'good' ? '✨' : 'ℹ️'}
+              </span>
+              <div>
+                <p className="font-semibold">Phân tích mức lương đề xuất:</p>
+                <p className="mt-0.5">{salaryAnalysis.comparisonMessage}</p>
+                <p className="mt-1 text-[10px] opacity-80">
+                  Mức lương trung bình ước tính cho vị trí tương tự: <strong>{salaryAnalysis.predictedSalary} triệu VNĐ</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Khu vực</label>
