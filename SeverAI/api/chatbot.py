@@ -1,12 +1,10 @@
 import json
 import requests
-import numpy as np
 import pandas as pd
 from pypdf import PdfReader
 from io import BytesIO
 from django.conf import settings
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from django.db import connection
 from .models import Job, Resume
 
 def extract_text_from_pdf(file_bytes):
@@ -74,87 +72,76 @@ def parse_db_resume(resume_id):
     except Resume.DoesNotExist:
         return ""
 
+from .embeddings import get_embedding, ensure_job_embeddings
+
 def get_gemini_recommendations(cv_text, top_n=3):
     """
-    Analyze CV using TF-IDF pre-filtering, then select matches and generate custom reasons via Gemini.
+    Analyze CV using pgvector pre-filtering, then select matches and generate custom reasons via Gemini.
     """
     if not cv_text:
         return {"error": "Không trích xuất được thông tin từ CV."}
 
-    # 1. Fetch active jobs
-    jobs_qs = Job.objects.filter(isvisible=True)
-    if not jobs_qs.exists():
-        return {"recommended_jobs": [], "message": "Không tìm thấy công việc nào hoạt động trên hệ thống hiện tại."}
+    # 1. Ensure all jobs have embeddings
+    try:
+        ensure_job_embeddings()
+    except Exception as e:
+        print(f"Error ensuring job embeddings: {e}")
 
-    jobs_data = []
-    for job in jobs_qs:
-        jobs_data.append({
-            'id': job.id,
-            'title': job.title,
-            'description': job.description or '',
-            'requirements': job.requirements or '',
-            'benefits': job.benefits or '',
-            'slug': job.slug,
-            'type': job.type,
-            'salarymin': job.salarymin,
-            'salarymax': job.salarymax,
-        })
+    # 2. Embed the CV text
+    cv_vector = get_embedding(cv_text)
 
-    df = pd.DataFrame(jobs_data)
-    df['combined_text'] = (
-        df['title'].fillna('') + ' ' + 
-        df['description'].fillna('') + ' ' + 
-        df['requirements'].fillna('') + ' ' + 
-        df['benefits'].fillna('')
-    )
-
-    # 2. Add CV text as the last row to calculate similarity
-    cv_row_idx = len(df)
-    df.loc[cv_row_idx] = {
-        'id': 'CV_USER',
-        'title': '', 'description': '', 'requirements': '', 'benefits': '',
-        'slug': '', 'type': '', 'salarymin': 0, 'salarymax': 0,
-        'combined_text': cv_text
-    }
-
-    # TF-IDF
-    vectorizer = TfidfVectorizer(token_pattern=r'(?u)\b\w+\b')
-    tfidf_matrix = vectorizer.fit_transform(df['combined_text'])
-    
-    # Calculate cosine similarity with the CV
-    cosine_sim = cosine_similarity(tfidf_matrix[cv_row_idx], tfidf_matrix).flatten()
-    
-    # Sort and take top 10 (excluding the CV itself)
-    # The last element is the CV, so we exclude index `cv_row_idx`
-    similar_indices = cosine_sim[:-1].argsort()[::-1]
-    
+    # 3. Query Top 12 similar jobs from DB using pgvector
     candidate_jobs = []
-    for idx in similar_indices:
-        score = float(cosine_sim[idx])
-        job_item = df.iloc[idx].to_dict()
-        job_item.pop('combined_text', None)
-        job_item['similarity_score'] = score
-        candidate_jobs.append(job_item)
-        if len(candidate_jobs) >= 12: # Check top 12 jobs
-            break
+    try:
+        query = """
+            SELECT 
+                j.id, j.title, j.description, j.requirements, j.benefits, 
+                j.slug, j.type, j."salaryMin", j."salaryMax",
+                (1 - (je.embedding <=> %s::vector)) AS similarity_score
+            FROM job_embeddings je
+            JOIN jobs j ON je.job_id = j.id
+            WHERE j."isVisible" = TRUE
+            ORDER BY je.embedding <=> %s::vector
+            LIMIT 12
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query, [cv_vector, cv_vector])
+            rows = cursor.fetchall()
+            
+            for row in rows:
+                score = float(row[9])
+                candidate_jobs.append({
+                    'id': row[0],
+                    'title': row[1],
+                    'description': row[2] or '',
+                    'requirements': row[3] or '',
+                    'benefits': row[4] or '',
+                    'slug': row[5],
+                    'type': row[6],
+                    'salarymin': row[7],
+                    'salarymax': row[8],
+                    'similarity_score': score
+                })
+    except Exception as e:
+        print(f"Error matching CV with jobs in DB: {e}")
 
     # If no active jobs found or no candidates
     if not candidate_jobs:
         return {"recommended_jobs": [], "message": "Không tìm thấy công việc nào phù hợp."}
 
-    # 3. Format the prompt for Gemini
+    # 4. Format the prompt for Gemini
     api_key = getattr(settings, 'GEMINI_API_KEY', '')
     if not api_key:
-        # Fallback if no API key is configured: return the TF-IDF recommendations directly
+        # Fallback if no API key is configured: return the top recommendations directly
         fallback_recs = []
         for j in candidate_jobs[:top_n]:
             fallback_recs.append({
                 "id": j['id'],
-                "reason": "Gợi ý tự động dựa trên mức độ trùng lặp từ khóa trong hồ sơ của bạn."
+                "reason": "Gợi ý tự động dựa trên mức độ tương đồng ngữ nghĩa giữa hồ sơ và tin tuyển dụng."
             })
         return {
             "recommended_jobs": fallback_recs,
-            "message": "Chào bạn! Đây là các công việc phù hợp được hệ thống tìm thấy dựa trên hồ sơ của bạn (sử dụng đối khớp từ khóa):"
+            "message": "Chào bạn! Đây là các công việc phù hợp được hệ thống tìm thấy dựa trên hồ sơ của bạn (sử dụng so khớp vector):"
         }
 
     # Format candidate list for the prompt
@@ -189,7 +176,7 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
 }}
 """
 
-    # 4. Call Gemini API
+    # 5. Call Gemini API
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     payload = {
@@ -217,7 +204,7 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
     for j in candidate_jobs[:top_n]:
         fallback_recs.append({
             "id": j['id'],
-            "reason": "Đề xuất dựa trên mức độ phù hợp từ khóa kỹ năng giữa CV và mô tả công việc."
+            "reason": "Đề xuất dựa trên mức độ phù hợp kỹ năng ngữ nghĩa giữa CV và mô tả công việc."
         })
     return {
         "recommended_jobs": fallback_recs,
