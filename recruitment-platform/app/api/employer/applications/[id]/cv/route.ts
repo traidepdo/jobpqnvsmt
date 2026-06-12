@@ -7,6 +7,8 @@ import {
   type ExperienceItem,
 } from '@/lib/renderResume';
 
+import { signCloudinaryCvUrl } from '@/lib/cloudinarySign';
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -39,7 +41,7 @@ export async function GET(
     if (application.cvUrl) {
       return NextResponse.json({
         hasResume: false,
-        cvUrl: application.cvUrl,
+        cvUrl: signCloudinaryCvUrl(application.cvUrl),
         message: 'Ứng viên đính kèm file CV (xem link bên dưới)',
       });
     }

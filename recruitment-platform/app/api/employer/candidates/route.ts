@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
 
+import { signCloudinaryCvUrl } from '@/lib/cloudinarySign';
+
 export async function GET(req: Request) {
     const auth = await requireEmployer();
     if (auth.error) return auth.error;
@@ -46,5 +48,10 @@ export async function GET(req: Request) {
         orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(applications);
+    const signedApplications = applications.map(app => ({
+        ...app,
+        cvUrl: signCloudinaryCvUrl(app.cvUrl)
+    }));
+
+    return NextResponse.json(signedApplications);
 }

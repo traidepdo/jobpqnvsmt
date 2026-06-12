@@ -83,7 +83,9 @@ body {
 }
 
 @media print {
-  html, body {
+
+  html,
+  body {
     background-color: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
@@ -95,7 +97,8 @@ body {
   }
 
   /* Reset min-h-screen/height attributes that trigger blank pages */
-  .min-h-screen, [class*="min-h-screen"] {
+  .min-h-screen,
+  [class*="min-h-screen"] {
     min-height: 0 !important;
     height: auto !important;
     padding: 0 !important;

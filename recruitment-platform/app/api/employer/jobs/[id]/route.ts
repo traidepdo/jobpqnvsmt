@@ -66,9 +66,8 @@ export async function PUT(
       longitude,
     } = body;
 
-    const targetStatus = status
-      ? (status === 'DRAFT' ? 'DRAFT' : status === 'CLOSED' ? 'CLOSED' : 'PENDING')
-      : undefined;
+    const isDraftOrClosed = status === 'DRAFT' || status === 'CLOSED' || (status === undefined && (existing.status === 'DRAFT' || existing.status === 'CLOSED'));
+    const finalStatus = isDraftOrClosed ? (status || existing.status) : 'PROCESSING';
 
     const job = await prisma.job.update({
       where: { id },
@@ -87,8 +86,8 @@ export async function PUT(
         ...(level !== undefined && { level: (level || null) as JobLevel | null }),
         ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
         ...(categoryId && { categoryId }),
-        ...(targetStatus && { status: targetStatus }),
-        ...(targetStatus === 'PENDING' && { rejectReason: null }),
+        status: finalStatus,
+        ...(finalStatus === 'PROCESSING' && { rejectReason: null }),
         quizId: quizId !== undefined ? (quizId || null) : undefined,
         latitude: latitude !== undefined ? (latitude !== null && latitude !== '' ? Number(latitude) : null) : undefined,
         longitude: longitude !== undefined ? (longitude !== null && longitude !== '' ? Number(longitude) : null) : undefined,
@@ -98,6 +97,18 @@ export async function PUT(
         ward: { select: { id: true, name: true } },
       },
     });
+
+    // Kích hoạt Celery kiểm duyệt lại khi tin ở trạng thái PROCESSING
+    if (finalStatus === 'PROCESSING') {
+      const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+      fetch(`${djangoUrl}/api/jobs/moderate/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: job.id }),
+      }).catch(err => {
+        console.error('Failed to trigger Django Celery moderation task on update:', err);
+      });
+    }
 
     return NextResponse.json({ job });
   } catch (error) {

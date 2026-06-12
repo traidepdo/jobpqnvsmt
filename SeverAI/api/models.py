@@ -16,6 +16,7 @@ class Job(models.Model):
     experience = models.CharField(max_length=50, blank=True, null=True)
     level = models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=50)
+    rejectreason = models.TextField(db_column='rejectReason', blank=True, null=True)
     deadline = models.DateTimeField(blank=True, null=True)
     categoryid = models.CharField(db_column='categoryId', max_length=191)
     companyid = models.CharField(db_column='companyId', max_length=191)

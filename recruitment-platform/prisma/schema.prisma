@@ -81,6 +81,7 @@ enum JobLevel {
 enum JobStatus {
   DRAFT
   PENDING
+  PROCESSING
   ACTIVE
   CLOSED
   REJECTED

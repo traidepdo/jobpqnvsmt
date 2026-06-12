@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatSalary, getJobTypeLabel } from '@/lib/jobLabels';
+import "../styles/home.css"
+import Hero from '@/components/hero';
 
 // ─── Interfaces (unchanged) ────────────────────────────────────────────────
 interface Category {
@@ -40,13 +42,6 @@ interface Ward {
   id: string;
   name: string;
 }
-
-// ─── Constants (unchanged) ─────────────────────────────────────────────────
-const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1400&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1559628233-100c798642d4?w=1400&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1400&auto=format&fit=crop&q=80',
-];
 
 const CATEGORY_ICONS: Record<string, string> = {
   hotel: 'hotel',
@@ -113,9 +108,6 @@ export default function PhuQuocJobs() {
     }
     loadHomeData();
 
-    const imgInterval = setInterval(() => {
-      setHeroImg(i => (i + 1) % HERO_IMAGES.length);
-    }, 5000);
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 40);
@@ -124,17 +116,12 @@ export default function PhuQuocJobs() {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      clearInterval(imgInterval);
+
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.append('query', searchQuery);
-    if (selectedLocation) params.append('location', selectedLocation);
-    router.push(`/jobs?${params.toString()}`);
-  };
+
 
   // ─── Loading State ─────────────────────────────────────────────────────
   if (loading) {
@@ -162,358 +149,13 @@ export default function PhuQuocJobs() {
       <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
 
-      <style>{`
-        body { font-family: 'Be Vietnam Pro', sans-serif; }
-
-        /* ── Parallax keyframes ── */
-        @keyframes blob-float-1 {
-          0%,100% { transform: translate3d(0,0,0) scale(1); }
-          25%      { transform: translate3d(50px,-35px,0) scale(1.1); }
-          50%      { transform: translate3d(-25px,55px,0) scale(0.93); }
-          75%      { transform: translate3d(35px,20px,0) scale(1.07); }
-        }
-        @keyframes blob-float-2 {
-          0%,100% { transform: translate3d(0,0,0) scale(1); }
-          33%      { transform: translate3d(-45px,30px,0) scale(1.08); }
-          66%      { transform: translate3d(40px,-45px,0) scale(0.95); }
-        }
-        @keyframes blob-float-3 {
-          0%,100% { transform: translate3d(0,0,0) scale(1); }
-          40%      { transform: translate3d(30px,40px,0) scale(1.12); }
-          70%      { transform: translate3d(-40px,-25px,0) scale(0.91); }
-        }
-        @keyframes particle-drift {
-          0%   { transform: translate3d(0,0,0) scale(1); opacity:0.7; }
-          33%  { transform: translate3d(12px,-24px,0) scale(1.3); opacity:1; }
-          66%  { transform: translate3d(-8px,-10px,0) scale(0.8); opacity:0.4; }
-          100% { transform: translate3d(0,0,0) scale(1); opacity:0.7; }
-        }
-        @keyframes orb-breathe {
-          0%,100% { transform: scale(1); opacity:0.18; }
-          50%      { transform: scale(1.3); opacity:0.35; }
-        }
-        @keyframes fade-up-in {
-          from { opacity:0; transform: translate3d(0,28px,0); }
-          to   { opacity:1; transform: translate3d(0,0,0); }
-        }
-        @keyframes scale-in {
-          from { opacity:0; transform: scale(0.94); }
-          to   { opacity:1; transform: scale(1); }
-        }
-        @keyframes reveal-left {
-          from { opacity:0; transform: translate3d(-32px,0,0); }
-          to   { opacity:1; transform: translate3d(0,0,0); }
-        }
-        @keyframes spin-ring {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes shimmer-sweep {
-          from { transform: translateX(-100%) skewX(-15deg); }
-          to   { transform: translateX(300%) skewX(-15deg); }
-        }
-        @keyframes float-badge {
-          0%,100% { transform: translateY(0); }
-          50%      { transform: translateY(-6px); }
-        }
-        @keyframes glow-pulse {
-          0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.3), 0 0 60px rgba(22,163,74,0.1); }
-          50%      { box-shadow: 0 0 35px rgba(34,197,94,0.55), 0 0 100px rgba(22,163,74,0.2); }
-        }
-        @keyframes text-shimmer {
-          0%   { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
-        }
-        @keyframes counter-up {
-          from { opacity:0; transform: translateY(10px); }
-          to   { opacity:1; transform: translateY(0); }
-        }
-
-        /* ── Utility ── */
-        .blob-1 { animation: blob-float-1 16s ease-in-out infinite; will-change: transform; }
-        .blob-2 { animation: blob-float-2 20s ease-in-out infinite; will-change: transform; }
-        .blob-3 { animation: blob-float-3 14s ease-in-out infinite; will-change: transform; }
-        .blob-4 { animation: blob-float-2 24s ease-in-out infinite reverse; will-change: transform; }
-        .blob-5 { animation: blob-float-1 18s ease-in-out infinite reverse; will-change: transform; }
-
-        .p1 { animation: particle-drift 7s ease-in-out infinite; }
-        .p2 { animation: particle-drift 9s ease-in-out infinite 1s; }
-        .p3 { animation: particle-drift 6s ease-in-out infinite 2s; }
-        .p4 { animation: particle-drift 8s ease-in-out infinite 0.5s; }
-        .p5 { animation: particle-drift 10s ease-in-out infinite 3s; }
-        .p6 { animation: particle-drift 5s ease-in-out infinite 1.5s; }
-        .p7 { animation: particle-drift 12s ease-in-out infinite 2.5s; }
-        .p8 { animation: particle-drift 8s ease-in-out infinite 4s; }
-
-        .orb-1 { animation: orb-breathe 5s ease-in-out infinite; }
-        .orb-2 { animation: orb-breathe 7s ease-in-out infinite 2s; }
-        .orb-3 { animation: orb-breathe 6s ease-in-out infinite 1s; }
-
-        .spin-ring { animation: spin-ring 30s linear infinite; }
-        .spin-ring-r { animation: spin-ring 20s linear infinite reverse; }
-
-        .fade-up { animation: fade-up-in 0.65s cubic-bezier(.22,1,.36,1) both; }
-        .scale-in { animation: scale-in 0.6s cubic-bezier(.22,1,.36,1) both; }
-        .reveal-left { animation: reveal-left 0.6s cubic-bezier(.22,1,.36,1) both; }
-
-        .float-badge { animation: float-badge 3s ease-in-out infinite; }
-        .glow-btn { animation: glow-pulse 3s ease-in-out infinite; }
-
-        .text-gradient-green {
-          background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a, #4ade80);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: text-shimmer 4s linear infinite;
-        }
-
-        .d-100 { animation-delay: 0.1s; }
-        .d-200 { animation-delay: 0.2s; }
-        .d-300 { animation-delay: 0.3s; }
-        .d-400 { animation-delay: 0.4s; }
-        .d-500 { animation-delay: 0.5s; }
-        .d-600 { animation-delay: 0.6s; }
-        .d-700 { animation-delay: 0.7s; }
-        .d-800 { animation-delay: 0.8s; }
-
-        /* ── Job Card ── */
-        .job-card-premium {
-          transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, border-color 0.3s ease;
-          will-change: transform;
-        }
-        .job-card-premium:hover {
-          transform: translateY(-8px) scale(1.015);
-          box-shadow: 0 20px 50px rgba(22,163,74,0.18), 0 8px 20px rgba(0,0,0,0.15);
-          border-color: rgba(34,197,94,0.4);
-        }
-
-        /* ── Category Card ── */
-        .cat-card-premium {
-          transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, border-color 0.3s ease;
-          will-change: transform;
-        }
-        .cat-card-premium:hover {
-          transform: translateY(-6px) scale(1.03);
-          box-shadow: 0 16px 40px rgba(22,163,74,0.2);
-          border-color: rgba(34,197,94,0.5);
-        }
-
-        /* ── Company Card ── */
-        .emp-card-premium {
-          transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
-        }
-        .emp-card-premium:hover {
-          transform: translateY(-4px) scale(1.06);
-          opacity: 1 !important;
-          box-shadow: 0 12px 30px rgba(22,163,74,0.25);
-        }
-
-        /* ── Shimmer button ── */
-        .shimmer-btn { position: relative; overflow: hidden; }
-        .shimmer-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-          transform: translateX(-100%) skewX(-15deg);
-        }
-        .shimmer-btn:hover::after { animation: shimmer-sweep 0.7s ease forwards; }
-
-        /* ── Glass input ── */
-        .glass-input-green:focus-within {
-          border-color: rgba(34,197,94,0.6);
-          box-shadow: 0 0 0 3px rgba(34,197,94,0.15), 0 8px 25px rgba(22,163,74,0.1);
-        }
-
-        /* ── Section reveal (Intersection Observer driven via data-attr) ── */
-        .section-hidden {
-          opacity: 0;
-          transform: translateY(40px);
-          transition: opacity 0.8s cubic-bezier(.22,1,.36,1), transform 0.8s cubic-bezier(.22,1,.36,1);
-        }
-        .section-visible {
-          opacity: 1 !important;
-          transform: translateY(0) !important;
-        }
-        .stagger-child { transition-delay: calc(var(--i, 0) * 0.08s); }
-
-        /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #052e16; }
-        ::-webkit-scrollbar-thumb { background: rgba(34,197,94,0.4); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(34,197,94,0.7); }
-      `}</style>
-
       <div className="min-h-screen text-gray-900 overflow-x-hidden"
         style={{ fontFamily: "'Be Vietnam Pro', sans-serif", background: '#f0fdf4' }}>
 
         {/* ═══════════════════════════════════════════════════════════════
             HERO SECTION
         ═══════════════════════════════════════════════════════════════ */}
-        <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #052e16 0%, #064e3b 40%, #065f46 70%, #052e16 100%)' }}>
-
-          {/* ── Parallax background layer ── */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{ transform: `translate3d(0, ${scrollY * 0.4}px, 0)`, willChange: 'transform' }}>
-            {HERO_IMAGES.map((src, i) => (
-              <img key={src} src={src} alt="" aria-hidden
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
-                style={{ opacity: i === heroImg ? 0.08 : 0 }} />
-            ))}
-          </div>
-
-          {/* ── Animated green blobs ── */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="blob-1 absolute -top-48 -left-48 w-[700px] h-[700px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.25) 0%, transparent 70%)' }} />
-            <div className="blob-2 absolute top-1/3 -right-56 w-[600px] h-[600px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%)' }} />
-            <div className="blob-3 absolute -bottom-48 left-1/4 w-[550px] h-[550px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.14) 0%, transparent 70%)' }} />
-            <div className="blob-4 absolute top-1/4 left-1/2 w-[400px] h-[400px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%)' }} />
-            <div className="blob-5 absolute bottom-1/4 -right-20 w-[450px] h-[450px] rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)' }} />
-
-            {/* Light orbs */}
-            <div className="orb-1 absolute top-1/3 left-1/4 w-56 h-56 rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.2) 0%, transparent 70%)' }} />
-            <div className="orb-2 absolute bottom-1/3 right-1/3 w-40 h-40 rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.22) 0%, transparent 70%)' }} />
-            <div className="orb-3 absolute top-2/3 left-2/3 w-32 h-32 rounded-full"
-              style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.2) 0%, transparent 70%)' }} />
-
-            {/* Grid */}
-            <div className="absolute inset-0 opacity-[0.04]"
-              style={{ backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
-
-            {/* Particles */}
-            <div className="p1 absolute top-[18%] left-[12%] w-1.5 h-1.5 rounded-full bg-green-400/70" />
-            <div className="p2 absolute top-[65%] left-[7%] w-1 h-1 rounded-full bg-emerald-300/60" />
-            <div className="p3 absolute top-[32%] right-[10%] w-2 h-2 rounded-full bg-lime-400/50" />
-            <div className="p4 absolute bottom-[22%] left-[42%] w-1.5 h-1.5 rounded-full bg-green-300/60" />
-            <div className="p5 absolute top-[78%] right-[28%] w-1 h-1 rounded-full bg-emerald-400/55" />
-            <div className="p6 absolute top-[12%] right-[35%] w-2 h-2 rounded-full bg-green-500/40" />
-            <div className="p7 absolute top-[48%] right-[6%] w-1.5 h-1.5 rounded-full bg-lime-300/45" />
-            <div className="p8 absolute bottom-[15%] left-[22%] w-1 h-1 rounded-full bg-green-400/50" />
-          </div>
-
-          {/* Decorative rings */}
-          <div className="spin-ring pointer-events-none absolute w-[900px] h-[900px] rounded-full border border-green-400/[0.05]"
-            style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
-          <div className="spin-ring-r pointer-events-none absolute w-[650px] h-[650px] rounded-full border border-emerald-300/[0.06]"
-            style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
-
-          {/* ── Dot indicators ── */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            {HERO_IMAGES.map((_, i) => (
-              <button key={i} onClick={() => setHeroImg(i)}
-                className={`rounded-full transition-all duration-300 cursor-pointer ${i === heroImg ? 'w-6 h-2 bg-green-400' : 'w-2 h-2 bg-white/30 hover:bg-white/50'}`} />
-            ))}
-          </div>
-
-          {/* ── Hero content ── */}
-          <div className="relative z-10 max-w-4xl mx-auto px-6 text-center"
-            style={{ transform: `translate3d(0, ${scrollY * -0.15}px, 0)`, willChange: 'transform' }}>
-
-            {/* Badge */}
-            <div className="fade-up d-100 mb-8">
-              <span className="float-badge inline-flex items-center gap-2.5 px-5 py-2 rounded-full text-sm font-semibold text-green-300"
-                style={{
-                  background: 'rgba(22,163,74,0.15)',
-                  border: '1px solid rgba(34,197,94,0.3)',
-                  backdropFilter: 'blur(12px)',
-                  boxShadow: '0 4px 20px rgba(22,163,74,0.15)',
-                }}>
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                500+ việc làm đang tuyển tại Phú Quốc
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="fade-up d-200 text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
-              Tìm việc làm tại<br />
-              <span className="text-gradient-green">Đảo Ngọc Phú Quốc</span>
-            </h1>
-
-            <p className="fade-up d-300 text-lg text-white/60 mb-12 max-w-lg mx-auto leading-relaxed">
-              Kết nối ứng viên với các nhà tuyển dụng hàng đầu tại điểm đến du lịch đẹp nhất Việt Nam.
-            </p>
-
-            {/* ── Search Box ── */}
-            <div className="fade-up d-400">
-              <div className="glass-input-green relative flex flex-col md:flex-row gap-2 p-2 rounded-2xl max-w-2xl mx-auto transition-all duration-300"
-                style={{
-                  background: 'rgba(255,255,255,0.07)',
-                  border: '1px solid rgba(34,197,94,0.25)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
-                }}>
-                {/* Search input */}
-                <div className="flex items-center gap-3 flex-1 px-4 py-2.5"
-                  style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
-                  <svg className="w-4 h-4 text-green-400/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                  </svg>
-                  <input
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                    placeholder="Tên công việc, từ khóa..."
-                    className="w-full bg-transparent text-sm text-white placeholder-white/35 outline-none font-medium"
-                  />
-                </div>
-                {/* Location select */}
-                <div className="flex items-center gap-3 px-4 py-2.5 min-w-[180px]">
-                  <svg className="w-4 h-4 text-green-400/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <select
-                    value={selectedLocation}
-                    onChange={e => setSelectedLocation(e.target.value)}
-                    className={`w-full bg-transparent text-sm outline-none cursor-pointer ${selectedLocation ? 'text-white' : 'text-white/40'}`}
-                    style={{ colorScheme: 'dark' }}
-                  >
-                    <option value="" style={{ background: '#052e16' }}>Tất cả khu vực</option>
-                    {wards.length > 0 ? wards.map(w => (
-                      <option key={w.id} value={w.name} style={{ background: '#052e16' }}>{w.name}</option>
-                    )) : (
-                      <>
-                        <option value="Dương Đông" style={{ background: '#052e16' }}>Dương Đông</option>
-                        <option value="An Thới" style={{ background: '#052e16' }}>An Thới</option>
-                        <option value="Phú Quốc" style={{ background: '#052e16' }}>Phú Quốc (toàn đảo)</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-                {/* Search button */}
-                <button onClick={handleSearch}
-                  className="shimmer-btn glow-btn text-white font-bold text-sm px-8 py-3 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] whitespace-nowrap"
-                  style={{ background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)' }}>
-                  Tìm việc ngay
-                </button>
-              </div>
-
-              {/* Stats */}
-              <div className="fade-up d-500 flex justify-center gap-10 mt-10">
-                {[['1,200+', 'Việc làm'], ['350+', 'Nhà tuyển dụng'], ['8,000+', 'Ứng viên']].map(([n, l], i) => (
-                  <div key={l} className="text-center" style={{ animationDelay: `${0.5 + i * 0.1}s` }}>
-                    <div className="text-2xl font-extrabold text-white mb-0.5"
-                      style={{ textShadow: '0 0 20px rgba(34,197,94,0.5)' }}>{n}</div>
-                    <div className="text-xs text-white/50 font-medium tracking-wide">{l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom gradient fade */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, #f0fdf4 0%, transparent 100%)' }} />
-        </section>
+        <Hero wards={wards} />
 
         {/* ═══════════════════════════════════════════════════════════════
             CATEGORIES SECTION
@@ -647,11 +289,10 @@ export default function PhuQuocJobs() {
                               <h3 className="font-bold text-gray-900 text-sm leading-snug group-hover:text-green-700 transition-colors">{job.title}</h3>
                               <p className="text-xs text-gray-500 mt-0.5 font-medium">{job.company.name}</p>
                             </div>
-                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                              job.status === 'ACTIVE'
-                                ? 'text-green-700 bg-green-50 border border-green-200'
-                                : 'text-amber-700 bg-amber-50 border border-amber-200'
-                            }`}>
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${job.status === 'ACTIVE'
+                              ? 'text-green-700 bg-green-50 border border-green-200'
+                              : 'text-amber-700 bg-amber-50 border border-amber-200'
+                              }`}>
                               {job.status === 'ACTIVE' ? '● Đang tuyển' : '○ Sắp tuyển'}
                             </span>
                           </div>
@@ -671,19 +312,18 @@ export default function PhuQuocJobs() {
                               </svg>
                               {getJobTypeLabel(job.type)}
                             </span>
-                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 px-2.5 py-1 rounded-lg"
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 px-2.5 py-1 rounded-lg"
                               style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.2)' }}>
                               {formatSalary(job.salaryMin ?? null, job.salaryMax ?? null)}
                             </span>
 
                             {job.salaryStatus && (
-                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${
-                                job.salaryStatus === 'good'
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                  : job.salaryStatus === 'bad'
-                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
-                                    : 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                              }`}>
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${job.salaryStatus === 'good'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : job.salaryStatus === 'bad'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                  : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                }`}>
                                 <span>{job.salaryStatus === 'good' ? '✨' : job.salaryStatus === 'bad' ? '⚠️' : 'ℹ️'}</span>
                                 <span>
                                   {job.salaryStatus === 'good'

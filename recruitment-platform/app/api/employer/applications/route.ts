@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
 import { ApplicationStatus } from '@prisma/client';
 
+import { signCloudinaryCvUrl } from '@/lib/cloudinarySign';
+
 export async function GET(req: Request) {
   const auth = await requireEmployer();
   if (auth.error) return auth.error;
@@ -12,10 +14,14 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') as ApplicationStatus | null;
   const jobId = searchParams.get('jobId');
+  const categoryId = searchParams.get('categoryId');
 
   const applications = await prisma.application.findMany({
     where: {
-      job: { companyId: auth.company.id },
+      job: {
+        companyId: auth.company.id,
+        ...(categoryId ? { categoryId } : {}),
+      },
       ...(status ? { status } : {}),
       ...(jobId ? { jobId } : {}),
     },
@@ -33,7 +39,13 @@ export async function GET(req: Request) {
         select: {
           id: true,
           title: true,
-          slug: true, // 🌟 Thêm slug để không bị lỗi Type ở Frontend (app.job.slug)
+          slug: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
         },
       },
       // 🌟 BỔ SUNG THÊM QUAN HỆ RESUME Ở ĐÂY 🌟
@@ -51,5 +63,10 @@ export async function GET(req: Request) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return NextResponse.json({ applications });
+  const signedApplications = applications.map(app => ({
+    ...app,
+    cvUrl: signCloudinaryCvUrl(app.cvUrl)
+  }));
+
+  return NextResponse.json({ applications: signedApplications });
 }

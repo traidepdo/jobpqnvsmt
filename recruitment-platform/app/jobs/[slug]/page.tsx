@@ -73,12 +73,14 @@ export default function JobViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [userResumes, setUserResumes] = useState<any[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState('');
   const [applyLoading, setApplyLoading] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -197,7 +199,8 @@ export default function JobViewPage() {
   const checkAplicated = () => {
     return applications.some((app: any) => app.jobId === job?.id);
   };
-  console.log(checkAplicated());
+  const userApplication = applications.find((app: any) => app.jobId === job?.id);
+  const isApplied = !!userApplication;
   const handleToggleSave = async () => {
     if (!isAuthenticated) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
     if (!job) return;
@@ -205,6 +208,10 @@ export default function JobViewPage() {
     try {
       if (isSaved) {
         const res = await fetch(`/api/candidate/saved-jobs?jobId=${job.id}`, { method: 'DELETE' });
+        if (res.status === 401 || res.status === 403) {
+          router.push(`/login?callbackUrl=/jobs/${params.slug}`);
+          return;
+        }
         if (res.ok) setIsSaved(false);
       } else {
         const res = await fetch('/api/candidate/saved-jobs', {
@@ -212,6 +219,10 @@ export default function JobViewPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobId: job.id }),
         });
+        if (res.status === 401 || res.status === 403) {
+          router.push(`/login?callbackUrl=/jobs/${params.slug}`);
+          return;
+        }
         if (res.ok) setIsSaved(true);
       }
     } catch (e) { console.error(e); }
@@ -235,10 +246,27 @@ export default function JobViewPage() {
   const submitApplication = async (answersList?: any[]) => {
     setApplyLoading(true);
     try {
+      let uploadedCvUrl = null;
+      if (cvFile) {
+        const formData = new FormData();
+        formData.append('file', cvFile);
+        const uploadRes = await fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          throw new Error(errData.error || 'Tải file CV lên thất bại.');
+        }
+        const uploadData = await uploadRes.json();
+        uploadedCvUrl = uploadData.url;
+      }
+
       const payload: any = {
         jobId: job?.id,
         coverLetter,
         resumeId: selectedResumeId || null,
+        cvUrl: uploadedCvUrl || null,
       };
 
       if (job?.quizId && answersList) {
@@ -261,6 +289,7 @@ export default function JobViewPage() {
           setApplySuccess(false);
           setCoverLetter('');
           setSelectedResumeId('');
+          setCvFile(null);
           setQuizPhase('none');
           setQuizData(null);
           setQuizQuestions([]);
@@ -271,8 +300,35 @@ export default function JobViewPage() {
         const err = await res.json().catch(() => ({}));
         alert(err.error || 'Không thể nộp hồ sơ. Vui lòng thử lại.');
       }
+    } catch (e: any) {
+      alert(e.message || 'Đã xảy ra lỗi khi nộp hồ sơ.');
+    } finally {
+      setApplyLoading(false);
+    }
+  };
+
+  const handleCancelApplication = () => {
+    setShowCancelModal(true);
+  };
+
+  const confirmCancelApplication = async () => {
+    if (!userApplication) return;
+    setApplyLoading(true);
+    try {
+      const res = await fetch(`/api/candidate/applications?id=${userApplication.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setApplications(prev => prev.filter((app: any) => app.id !== userApplication.id));
+        setCancelSuccess(true);
+        setTimeout(() => setCancelSuccess(false), 2000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Không thể hủy ứng tuyển. Vui lòng thử lại.');
+      }
     } catch (e) {
-      alert('Đã xảy ra lỗi khi nộp hồ sơ.');
+      console.error(e);
+      alert('Đã xảy ra lỗi khi hủy ứng tuyển.');
     } finally {
       setApplyLoading(false);
     }
@@ -560,9 +616,20 @@ export default function JobViewPage() {
                     Ứng tuyển ngay
                   </button>
                 ) : (
-                  <button className="apply-btn bg-gray-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl cursor-pointer hidden md:block">
-                    Đã ứng tuyển
-                  </button>
+                  <div className="hidden md:flex items-center gap-2">
+                    <button className="apply-btn bg-gray-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl cursor-not-allowed">
+                      Đã ứng tuyển
+                    </button>
+                    {(userApplication?.status === 'PENDING' || userApplication?.status === 'REVIEWING') && (
+                      <button
+                        onClick={handleCancelApplication}
+                        disabled={applyLoading}
+                        className="apply-btn bg-red-500 hover:bg-red-600 text-white font-semibold text-sm px-5 py-2.5 rounded-xl cursor-pointer disabled:opacity-50"
+                      >
+                        {applyLoading ? 'Đang hủy...' : 'Hủy ứng tuyển'}
+                      </button>
+                    )}
+                  </div>
                 )}
                 <button
                   onClick={handleToggleSave}
@@ -588,9 +655,20 @@ export default function JobViewPage() {
                   Ứng tuyển ngay
                 </button>
               ) : (
-                <button className="w-full bg-gray-700 text-white font-semibold text-sm py-3 rounded-xl cursor-pointer">
-                  Đã ứng tuyển
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button className="w-full bg-gray-700 text-white font-semibold text-sm py-3 rounded-xl cursor-not-allowed">
+                    Đã ứng tuyển
+                  </button>
+                  {(userApplication?.status === 'PENDING' || userApplication?.status === 'REVIEWING') && (
+                    <button
+                      onClick={handleCancelApplication}
+                      disabled={applyLoading}
+                      className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold text-sm py-3 rounded-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {applyLoading ? 'Đang hủy...' : 'Hủy ứng tuyển'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -757,12 +835,29 @@ export default function JobViewPage() {
                 <div className="relative z-10">
                   <p className="text-white font-bold text-sm mb-1">Đừng bỏ lỡ cơ hội này!</p>
                   <p className="text-white/60 text-xs mb-4 leading-relaxed">Phản hồi phỏng vấn trong 2–3 ngày làm việc.</p>
-                  <button
-                    onClick={() => isAuthenticated ? setShowApplyModal(true) : router.push(`/login?callbackUrl=/jobs/${params.slug}`)}
-                    className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
-                  >
-                    Nộp hồ sơ ngay
-                  </button>
+                  {!checkAplicated() ? (
+                    <button
+                      onClick={() => isAuthenticated ? setShowApplyModal(true) : router.push(`/login?callbackUrl=/jobs/${params.slug}`)}
+                      className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
+                    >
+                      Nộp hồ sơ ngay
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <button className="w-full bg-[#00b14f]/30 text-white/70 font-semibold text-sm py-3 rounded-xl cursor-not-allowed">
+                        Đã nộp hồ sơ
+                      </button>
+                      {(userApplication?.status === 'PENDING' || userApplication?.status === 'REVIEWING') && (
+                        <button
+                          onClick={handleCancelApplication}
+                          disabled={applyLoading}
+                          className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold text-sm py-3 rounded-xl cursor-pointer disabled:opacity-50"
+                        >
+                          {applyLoading ? 'Đang hủy...' : 'Hủy ứng tuyển'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -859,6 +954,61 @@ export default function JobViewPage() {
             )}
           </div>
         </div>
+
+        {/* ── Cancel Success Modal ────────────────────── */}
+        {cancelSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-gray-100 text-center animate-[scaleUp_0.25s_ease]"
+              style={{ animation: 'scaleUp 0.2s ease' }}>
+              <style>{`@keyframes scaleUp { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
+              <div className="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Hủy thành công</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Bạn đã hủy đơn ứng tuyển thành công.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Cancel Confirm Modal ─────────────────────── */}
+        {showCancelModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-gray-100 animate-[slideUp_0.25s_ease]"
+              style={{ animation: 'slideUp 0.2s ease' }}>
+              <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-gray-900 text-center mb-2">Hủy ứng tuyển</h3>
+              <p className="text-xs text-gray-500 text-center mb-6 leading-relaxed">
+                Bạn có chắc chắn muốn hủy đơn ứng tuyển cho công việc này? Hành động này không thể hoàn tác.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    confirmCancelApplication();
+                  }}
+                  disabled={applyLoading}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Apply Modal ─────────────────────────────── */}
         {showApplyModal && (

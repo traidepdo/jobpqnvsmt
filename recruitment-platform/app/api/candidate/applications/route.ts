@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireCandidate } from '@/lib/requireCandidate';
 
+import { signCloudinaryCvUrl } from '@/lib/cloudinarySign';
+
 export async function GET() {
   const auth = await requireCandidate();
   if (auth.error) return auth.error;
@@ -25,7 +27,12 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({ applications });
+  const signedApplications = applications.map(app => ({
+    ...app,
+    cvUrl: signCloudinaryCvUrl(app.cvUrl)
+  }));
+
+  return NextResponse.json({ applications: signedApplications });
 }
 
 export async function POST(req: Request) {
@@ -33,7 +40,7 @@ export async function POST(req: Request) {
   if (auth.error) return auth.error;
 
   try {
-    const { jobId, resumeId, coverLetter, quizAnswers, quizDuration } = await req.json();
+    const { jobId, resumeId, cvUrl, coverLetter, quizAnswers, quizDuration } = await req.json();
 
     if (!jobId) {
       return NextResponse.json({ error: 'Thiếu jobId' }, { status: 400 });
@@ -92,6 +99,7 @@ export async function POST(req: Request) {
           userId: auth.payload.id,
           jobId,
           resumeId: resumeId || null,
+          cvUrl: cvUrl || null,
           coverLetter: coverLetter || null,
           quizScore,
           quizDuration: finalDuration,
@@ -139,5 +147,79 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Application error:', error);
     return NextResponse.json({ error: 'Không thể nộp hồ sơ' }, { status: 500 });
+  }
+}
+
+function getCloudinaryPublicId(url: string, isRaw: boolean = false): string | null {
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    const pathAfterUpload = parts[1];
+    const pathParts = pathAfterUpload.split('/');
+    if (pathParts[0].startsWith('v') && !isNaN(Number(pathParts[0].substring(1)))) {
+      pathParts.shift();
+    }
+    const publicIdWithExt = pathParts.join('/');
+    if (isRaw) {
+      return publicIdWithExt;
+    }
+    return publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function DELETE(req: Request) {
+  const auth = await requireCandidate();
+  if (auth.error) return auth.error;
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Thiếu mã đơn ứng tuyển' }, { status: 400 });
+    }
+
+    const application = await prisma.application.findFirst({
+      where: { id, userId: auth.payload.id },
+      include: { job: { select: { title: true } } }
+    });
+
+    if (!application) {
+      return NextResponse.json({ error: 'Không tìm thấy đơn ứng tuyển' }, { status: 404 });
+    }
+
+    // Only allow cancelling if PENDING or REVIEWING
+    if (application.status !== 'PENDING' && application.status !== 'REVIEWING') {
+      return NextResponse.json({ error: 'Đơn ứng tuyển đã được xử lý, không thể hủy' }, { status: 400 });
+    }
+
+    // Delete CV from Cloudinary if it was uploaded
+    if (application.cvUrl) {
+      try {
+        const publicId = getCloudinaryPublicId(application.cvUrl, true);
+        if (publicId) {
+          const { v2: cloudinary } = await import('cloudinary');
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+          });
+          await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        }
+      } catch (cloudinaryErr) {
+        console.error('Failed to delete CV from Cloudinary:', cloudinaryErr);
+      }
+    }
+
+    await prisma.application.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: 'Hủy ứng tuyển thành công' });
+  } catch (error) {
+    console.error('Cancel application error:', error);
+    return NextResponse.json({ error: 'Không thể hủy ứng tuyển' }, { status: 500 });
   }
 }

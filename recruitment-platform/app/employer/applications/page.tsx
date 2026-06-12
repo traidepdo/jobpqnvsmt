@@ -38,6 +38,10 @@ export default function EmployerApplicationsPage() {
   const [cvModal, setCvModal] = useState<{ id: string; name: string } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [evaluatingId, setEvaluatingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [filterCategory, setFilterCategory] = useState('');
+  const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
+  const [filterJob, setFilterJob] = useState('');
 
   const handleEvaluate = async (id: string) => {
     setEvaluatingId(id);
@@ -76,14 +80,35 @@ export default function EmployerApplicationsPage() {
 
   const load = () => {
     setLoading(true);
-    const q = filter ? `?status=${filter}` : '';
+    const params = new URLSearchParams();
+    if (filter) params.set('status', filter);
+    if (filterCategory) params.set('categoryId', filterCategory);
+    if (filterJob) params.set('jobId', filterJob);
+    
+    const q = params.toString() ? `?${params.toString()}` : '';
     fetch(`/api/employer/applications${q}`)
       .then(r => r.json())
       .then(d => setApps(d.applications || []))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => {
+    fetch('/api/user/category')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setCategories(data);
+      })
+      .catch(err => console.error(err));
+
+    fetch('/api/employer/jobs?limit=100')
+      .then(r => r.json())
+      .then(data => {
+        if (data && Array.isArray(data.jobs)) setJobs(data.jobs);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => { load(); }, [filter, filterCategory, filterJob]);
 
   // autoNavigate: sau khi tạo conversation mới thì tự push sang trang messages
   const updateStatus = async (id: string, status: string, autoNavigate = false) => {
@@ -173,17 +198,53 @@ export default function EmployerApplicationsPage() {
   };
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex flex-wrap gap-2">
-        {['', 'PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED'].map(s => (
-          <button
-            key={s || 'all'}
-            onClick={() => setFilter(s)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold cursor-pointer ${filter === s ? 'bg-[#0052CC] text-white' : 'bg-white border border-gray-200'
-              }`}
-          >
-            {s ? getApplicationStatusLabel(s) : 'Tất cả'}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          {['', 'PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED'].map(s => (
+            <button
+              key={s || 'all'}
+              onClick={() => setFilter(s)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors ${filter === s ? 'bg-[#0052CC] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+            >
+              {s ? getApplicationStatusLabel(s) : 'Tất cả'}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500 font-semibold">Công việc:</span>
+            <select
+              value={filterJob}
+              onChange={(e) => setFilterJob(e.target.value)}
+              className="text-xs bg-white border border-gray-200 rounded-lg px-3 py-1.5 font-semibold text-gray-700 outline-none focus:border-[#0052CC] cursor-pointer max-w-[200px]"
+            >
+              <option value="">Tất cả công việc</option>
+              {jobs.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500 font-semibold">Ngành nghề:</span>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="text-xs bg-white border border-gray-200 rounded-lg px-3 py-1.5 font-semibold text-gray-700 outline-none focus:border-[#0052CC] cursor-pointer"
+            >
+              <option value="">Tất cả ngành nghề</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -406,11 +467,64 @@ export default function EmployerApplicationsPage() {
                       <ResumeSummaryBlock education={app.resume.education} experience={app.resume.experience} />
                     </div>
                   ) : app.cvUrl ? (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                      <p className="text-sm text-amber-800 mb-2">Ứng viên đính kèm file CV</p>
-                      <a href={app.cvUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-[#0052CC] hover:underline">
-                        Tải / mở file CV
-                      </a>
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-gray-500">
+                          CV đính kèm: <span className="text-amber-700 font-bold">File PDF/Word</span>
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {app.isBookmarked ? (
+                            <button
+                              type="button"
+                              disabled={updatingId === app.id}
+                              onClick={(e) => { e.stopPropagation(); handleBookmark(app.id); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200/80 border border-amber-300 rounded-full transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-60"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className={`w-3.5 h-3.5 text-amber-500 ${updatingId === app.id ? "animate-spin" : ""}`}
+                              >
+                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                              </svg>
+                              {updatingId === app.id ? "Đang xử lý..." : "Bỏ quan tâm"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={updatingId === app.id}
+                              onClick={(e) => { e.stopPropagation(); handleBookmark(app.id); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-amber-700 bg-transparent hover:bg-amber-50/60 border border-gray-200 hover:border-amber-300 rounded-full transition-all duration-200 cursor-pointer disabled:opacity-60"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2}
+                                stroke="currentColor"
+                                className={`w-3.5 h-3.5 text-gray-400 group-hover:text-amber-500 ${updatingId === app.id ? "animate-spin" : ""}`}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499c.151-.326.621-.326.772 0l2.035 4.396 4.817.478c.363.036.508.48.232.729l-3.647 3.326.98 4.755c.074.359-.313.642-.63.464L12 15.754l-4.217 2.203c-.317.178-.704-.105-.63-.464l.98-4.755-3.647-3.326c-.276-.249-.131-.693.232-.729l4.817-.478 2.035-4.396Z" />
+                              </svg>
+                              {updatingId === app.id ? "Đang xử lý..." : "Tiềm năng"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-lg p-3">
+                        <span className="text-xs text-amber-800 font-medium">Đã tải lên tệp PDF/Word</span>
+                        <a
+                          href={app.cvUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-4 py-2 bg-[#0052CC] hover:bg-[#0040a2] text-white text-xs font-bold rounded-lg cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          Xem/Tải CV đính kèm
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm text-gray-400 italic">Ứng viên chưa gắn CV</p>

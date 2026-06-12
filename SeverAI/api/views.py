@@ -161,5 +161,32 @@ def evaluate_cv_api(request):
             
     return JsonResponse({'score': score})
 
+@csrf_exempt
+def trigger_moderation_api(request):
+    """
+    API endpoint: POST /api/jobs/moderate/
+    Triggers asynchronous job moderation Celery task.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed.'}, status=405)
+        
+    try:
+        data = json.loads(request.body)
+        job_id = data.get('job_id')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+        
+    if not job_id:
+        return JsonResponse({'error': 'Missing job_id.'}, status=400)
+        
+    from .tasks import moderate_job_task
+    task = moderate_job_task.delay(job_id)
+    
+    return JsonResponse({
+        'message': 'Job is being processed',
+        'task_id': task.id
+    }, status=202)
+
+
 
 

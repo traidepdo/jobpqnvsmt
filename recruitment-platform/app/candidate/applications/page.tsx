@@ -92,6 +92,7 @@ export default function AppliedJobsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/candidate/applications')
@@ -100,6 +101,31 @@ export default function AppliedJobsPage() {
       .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleCancelApplication = (id: string) => {
+    setCancelTargetId(id);
+  };
+
+  const confirmCancelApplication = async () => {
+    if (!cancelTargetId) return;
+    try {
+      const res = await fetch(`/api/candidate/applications?id=${cancelTargetId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setApplications(prev => prev.filter(app => app.id !== cancelTargetId));
+        alert('Hủy ứng tuyển thành công!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Không thể hủy ứng tuyển. Vui lòng thử lại.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Đã xảy ra lỗi khi hủy ứng tuyển.');
+    } finally {
+      setCancelTargetId(null);
+    }
+  };
 
   const filtered = filterStatus
     ? applications.filter(a => a.status === filterStatus)
@@ -235,7 +261,17 @@ export default function AppliedJobsPage() {
                             </Link>
                             <p className="text-[12px] font-medium text-[#00b14f] mt-0.5">{app.job.company.name}</p>
                           </div>
-                          <StatusBadge status={app.status} />
+                          <div className="flex flex-col items-end gap-1.5">
+                            <StatusBadge status={app.status} />
+                            {(app.status === 'PENDING' || app.status === 'REVIEWING') && (
+                              <button
+                                onClick={() => handleCancelApplication(app.id)}
+                                className="text-[11px] font-semibold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                              >
+                                Hủy ứng tuyển
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -296,6 +332,38 @@ export default function AppliedJobsPage() {
         )}
 
       </div>
+
+      {/* ── Cancel Confirm Modal ─────────────────────── */}
+      {cancelTargetId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-gray-100 animate-[slideUp_0.25s_ease]"
+            style={{ animation: 'slideUp 0.2s ease' }}>
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-gray-900 text-center mb-2">Hủy ứng tuyển</h3>
+            <p className="text-xs text-gray-500 text-center mb-6 leading-relaxed">
+              Bạn có chắc chắn muốn hủy đơn ứng tuyển cho công việc này? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCancelTargetId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-500 text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmCancelApplication}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Xác nhận hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

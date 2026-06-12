@@ -17,29 +17,46 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Không có file" }, { status: 400 });
         }
 
-        // Kiểm tra loại file
-        if (!file.type.startsWith("image/")) {
-            return NextResponse.json({ error: "Chỉ chấp nhận file ảnh" }, { status: 400 });
+        const isImage = file.type.startsWith("image/");
+        const isDoc = [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ].includes(file.type) || /\.(pdf|doc|docx)$/i.test(file.name);
+
+        if (!isImage && !isDoc) {
+            return NextResponse.json({ error: "Chỉ chấp nhận file ảnh hoặc tài liệu (PDF, Word)" }, { status: 400 });
         }
 
         // Giới hạn 5MB
         if (file.size > 5 * 1024 * 1024) {
-            return NextResponse.json({ error: "Ảnh tối đa 5MB" }, { status: 400 });
+            return NextResponse.json({ error: "File tối đa 5MB" }, { status: 400 });
         }
 
         // Convert file → base64
         const bytes = await file.arrayBuffer();
         const base64 = Buffer.from(bytes).toString("base64");
-        const dataUri = `data:${file.type};base64,${base64}`;
+        const dataUri = `data:${file.type || "application/octet-stream"};base64,${base64}`;
 
         // Upload lên Cloudinary
-        const result = await cloudinary.uploader.upload(dataUri, {
-            folder: "cv-avatars",
-            transformation: [
+        const uploadOptions: any = {
+            folder: isImage ? "cv-avatars" : "cv-documents",
+        };
+
+        if (isImage) {
+            uploadOptions.transformation = [
                 { width: 400, height: 400, crop: "fill", gravity: "face" },
                 { quality: "auto", fetch_format: "auto" },
-            ],
-        });
+            ];
+        } else {
+            uploadOptions.resource_type = "raw";
+            uploadOptions.type = "authenticated";
+            const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '.pdf';
+            const uniqueId = `cv_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            uploadOptions.public_id = `${uniqueId}${ext}`;
+        }
+
+        const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
 
         return NextResponse.json({
             ok: true,

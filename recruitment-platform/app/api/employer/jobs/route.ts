@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     }
 
     const status: JobStatus =
-      jobStatus === 'DRAFT' ? 'DRAFT' : 'PENDING';
+      jobStatus === 'DRAFT' ? 'DRAFT' : 'PROCESSING';
 
     const job = await prisma.job.create({
       data: {
@@ -120,27 +120,16 @@ export async function POST(req: Request) {
       },
     });
 
-    // Gửi thông báo cho Admin nếu tin ở trạng thái PENDING
-    if (status === 'PENDING') {
-      try {
-        const admins = await prisma.user.findMany({
-          where: { role: 'ADMIN' },
-          select: { id: true }
-        });
-        if (admins.length > 0) {
-          await prisma.notification.createMany({
-            data: admins.map(admin => ({
-              userId: admin.id,
-              type: 'SYSTEM',
-              title: 'Tin tuyển dụng mới cần duyệt',
-              content: `Doanh nghiệp "${auth.company.name}" vừa đăng tin tuyển dụng mới: "${job.title}" và đang chờ phê duyệt.`,
-              refId: job.id,
-            }))
-          });
-        }
-      } catch (err) {
-        console.error('Failed to notify admins of new job:', err);
-      }
+    // Trigger Django Celery moderation task asynchronously if status is PROCESSING
+    if (status === 'PROCESSING') {
+      const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+      fetch(`${djangoUrl}/api/jobs/moderate/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: job.id }),
+      }).catch(err => {
+        console.error('Failed to trigger Django Celery moderation task:', err);
+      });
     }
 
     return NextResponse.json({ job }, { status: 201 });
