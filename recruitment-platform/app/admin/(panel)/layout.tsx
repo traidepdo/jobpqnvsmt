@@ -25,6 +25,7 @@ const NAV_GROUPS: NavGroup[] = [
     {
         title: 'Nội dung',
         items: [
+            { href: '/admin/job-duyet', icon: '?', label: 'Kiểm duyệt tin tuyển dụng' },
             { href: '/admin/jobs', icon: '◷', label: 'Tin tuyển dụng' },
             { href: '/admin/companies', icon: '⬡', label: 'Doanh nghiệp' },
             { href: '/admin/users', icon: '◉', label: 'Người dùng' },

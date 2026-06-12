@@ -148,6 +148,7 @@ export default function JobsPage() {
 
     const statusConfig: Record<string, { label: string; className: string }> = {
         ACTIVE: { label: 'Đang tuyển', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+        DRAFT: { label: 'Nháp', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30' },
         CLOSED: { label: 'Đã đóng', className: 'bg-gray-500/15  text-gray-400  border-gray-500/30' },
         PENDING: { label: 'Chờ duyệt', className: 'bg-amber-500/15  text-amber-400  border-amber-500/30' },
         REJECTED: { label: 'Từ chối', className: 'bg-red-500/15    text-red-400    border-red-500/30' },
