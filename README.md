@@ -1,14 +1,100 @@
-# BÁO CÁO KỸ THUẬT: HỆ THỐNG TUYỂN DỤNG VÀ GỢI Ý VIỆC LÀM THÔNG MINH PHÚ QUỐC (PHU QUOC JOBS)
+# HỆ THỐNG TUYỂN DỤNG VÀ GỢI Ý VIỆC LÀM THÔNG MINH PHÚ QUỐC (PHU QUOC JOBS)
 
-Chào mừng bạn đến với tài liệu báo cáo kỹ thuật và hướng dẫn vận hành của dự án **Phu Quoc Jobs**. Đây là một hệ thống tuyển dụng hiện đại được tích hợp Trí tuệ nhân tạo (AI) và Học sâu (Deep Learning) nhằm tối ưu hóa việc kết nối nhà tuyển dụng với các ứng viên phù hợp tại khu vực Phú Quốc.
+Chào mừng bạn đến với tài liệu giới thiệu hệ thống, hướng dẫn vận hành và sơ đồ nghiệp vụ của toàn bộ dự án **Phu Quoc Jobs**. Đây là một nền tảng tuyển dụng hiện đại tích hợp các mô hình Trí tuệ nhân tạo (AI), Học sâu (Deep Learning), Chat Real-time (Cá nhân, Nhóm và Hỗ trợ), Hệ thống làm bài trắc nghiệm (Quiz), Lên lịch phỏng vấn (Interview), và Kiểm duyệt tự động để tối ưu hóa việc kết nối ứng viên và nhà tuyển dụng tại khu vực Phú Quốc.
 
 ---
 
-## 🏗️ 1. Kiến trúc Hệ thống (System Architecture)
+## 🗺️ 1. Sơ đồ Use Case Toàn bộ Hệ thống (System Use Case Diagram)
+
+Dưới đây là sơ đồ Use Case chi tiết mô tả đầy đủ tất cả các tác nhân (Actors) và các chức năng của toàn bộ hệ thống **Phu Quoc Jobs**:
+
+```mermaid
+leftToRightDirection
+actor Candidate as "Ứng viên (Candidate)"
+actor Employer as "Nhà tuyển dụng (Employer)"
+actor Admin as "Quản trị viên (Admin)"
+
+rectangle "Hệ thống Phu Quoc Jobs" {
+    %% Chức năng chung
+    usecase UC_Auth as "Đăng ký & Đăng nhập"
+    usecase UC_Blog as "Đọc & Xem Tin tức/Bài viết (Blogs)"
+    usecase UC_Notify as "Nhận Thông báo (Notifications)"
+    
+    %% Phân hệ Ứng viên (Candidate)
+    usecase UC_Profile as "Quản lý Hồ sơ & CV"
+    usecase UC_Resume_Template as "Tạo CV theo Mẫu có sẵn"
+    usecase UC_Search as "Tìm kiếm & Lọc việc làm (Vị trí, Lương, Kinh nghiệm)"
+    usecase UC_AI_Rec as "Nhận Gợi ý việc làm tự động bằng AI (Upload CV PDF)"
+    usecase UC_Chatbot as "Tương tác Chatbot AI tư vấn & gợi ý việc làm"
+    usecase UC_Apply as "Ứng tuyển & Làm bài kiểm tra năng lực (Quiz)"
+    usecase UC_Interview_Confirm as "Xác nhận / Từ chối lịch phỏng vấn"
+    usecase UC_Candidate_Chat as "Chat Real-time với Nhà tuyển dụng (Cá nhân & Nhóm)"
+    usecase UC_Save_Items as "Lưu trữ việc làm & Theo dõi doanh nghiệp"
+
+    %% Phân hệ Nhà tuyển dụng (Employer)
+    usecase UC_Company_Profile as "Đăng ký & Cập nhật thông tin doanh nghiệp"
+    usecase UC_Post_Job as "Đăng & Quản lý tin tuyển dụng (Duyệt tự động Celery)"
+    usecase UC_Quiz_Manage as "Thiết lập Bài test trắc nghiệm (Quiz)"
+    usecase UC_Salary as "Xem mức lương dự báo gợi ý (Ridge Regression)"
+    usecase UC_Manage_App as "Quản lý & Đánh giá Đơn ứng tuyển"
+    usecase UC_AI_Match as "Chấm điểm CV ứng viên bằng AI (Cross-Encoder)"
+    usecase UC_Schedule_Interview as "Lên lịch hẹn Phỏng vấn (Online/Offline)"
+    usecase UC_Employer_Chat as "Chat Real-time với Ứng viên (Cá nhân & Nhóm)"
+    usecase UC_Employer_Support as "Chat Hỗ trợ với Quản trị viên (Admin Support)"
+
+    %% Phân hệ Quản trị viên (Admin)
+    usecase UC_Dashboard as "Xem Thống kê Dashboard (Biểu đồ tương tác)"
+    usecase UC_Users as "Quản lý Người dùng (Khóa/Mở tài khoản)"
+    usecase UC_Company_Approve as "Phê duyệt / Từ chối doanh nghiệp"
+    usecase UC_Jobs_Approve as "Phê duyệt thủ công / Từ chối tin tuyển dụng"
+    usecase UC_Retrain as "Huấn luyện lại mô hình Dự báo lương"
+    usecase UC_Blog_Manage as "Quản lý Bài viết & Danh mục Tin tức"
+    usecase UC_Template_Manage as "Quản lý Mẫu CV (Resume Templates)"
+    usecase UC_Admin_Support as "Chat hỗ trợ Nhà tuyển dụng (Admin Support)"
+}
+
+Candidate --> UC_Auth
+Candidate --> UC_Blog
+Candidate --> UC_Notify
+Candidate --> UC_Profile
+Candidate --> UC_Resume_Template
+Candidate --> UC_Search
+Candidate --> UC_AI_Rec
+Candidate --> UC_Chatbot
+Candidate --> UC_Apply
+Candidate --> UC_Interview_Confirm
+Candidate --> UC_Candidate_Chat
+Candidate --> UC_Save_Items
+
+Employer --> UC_Auth
+Employer --> UC_Blog
+Employer --> UC_Notify
+Employer --> UC_Company_Profile
+Employer --> UC_Post_Job
+Employer --> UC_Quiz_Manage
+Employer --> UC_Salary
+Employer --> UC_Manage_App
+Employer --> UC_AI_Match
+Employer --> UC_Schedule_Interview
+Employer --> UC_Employer_Chat
+Employer --> UC_Employer_Support
+
+Admin --> UC_Auth
+Admin --> UC_Dashboard
+Admin --> UC_Users
+Admin --> UC_Company_Approve
+Admin --> UC_Jobs_Approve
+Admin --> UC_Retrain
+Admin --> UC_Blog_Manage
+Admin --> UC_Template_Manage
+Admin --> UC_Admin_Support
+```
+
+---
+
+## 🏗️ 2. Kiến trúc Hệ thống (System Architecture)
 
 Dự án được xây dựng dựa trên mô hình **Microservices lai (Hybrid Architecture)**, tách biệt phần quản trị nghiệp vụ web thông thường và phần xử lý tính toán mô hình trí tuệ nhân tạo (AI/ML).
-
-### Sơ đồ luồng tương tác hệ thống (System Flow Diagram):
 
 ```mermaid
 graph TD
@@ -43,139 +129,121 @@ graph TD
     NextJS -->|Truy vấn dữ liệu| Prisma
     Prisma -->|Đồng bộ dữ liệu| PostgreSQL
     
-    %% Giao tiếp giữa NextJS và Django
-    NextJS -->|1. Yêu cầu gợi ý / đối sánh| Django
+    %% Giao tiếp giữa NextJS và Django (Bảo mật bằng INTERNAL_API_KEY)
+    NextJS -->|Yêu cầu gợi ý / đối sánh + Bearer Token| Django
     Django -->|Đọc CV & Tin tuyển dụng| PostgreSQL
     
     %% Luồng xử lý AI
-    Django -->|2. Tìm kiếm ngữ nghĩa thô| pgvector
-    Django -->|3. Đánh giá ngữ nghĩa sâu| CrossEncoder
-    Django -->|4. Phân tích điểm mạnh & yếu| Gemini[Google Gemini API]
+    Django -->|Tìm kiếm ngữ nghĩa thô| pgvector
+    Django -->|Đánh giá ngữ nghĩa sâu| CrossEncoder
+    Django -->|Phân tích điểm mạnh & yếu| Gemini[Google Gemini API]
     
     Gemini -->|Trả kết quả văn bản AI| Django
     Django -->|Lưu matchScore trực tiếp| PostgreSQL
-    Django -->|5. Trả điểm số & Báo cáo| NextJS
+    Django -->|Trả điểm số & Báo cáo| NextJS
 ```
 
-### Giải thích quy trình hoạt động (Data Flow Explanation):
-1. **Quản trị và Nghiệp vụ (Next.js)**: Đảm nhận phần lớn lưu lượng truy cập của người dùng. Các thao tác CRUD, đặt lịch phỏng vấn, lưu trạng thái đơn ứng tuyển đều được lưu trữ trực tiếp vào cơ sở dữ liệu **PostgreSQL (Neon Cloud)** thông qua **Prisma ORM**.
-2. **Xử lý AI (Django)**: Khi có yêu cầu tính toán phức tạp (như gợi ý công việc tương tự, chấm điểm tương thích CV), Next.js sẽ gọi một yêu cầu proxy HTTP API sang **Django AI Server (chạy ở port 8000)**.
-3. **Độc lập và chia sẻ DB**: Cả Next.js và Django đều dùng chung một chuỗi kết nối `DATABASE_URL` để truy cập trực tiếp vào cùng một cơ sở dữ liệu PostgreSQL. Điều này giúp Django có thể truy vấn thông tin CV và tin tuyển dụng cực nhanh mà không cần Next.js truyền tải toàn bộ dữ liệu văn bản nặng nề qua HTTP payload.
-4. **Tìm kiếm ngữ nghĩa (Semantic Search) & Xếp hạng (Re-ranking)**: 
-   - Thay vì dùng thuật toán TF-IDF so khớp từ khóa thô, Django sử dụng mô hình **`vietnamese-sbert`** kết hợp với **`pgvector`** trên PostgreSQL để tìm kiếm các văn bản tương đồng ngữ nghĩa.
-   - Chỉ mục **HNSW (Hierarchical Navigable Small World)** được thiết lập trực tiếp trên DB giúp giảm độ phức tạp tìm kiếm xuống $O(\log N)$, hỗ trợ xử lý lên đến 100,000+ bản ghi dưới **10ms**.
-   - Đối với việc so khớp hồ sơ chi tiết, mô hình Cross-Encoder nạp mạng nơ-ron Transformer trực tiếp từ bộ nhớ cục bộ, thực hiện so sánh chéo ngữ nghĩa, sau đó lưu kết quả điểm số đối khớp (`matchScore`) trực tiếp vào Postgres để Next.js lấy ra hiển thị mà không cần tính toán lại.
+---
+
+## 🛠️ 3. Công nghệ Sử dụng (Tech Stack)
+
+### 3.1. Phân hệ Web & Quản lý (Thư mục `recruitment-platform`)
+*   **Next.js 16 (App Router) & React 19**: Tận dụng tối đa Server-Side Rendering (SSR) nâng cao điểm SEO, đồng thời đóng vai trò API Gateway.
+*   **Prisma Client ORM**: Truy vấn kiểu Type-safe hoàn hảo trong TypeScript, tối ưu hóa giao tiếp cơ sở dữ liệu.
+*   **PostgreSQL (Neon Cloud)**: Hệ quản trị cơ sở dữ liệu quan hệ mạnh mẽ, hỗ trợ mở rộng Serverless.
+*   **HttpOnly Cookie & JWT**: Cơ chế bảo mật phiên đăng nhập an toàn, chống tấn công XSS và giả mạo phiên.
+*   **Cloudinary API**: Quản lý và lưu trữ hình ảnh đại diện (avatar), logo doanh nghiệp chuyên nghiệp.
+
+### 3.2. Phân hệ Trí tuệ nhân tạo (Thư mục `SeverAI`)
+*   **Django & Django REST Framework**: Đóng vai trò Computing Server, cung cấp các API xử lý logic AI phức tạp.
+*   **Sentence-Transformers & PyTorch (CPU version)**: Sử dụng để mã hóa các nội dung tin tuyển dụng và CV thành các vector 768 chiều.
+*   **Mô hình `keepitreal/vietnamese-sbert` (Dense Embeddings)**: Phân tích ngữ nghĩa tiếng Việt sâu sắc hơn so khớp từ khóa thông thường.
+*   **Chỉ mục HNSW trên `pgvector`**: Hấu trợ tìm kiếm lân cận gần đúng (ANN) trên cơ sở dữ liệu với hiệu năng cực cao $O(\log N)$.
+*   **Mô hình `cross-encoder/ms-marco-MiniLM-L-6-v2`**: Đánh giá mức độ tương thích ngữ nghĩa chi tiết (reranking) thông qua cơ chế Self-Attention của Transformer.
+*   **Google Gemini API (`gemini-2.5-flash`)**: Đọc hiểu CV, viết báo cáo đề xuất, và đóng vai trò kiểm duyệt tự động nội dung tin đăng tuyển.
+*   **Ridge Regression (Scikit-Learn)**: Mô hình học máy dự báo và gợi ý khoảng lương tuyển dụng hợp lý dựa trên dữ liệu hệ thống.
 
 ---
 
-## 🛠️ 2. Công nghệ Sử dụng & Giải thích Chi tiết (Tech Stack & Explanations)
+## 🌟 4. Chi tiết các Nghiệp vụ AI & Bảo mật Cốt lõi
 
-### 2.1. Phân hệ Web & Quản lý (Thư mục `recruitment-platform`)
-*   **Next.js 16 (App Router) & React 19**: Lựa chọn Next.js giúp hệ thống tận dụng cơ chế **Server-Side Rendering (SSR)** và **Incremental Static Regeneration (ISR)** giúp tối ưu điểm SEO cho các trang tin tuyển dụng, đồng thời cung cấp các API Routes gọn nhẹ đóng vai trò như API Gateway.
-*   **Prisma Client ORM**: Cung cấp khả năng truy vấn kiểu Type-safe hoàn hảo trong TypeScript. Tự động sinh mã nguồn client tương thích với schema và hỗ trợ quản lý di chuyển schema (migration) mượt mượt.
-*   **PostgreSQL (Neon Cloud)**: Hệ quản trị cơ sở dữ liệu quan hệ mạnh mẽ. Neon DB cung cấp tính năng Serverless tự động co giãn và kết nối pooling qua giao thức WebSocket Constructor (`ws`) trên môi trường đám mây đảm bảo khả năng chịu tải tốt.
-*   **HttpOnly Cookie & JWT (jose)**: Phiên đăng nhập được mã hóa thành JWT và lưu dưới dạng cookie với cờ `HttpOnly`, ngăn chặn hoàn toàn các cuộc tấn công XSS lấy cắp token.
-*   **Cloudinary API**: Dịch vụ CDN chuyên nghiệp dùng để quản lý lưu trữ và tối ưu hóa dung lượng hình ảnh đại diện (avatar) của ứng viên hoặc logo của doanh nghiệp.
+### 4.1. Chấm điểm CV bằng AI (AI Match Score)
+Khi nhà tuyển dụng nhấp vào **"Chấm điểm CV"**:
+1. Next.js gửi yêu cầu bảo mật có kèm `INTERNAL_API_KEY` sang Django.
+2. Django tải thông tin JD và văn bản từ CV PDF lên.
+3. Mô hình **Cross-Encoder** tính toán điểm tương thích thô.
+4. Áp dụng công thức **Calibrated Sigmoid** chuyển đổi điểm số về dải $0 - 100\%$:
+   $$\text{Score (\%)} = \text{Round}\left(\frac{1}{1 + e^{-\frac{\text{raw\_score} + 6.5}{1.5}}} \times 100\right)$$
+5. Điểm số được lưu vào trường `matchScore` hiển thị trực quan theo dải màu sắc (Xanh lá $\ge 75\%$, Cam $50\% - 74\%$, Đỏ $< 50\%$).
 
-### 2.2. Phân hệ Trí tuệ nhân tạo (Thư mục `severAI`)
-*   **Django & Django REST Framework**: Đóng vai trò là máy chủ dịch vụ tính toán (Computing Service). Python có hệ sinh thái thư viện AI/ML mạnh nhất thế giới nên Django là cầu nối hoàn hảo để tích hợp các mô hình học máy.
-*   **Sentence-Transformers & PyTorch (CPU version)**:
-    *   Hệ thống sử dụng thư viện `sentence-transformers` được tối ưu hóa trên nền tảng **PyTorch**.
-    *   Để tối ưu hóa dung lượng lưu trữ trên máy chủ local, chúng ta cài đặt phiên bản **PyTorch CPU** giúp giảm kích thước gói cài đặt từ vài GB xuống còn vài trăm MB mà vẫn đảm bảo tốc độ phản hồi tính toán tức thời (dưới 1 giây cho mỗi lượt đối khớp).
-*   **Mô hình `keepitreal/vietnamese-sbert` (Dense Embeddings)**:
-    *   Sử dụng để mã hóa các nội dung tin tuyển dụng và CV thành các vector 768 chiều.
-    *   Hỗ trợ hiểu sâu ngữ cảnh ngữ nghĩa tiếng Việt (ví dụ: liên kết từ khóa "Lập trình viên" với "Software Engineer", "Developer").
-*   **Chỉ mục HNSW trên `pgvector`**:
-    *   Hỗ trợ tìm kiếm lân cận gần đúng (ANN) với hiệu năng $O(\log N)$, phản hồi tức thì với tập dữ liệu lớn.
-*   **Mô hình `cross-encoder/ms-marco-MiniLM-L-6-v2`**:
-    *   Đây là một mô hình **Cross-Encoder** hiệu năng cao chuyên biệt cho tác vụ Reranking (đánh giá mức độ liên quan ngữ nghĩa giữa 2 văn bản).
-    *   *Tại sao dùng Cross-Encoder thay vì Bi-Encoder?* Bi-Encoder mã hóa độc lập 2 câu rồi tính Cosine Similarity, chạy nhanh nhưng bỏ qua mối liên hệ ngữ nghĩa chi tiết. Cross-Encoder đưa cả 2 văn bản vào mô hình cùng lúc, cơ chế **Self-Attention** của Transformer sẽ so sánh từng từ của CV với từng từ của JD, mang lại độ chính xác cực kỳ vượt trội.
-*   **Google Gemini API (`gemini-2.5-flash`)**: Sử dụng để phân tích sâu nội dung CV và viết báo cáo lý do đề xuất tuyển dụng chi tiết bằng tiếng Việt vô cùng tự nhiên.
+### 4.2. Kiểm duyệt Tin tuyển dụng Tự động (Auto Moderation)
+1. Khi nhà tuyển dụng đăng tin mới, trạng thái tin là `PROCESSING`.
+2. Hệ thống Next.js kích hoạt một Celery task bất đồng bộ trên Django.
+3. Django gọi mô hình Gemini AI phân tích nội dung JD để phát hiện các yếu tố lừa đảo, spam, bài đăng bất hợp pháp, v.v.
+4. Nếu tin đăng an toàn, hệ thống tự động đổi trạng thái sang `APPROVED`. Ngược lại sẽ đổi thành `REJECTED` kèm lý do cụ thể.
+
+### 4.3. Xác thực Bảo mật Nâng cao (Security Hardening)
+*   **Service-to-Service Authorization**: Giao tiếp giữa Next.js và Django được bảo vệ thông qua mã token bí mật `INTERNAL_API_KEY` ở Header `Authorization: Bearer <KEY>`. Django sẽ chặn và trả về lỗi `401 Unauthorized` cho bất kỳ cuộc gọi trái phép nào.
+*   **Upload API Authorization**: Route `/api/upload/image/route.ts` của Next.js yêu cầu cookie phiên đăng nhập hợp lệ của người dùng trước khi tiến hành kết nối đến Cloudinary.
+*   **JWT Security**: Loại bỏ hoàn toàn fallback key tĩnh, hệ thống sẽ dừng chạy ngay lập tức nếu thiếu cấu hình `JWT_SECRET` trong biến môi trường.
 
 ---
 
-## 🌟 3. Báo cáo Chi tính năng (Detailed Features Report)
+## 🚀 5. Hướng dẫn Cài đặt & Vận hành (Local Setup & Run)
 
-### 3.1. Phân hệ Ứng viên (Candidate)
-*   **Tìm kiếm & Lọc việc làm thông minh**: Cho phép lọc công việc theo khu vực cụ thể tại Phú Quốc (các phường An Thới, Dương Đông, xã Gành Dầu, v.v.), khoảng lương và yêu cầu kinh nghiệm.
-*   **Trắc nghiệm năng lực trực tuyến (Quiz)**: Khi ứng tuyển vào các vị trí yêu cầu bài test, ứng viên sẽ làm bài trắc nghiệm tính giờ trực tiếp trên hệ thống. Kết quả tự động chấm điểm (%) và ghi nhận thời gian làm bài.
-*   **Gợi ý việc làm tự động bằng AI**: Khi ứng viên upload CV PDF, hệ thống sử dụng mô hình `vietnamese-sbert` sinh vector đại diện và thực hiện so khớp vector qua Postgres DB để lấy ra nhanh các công việc tiềm năng, sau đó gửi sang Gemini AI để phân tích và viết lý do đề xuất công việc chi tiết.
-*   **Nhắn tin thời gian thực & Thu hồi tin nhắn**: Ứng viên có thể chat trực tiếp với nhà tuyển dụng ngay khi đơn ứng tuyển được duyệt. Cho phép xóa tin nhắn cá nhân (thu hồi) và xóa toàn bộ cuộc hội thoại.
-
-### 3.2. Phân hệ Nhà tuyển dụng (Employer)
-*   **Đánh giá hồ sơ bằng mô hình học máy (AI Match Score)**:
-    *   Nhà tuyển dụng có một nút **"Chấm điểm CV"** riêng biệt cho mỗi hồ sơ. Khi click, hệ thống gửi yêu cầu sang Django Server.
-    *   Mô hình Cross-Encoder sẽ tính toán điểm tương thích ngữ nghĩa thô (Logit). Do phân phối điểm thô của mô hình Cross-Encoder thường bị lệch âm (từ -11.0 đến -2.0), hệ thống áp dụng công thức **Calibrated Sigmoid** (Hàm Sigmoid hiệu chuẩn nhiệt độ) để chuyển đổi:
-        $$\text{Score (\%)} = \text{Round}\left(\frac{1}{1 + e^{-\frac{\text{raw\_score} + 6.5}{1.5}}} \times 100\right)$$
-    *   Điểm số sau đó được lưu vĩnh viễn vào cột `matchScore` của bảng `applications`. Hệ thống hiển thị trực quan các mức độ phù hợp bằng màu sắc: **Xanh lá (>= 75% - Rất phù hợp)**, **Cam (50% - 74% - Phù hợp trung bình)**, và **Đỏ (< 50% - Ít phù hợp)**.
-*   **Gợi ý mức lương đăng tuyển (Salary Predictor)**:
-    *   Khi nhà tuyển dụng soạn thảo JD, hệ thống sử dụng mô hình hồi quy Ridge Regression được huấn luyện từ các tin tuyển dụng thực tế trên hệ thống để đưa ra gợi ý mức lương min/max phù hợp nhất dựa trên yêu cầu kinh nghiệm, cấp bậc, loại hình công việc và khu vực địa lý.
-*   **Quản lý Hội thoại**: Hỗ trợ xóa tin nhắn đơn lẻ hoặc xóa hoàn toàn lịch sử chat trực tiếp để dọn dẹp không gian làm việc.
-
-### 3.3. Phân hệ Quản trị viên (Admin)
-*   **Duyệt tin tuyển dụng & Doanh nghiệp**: Duyệt thủ công bài đăng của nhà tuyển dụng hoặc từ chối kèm phản hồi lý do chi tiết.
-*   **Quản lý Vận hành AI**: Cho phép Admin click nút huấn luyện lại (Retrain) mô hình dự báo lương Ridge Regression trực tiếp trên giao diện Admin Panel khi cơ sở dữ liệu cập nhật nhiều tin tuyển dụng mới.
-
----
-
-## 🚀 4. Hướng dẫn Cài đặt & Vận hành (Local Setup & Run)
-
-### 4.1. Khởi chạy Recruitment Platform (Next.js)
+### 5.1. Khởi chạy Recruitment Platform (Next.js)
 1. Cài đặt các thư viện Node.js:
    ```bash
    cd recruitment-platform
    npm install
    ```
-2. Tạo file `.env` cấu hình cơ sở dữ liệu Neon PostgreSQL và Cloudinary:
+2. Cấu hình file `.env`:
    ```env
-   DATABASE_URL="postgresql://neondb_owner:npg_... (Lấy từ Neon console)"
-   JWT_SECRET="super-secret-key-123"
+   DATABASE_URL="postgresql://neondb_owner:npg_... (Lấy từ Neon DB)"
+   JWT_SECRET="Chuỗi_JWT_Bảo_Mật_Ngẫu_Nhiên"
+   INTERNAL_API_KEY="Mã_API_Key_Nội_Bộ_Dùng_Chung"
    CLOUDINARY_CLOUD_NAME="..."
    CLOUDINARY_API_KEY="..."
    CLOUDINARY_API_SECRET="..."
    NEXT_PUBLIC_USE_CLOUDINARY=true
    ```
-3. Sinh mã nguồn client và chạy dev server:
+3. Sinh mã nguồn client và chạy:
    ```bash
    npx prisma generate
    npm run dev
    ```
 
-### 4.2. Khởi chạy AI Server (Django)
+### 5.2. Khởi chạy AI Server (Django)
 1. Kích hoạt môi trường ảo Python virtualenv:
    * **Windows**:
      ```powershell
-     cd severAI
+     cd SeverAI
      .\env\Scripts\activate
      ```
    * **macOS/Linux**:
      ```bash
-     cd severAI
+     cd SeverAI
      source env/bin/activate
      ```
 2. Cài đặt các thư viện Python:
    ```bash
    pip install django djangorestframework dj-database-url python-dotenv requests pandas numpy scikit-learn pypdf psycopg2-binary sentence-transformers torch --extra-index-url https://download.pytorch.org/whl/cpu
    ```
-   *(Lưu ý: Tham số `--extra-index-url https://download.pytorch.org/whl/cpu` giúp tải phiên bản PyTorch CPU siêu nhẹ, giúp tiết kiệm băng thông và bộ nhớ ổ cứng).*
-3. Cấu hình file `.env` trong thư mục `severAI/`:
+3. Cấu hình file `.env` trong thư mục `SeverAI/`:
    ```env
    DATABASE_URL="postgresql://neondb_owner:npg_... (Dùng chung database với Next.js)"
    GEMINI_API_KEY="AIzaSy..."
+   INTERNAL_API_KEY="Mã_API_Key_Nội_Bộ_Dùng_Chung_Khớp_Với_Next.js"
    ```
 4. Thiết lập Cấu trúc Vector trên PostgreSQL:
-   Kết nối vào PostgreSQL (Neon DB) và chạy lệnh SQL:
    ```sql
-   -- Kích hoạt extension vector
    CREATE EXTENSION IF NOT EXISTS vector;
-
-   -- Tạo bảng lưu trữ job embeddings 768 chiều
+   
    CREATE TABLE IF NOT EXISTS job_embeddings (
        job_id VARCHAR(191) PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
        embedding vector(768)
    );
 
-   -- Tạo chỉ mục HNSW tối ưu hóa tìm kiếm tương đồng
    CREATE INDEX IF NOT EXISTS job_embeddings_hnsw_idx 
    ON job_embeddings USING hnsw (embedding vector_cosine_ops);
    ```
@@ -183,4 +251,3 @@ graph TD
    ```bash
    python manage.py runserver
    ```
-   *(Máy chủ AI sẽ lắng nghe tại cổng `http://127.0.0.1:8000`)*.

@@ -103,7 +103,10 @@ export async function PUT(
       const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
       fetch(`${djangoUrl}/api/jobs/moderate/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || ""}`
+        },
         body: JSON.stringify({ job_id: job.id }),
       }).catch(err => {
         console.error('Failed to trigger Django Celery moderation task on update:', err);

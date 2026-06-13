@@ -19,6 +19,9 @@ export async function POST(req: Request) {
       }
       djangoResponse = await fetch("http://127.0.0.1:8000/api/chatbot/recommend/", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
+        },
         body: djangoFormData,
       });
     } else {
@@ -27,6 +30,7 @@ export async function POST(req: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
         },
         body: JSON.stringify(body),
       });

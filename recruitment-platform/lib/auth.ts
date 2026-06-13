@@ -1,5 +1,8 @@
 import { jwtVerify } from "jose";
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-key-123');
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET environment variable is missing!");
+}
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export interface JWTPayload {
     id: string;

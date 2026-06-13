@@ -1,6 +1,8 @@
 // app/api/upload/image/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,6 +12,16 @@ cloudinary.config({
 
 export async function POST(req: NextRequest) {
     try {
+        // Authenticate request
+        const token = (await cookies()).get('token')?.value;
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized: Vui lòng đăng nhập" }, { status: 401 });
+        }
+        const payload = await verifyToken(token);
+        if (!payload) {
+            return NextResponse.json({ error: "Unauthorized: Phiên làm việc không hợp lệ" }, { status: 401 });
+        }
+
         const formData = await req.formData();
         const file = formData.get("file") as File | null;
 

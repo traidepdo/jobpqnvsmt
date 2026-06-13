@@ -25,7 +25,8 @@ export async function GET(
             const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
                 method: "GET",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
                 },
                 next: { revalidate: 60 } // Cache recommendations for 60s
             });

@@ -1,11 +1,28 @@
 import json
+import os
+from functools import wraps
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from .recommender import get_related_jobs
 from .chatbot import extract_text_from_pdf, parse_db_resume, get_gemini_recommendations, get_general_chat_response
 
+def internal_api_key_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        expected_key = os.getenv('INTERNAL_API_KEY')
+        if not expected_key:
+            return JsonResponse({'error': 'Server misconfiguration: INTERNAL_API_KEY not set.'}, status=500)
+        
+        auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION') or ''
+        if not auth_header.startswith('Bearer ') or auth_header[7:] != expected_key:
+            return JsonResponse({'error': 'Unauthorized service-to-service call.'}, status=401)
+            
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
+
 @require_GET
+@internal_api_key_required
 def recommend_jobs_api(request, job_id):
     """
     API endpoint: GET /api/jobs/<job_id>/recommend/
@@ -24,6 +41,7 @@ def recommend_jobs_api(request, job_id):
     }, safe=False)
 
 @csrf_exempt
+@internal_api_key_required
 def chatbot_recommend_api(request):
     """
     API endpoint: POST /api/chatbot/recommend/
@@ -74,6 +92,7 @@ def chatbot_recommend_api(request):
     return JsonResponse(recommendations_result)
 
 @csrf_exempt
+@internal_api_key_required
 def chatbot_chat_api(request):
     """
     API endpoint: POST /api/chatbot/chat/
@@ -96,6 +115,7 @@ def chatbot_chat_api(request):
     return JsonResponse(response_result)
 
 @csrf_exempt
+@internal_api_key_required
 def evaluate_cv_api(request):
     """
     API endpoint: POST /api/evaluate-cv/
@@ -162,6 +182,7 @@ def evaluate_cv_api(request):
     return JsonResponse({'score': score})
 
 @csrf_exempt
+@internal_api_key_required
 def trigger_moderation_api(request):
     """
     API endpoint: POST /api/jobs/moderate/
