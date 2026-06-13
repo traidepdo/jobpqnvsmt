@@ -177,7 +177,7 @@ Khi nhà tuyển dụng nhấp vào **"Chấm điểm CV"**:
 2. Django tải thông tin JD và văn bản từ CV PDF lên.
 3. Mô hình **Cross-Encoder** tính toán điểm tương thích thô.
 4. Áp dụng công thức **Calibrated Sigmoid** chuyển đổi điểm số về dải $0 - 100\%$:
-   $$\text{Score (\%)} = \text{Round}\left(\frac{1}{1 + e^{-\frac{\text{raw\_score} + 6.5}{1.5}}} \times 100\right)$$
+    $$\text{Score (\%)} = \text{Round}\left(\frac{1}{1 + e^{-\frac{\text{raw score} + 6.5}{1.5}}} \times 100\right)$$
 5. Điểm số được lưu vào trường `matchScore` hiển thị trực quan theo dải màu sắc (Xanh lá $\ge 75\%$, Cam $50\% - 74\%$, Đỏ $< 50\%$).
 
 ### 4.2. Kiểm duyệt Tin tuyển dụng Tự động (Auto Moderation)
