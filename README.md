@@ -9,85 +9,89 @@ Chào mừng bạn đến với tài liệu giới thiệu hệ thống, hướn
 Dưới đây là sơ đồ Use Case chi tiết mô tả đầy đủ tất cả các tác nhân (Actors) và các chức năng của toàn bộ hệ thống **Phu Quoc Jobs**:
 
 ```mermaid
-leftToRightDirection
-actor Candidate as "Ứng viên (Candidate)"
-actor Employer as "Nhà tuyển dụng (Employer)"
-actor Admin as "Quản trị viên (Admin)"
+graph LR
+    %% Định nghĩa các Actors dưới dạng hình chữ nhật hoặc hình có bo tròn riêng biệt
+    Candidate["👤 Ứng viên (Candidate)"]
+    Employer["🏢 Nhà tuyển dụng (Employer)"]
+    Admin["⚙️ Quản trị viên (Admin)"]
 
-rectangle "Hệ thống Phu Quoc Jobs" {
-    %% Chức năng chung
-    usecase UC_Auth as "Đăng ký & Đăng nhập"
-    usecase UC_Blog as "Đọc & Xem Tin tức/Bài viết (Blogs)"
-    usecase UC_Notify as "Nhận Thông báo (Notifications)"
-    
-    %% Phân hệ Ứng viên (Candidate)
-    usecase UC_Profile as "Quản lý Hồ sơ & CV"
-    usecase UC_Resume_Template as "Tạo CV theo Mẫu có sẵn"
-    usecase UC_Search as "Tìm kiếm & Lọc việc làm (Vị trí, Lương, Kinh nghiệm)"
-    usecase UC_AI_Rec as "Nhận Gợi ý việc làm tự động bằng AI (Upload CV PDF)"
-    usecase UC_Chatbot as "Tương tác Chatbot AI tư vấn & gợi ý việc làm"
-    usecase UC_Apply as "Ứng tuyển & Làm bài kiểm tra năng lực (Quiz)"
-    usecase UC_Interview_Confirm as "Xác nhận / Từ chối lịch phỏng vấn"
-    usecase UC_Candidate_Chat as "Chat Real-time với Nhà tuyển dụng (Cá nhân & Nhóm)"
-    usecase UC_Save_Items as "Lưu trữ việc làm & Theo dõi doanh nghiệp"
+    subgraph HT["Hệ thống Phu Quoc Jobs"]
+        %% Chức năng chung
+        UC_Auth(["Đăng ký & Đăng nhập"])
+        UC_Blog(["Đọc & Xem Tin tức/Bài viết Blogs"])
+        UC_Notify(["Nhận Thông báo Notifications"])
+        
+        %% Phân hệ Ứng viên
+        UC_Profile(["Quản lý Hồ sơ & CV"])
+        UC_Resume_Template(["Tạo CV theo Mẫu có sẵn"])
+        UC_Search(["Tìm kiếm & Lọc việc làm"])
+        UC_AI_Rec(["Nhận Gợi ý việc làm tự động bằng AI"])
+        UC_Chatbot(["Tương tác Chatbot AI tư vấn"])
+        UC_Apply(["Ứng tuyển & Làm bài test Quiz"])
+        UC_Interview_Confirm(["Xác nhận / Từ chối lịch phỏng vấn"])
+        UC_Candidate_Chat(["Chat Real-time Cá nhân & Nhóm"])
+        UC_Save_Items(["Lưu trữ việc làm & Theo dõi công ty"])
 
-    %% Phân hệ Nhà tuyển dụng (Employer)
-    usecase UC_Company_Profile as "Đăng ký & Cập nhật thông tin doanh nghiệp"
-    usecase UC_Post_Job as "Đăng & Quản lý tin tuyển dụng (Duyệt tự động Celery)"
-    usecase UC_Quiz_Manage as "Thiết lập Bài test trắc nghiệm (Quiz)"
-    usecase UC_Salary as "Xem mức lương dự báo gợi ý (Ridge Regression)"
-    usecase UC_Manage_App as "Quản lý & Đánh giá Đơn ứng tuyển"
-    usecase UC_AI_Match as "Chấm điểm CV ứng viên bằng AI (Cross-Encoder)"
-    usecase UC_Schedule_Interview as "Lên lịch hẹn Phỏng vấn (Online/Offline)"
-    usecase UC_Employer_Chat as "Chat Real-time với Ứng viên (Cá nhân & Nhóm)"
-    usecase UC_Employer_Support as "Chat Hỗ trợ với Quản trị viên (Admin Support)"
+        %% Phân hệ Nhà tuyển dụng
+        UC_Company_Profile(["Cập nhật thông tin doanh nghiệp"])
+        UC_Post_Job(["Đăng & Quản lý tin tuyển dụng"])
+        UC_Quiz_Manage(["Thiết lập Bài test trắc nghiệm Quiz"])
+        UC_Salary(["Xem mức lương dự báo Ridge Regression"])
+        UC_Manage_App(["Quản lý & Đánh giá Đơn ứng tuyển"])
+        UC_AI_Match(["Chấm điểm CV bằng Cross-Encoder"])
+        UC_Schedule_Interview(["Lên lịch hẹn Phỏng vấn"])
+        UC_Employer_Chat(["Chat Real-time với Ứng viên"])
+        UC_Employer_Support(["Chat Hỗ trợ với Admin"])
 
-    %% Phân hệ Quản trị viên (Admin)
-    usecase UC_Dashboard as "Xem Thống kê Dashboard (Biểu đồ tương tác)"
-    usecase UC_Users as "Quản lý Người dùng (Khóa/Mở tài khoản)"
-    usecase UC_Company_Approve as "Phê duyệt / Từ chối doanh nghiệp"
-    usecase UC_Jobs_Approve as "Phê duyệt thủ công / Từ chối tin tuyển dụng"
-    usecase UC_Retrain as "Huấn luyện lại mô hình Dự báo lương"
-    usecase UC_Blog_Manage as "Quản lý Bài viết & Danh mục Tin tức"
-    usecase UC_Template_Manage as "Quản lý Mẫu CV (Resume Templates)"
-    usecase UC_Admin_Support as "Chat hỗ trợ Nhà tuyển dụng (Admin Support)"
-}
+        %% Phân hệ Quản trị viên
+        UC_Dashboard(["Xem Thống kê Dashboard"])
+        UC_Users(["Quản lý Người dùng"])
+        UC_Company_Approve(["Phê duyệt doanh nghiệp"])
+        UC_Jobs_Approve(["Phê duyệt tin tuyển dụng"])
+        UC_Retrain(["Huấn luyện lại mô hình Dự báo lương"])
+        UC_Blog_Manage(["Quản lý Bài viết & Danh mục"])
+        UC_Template_Manage(["Quản lý Mẫu CV Templates"])
+        UC_Admin_Support(["Chat hỗ trợ Nhà tuyển dụng"])
+    end
 
-Candidate --> UC_Auth
-Candidate --> UC_Blog
-Candidate --> UC_Notify
-Candidate --> UC_Profile
-Candidate --> UC_Resume_Template
-Candidate --> UC_Search
-Candidate --> UC_AI_Rec
-Candidate --> UC_Chatbot
-Candidate --> UC_Apply
-Candidate --> UC_Interview_Confirm
-Candidate --> UC_Candidate_Chat
-Candidate --> UC_Save_Items
+    %% Liên kết cho Candidate
+    Candidate --- UC_Auth
+    Candidate --- UC_Blog
+    Candidate --- UC_Notify
+    Candidate --- UC_Profile
+    Candidate --- UC_Resume_Template
+    Candidate --- UC_Search
+    Candidate --- UC_AI_Rec
+    Candidate --- UC_Chatbot
+    Candidate --- UC_Apply
+    Candidate --- UC_Interview_Confirm
+    Candidate --- UC_Candidate_Chat
+    Candidate --- UC_Save_Items
 
-Employer --> UC_Auth
-Employer --> UC_Blog
-Employer --> UC_Notify
-Employer --> UC_Company_Profile
-Employer --> UC_Post_Job
-Employer --> UC_Quiz_Manage
-Employer --> UC_Salary
-Employer --> UC_Manage_App
-Employer --> UC_AI_Match
-Employer --> UC_Schedule_Interview
-Employer --> UC_Employer_Chat
-Employer --> UC_Employer_Support
+    %% Liên kết cho Employer
+    Employer --- UC_Auth
+    Employer --- UC_Blog
+    Employer --- UC_Notify
+    Employer --- UC_Company_Profile
+    Employer --- UC_Post_Job
+    Employer --- UC_Quiz_Manage
+    Employer --- UC_Salary
+    Employer --- UC_Manage_App
+    Employer --- UC_AI_Match
+    Employer --- UC_Schedule_Interview
+    Employer --- UC_Employer_Chat
+    Employer --- UC_Employer_Support
 
-Admin --> UC_Auth
-Admin --> UC_Dashboard
-Admin --> UC_Users
-Admin --> UC_Company_Approve
-Admin --> UC_Jobs_Approve
-Admin --> UC_Retrain
-Admin --> UC_Blog_Manage
-Admin --> UC_Template_Manage
-Admin --> UC_Admin_Support
+    %% Liên kết cho Admin
+    Admin --- UC_Auth
+    Admin --- UC_Dashboard
+    Admin --- UC_Users
+    Admin --- UC_Company_Approve
+    Admin --- UC_Jobs_Approve
+    Admin --- UC_Retrain
+    Admin --- UC_Blog_Manage
+    Admin --- UC_Template_Manage
+    Admin --- UC_Admin_Support
 ```
 
 ---
