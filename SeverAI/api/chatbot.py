@@ -187,17 +187,34 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
         if response.ok:
             resp_data = response.json()
-            # Extract JSON from Gemini response
-            raw_text = resp_data['candidates'][0]['content']['parts'][0]['text']
-            parsed_result = json.loads(raw_text)
-            return parsed_result
+            if 'candidates' in resp_data and resp_data['candidates']:
+                candidate = resp_data['candidates'][0]
+                if 'content' in candidate and 'parts' in candidate['content'] and candidate['content']['parts']:
+                    raw_text = candidate['content']['parts'][0]['text']
+                    try:
+                        parsed_result = json.loads(raw_text)
+                        return parsed_result
+                    except Exception as json_err:
+                        print(f"JSON parsing error: {json_err}")
+                        with open("gemini_error.log", "w", encoding="utf-8") as f:
+                            f.write(f"JSON error: {json_err}\nRaw text: {raw_text}")
+                else:
+                    with open("gemini_error.log", "w", encoding="utf-8") as f:
+                        f.write(f"No content inside candidate. Response: {resp_data}")
+            else:
+                with open("gemini_error.log", "w", encoding="utf-8") as f:
+                    f.write(f"No candidates key in response. Response: {resp_data}")
         else:
             print(f"Gemini API returned error: {response.status_code} - {response.text}")
+            with open("gemini_error.log", "w", encoding="utf-8") as f:
+                f.write(f"API error: {response.status_code}\nResponse: {response.text}")
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
+        with open("gemini_error.log", "w", encoding="utf-8") as f:
+            f.write(f"Exception: {e}")
 
     # Fallback in case of API error
     fallback_recs = []
@@ -256,7 +273,7 @@ def get_general_chat_response(message, history=None):
     headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
         if response.ok:
             resp_data = response.json()
             raw_text = resp_data['candidates'][0]['content']['parts'][0]['text']

@@ -8,7 +8,6 @@ export async function GET(
 ) {
     try {
         const { slug } = await params;
-        
         // 1. Find the target job ID
         const job = await prisma.job.findUnique({
             where: { slug },

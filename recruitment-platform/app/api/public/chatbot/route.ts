@@ -11,9 +11,11 @@ export async function POST(req: Request) {
       const formData = await req.formData();
       // Forward form data to Django
       const djangoFormData = new FormData();
-      const file = formData.get("file");
+      const file = formData.get("file") as unknown as File;
       if (file) {
-        djangoFormData.append("file", file);
+        const buffer = await file.arrayBuffer();
+        const blob = new Blob([buffer], { type: file.type });
+        djangoFormData.append("file", blob, file.name);
       }
       djangoResponse = await fetch("http://127.0.0.1:8000/api/chatbot/recommend/", {
         method: "POST",

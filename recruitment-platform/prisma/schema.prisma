@@ -292,12 +292,21 @@ model Job {
   tags         JobTag[]
   applications Application[]
   savedByUsers SavedJob[]
+  embedding    JobEmbedding?
 
   @@index([companyId])
   @@index([categoryId])
   @@index([wardId])
   @@index([status, createdAt])
   @@map("jobs")
+}
+
+model JobEmbedding {
+  jobId     String                     @id @map("job_id")
+  embedding Unsupported("vector(768)")?
+  job       Job                        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("job_embeddings")
 }
 
 model JobTag {
