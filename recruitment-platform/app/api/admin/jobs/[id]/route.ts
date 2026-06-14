@@ -71,9 +71,14 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    const updateData = { ...body };
+    if (status === 'REJECTED') {
+        updateData.isVisible = false;
+    }
+
     const updated = await prisma.job.update({
         where: { id },
-        data: body,
+        data: updateData,
         include: {
             company: { select: { id: true, name: true } },
             category: { select: { id: true, name: true } },

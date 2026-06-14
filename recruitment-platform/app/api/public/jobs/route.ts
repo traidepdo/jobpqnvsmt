@@ -4,6 +4,25 @@ import { JobStatus } from '@prisma/client';
 import { companyCardSelect } from '@/lib/prismaSafe';
 import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
 
+function getSalaryMinCondition(operator: 'lte' | 'gte', value: number) {
+  return {
+    OR: [
+      {
+        AND: [
+          { salaryMin: { [operator]: value / 1_000_000, not: null } },
+          { salaryMin: { lt: 100_000 } }
+        ]
+      },
+      {
+        AND: [
+          { salaryMin: { [operator]: value, not: null } },
+          { salaryMin: { gte: 100_000 } }
+        ]
+      }
+    ]
+  };
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -42,23 +61,51 @@ export async function GET(req: Request) {
 
     if (salary) {
       switch (salary) {
-        case 'lt5':
-          andConditions.push({ salaryMax: { lte: 5_000_000 } });
+        case 'lt10':
+          andConditions.push(getSalaryMinCondition('lte', 10_000_000));
           break;
-        case 'to5':
-          andConditions.push({ salaryMin: { gte: 5_000_000 } });
+        case '10to15':
+          andConditions.push({
+            AND: [
+              getSalaryMinCondition('gte', 10_000_000),
+              getSalaryMinCondition('lte', 15_000_000)
+            ]
+          });
           break;
-        case 'to10':
-          andConditions.push({ salaryMin: { gte: 10_000_000 } });
+        case '15to20':
+          andConditions.push({
+            AND: [
+              getSalaryMinCondition('gte', 15_000_000),
+              getSalaryMinCondition('lte', 20_000_000)
+            ]
+          });
           break;
-        case 'to20':
-          andConditions.push({ salaryMin: { gte: 20_000_000 } });
+        case '20to25':
+          andConditions.push({
+            AND: [
+              getSalaryMinCondition('gte', 20_000_000),
+              getSalaryMinCondition('lte', 25_000_000)
+            ]
+          });
           break;
-        case 'to30':
-          andConditions.push({ salaryMin: { gte: 30_000_000 } });
+        case '25to30':
+          andConditions.push({
+            AND: [
+              getSalaryMinCondition('gte', 25_000_000),
+              getSalaryMinCondition('lte', 30_000_000)
+            ]
+          });
           break;
-        case 'to40':
-          andConditions.push({ salaryMin: { gte: 40_000_000 } });
+        case '30to50':
+          andConditions.push({
+            AND: [
+              getSalaryMinCondition('gte', 30_000_000),
+              getSalaryMinCondition('lte', 50_000_000)
+            ]
+          });
+          break;
+        case 'gt50':
+          andConditions.push(getSalaryMinCondition('gte', 50_000_000));
           break;
         case 'negotiable':
           andConditions.push({ salaryMin: null, salaryMax: null });
@@ -75,7 +122,7 @@ export async function GET(req: Request) {
         orderBy = { salaryMin: 'asc' };
         break;
       case 'maxsalary':
-        orderBy = { salaryMax: 'desc' };
+        orderBy = { salaryMin: 'desc' };
         break;
       default:
         orderBy = { createdAt: 'desc' };
@@ -123,7 +170,7 @@ export async function GET(req: Request) {
     const jobsWithAnalysis = jobs.map(job => {
       const min = job.salaryMin;
       const max = job.salaryMax;
-      
+
       let actualSalary: number | null = null;
       if (min !== null && max !== null) {
         actualSalary = (min + max) / 2;
@@ -132,15 +179,15 @@ export async function GET(req: Request) {
       } else if (max !== null) {
         actualSalary = max;
       }
-      
+
       let salaryStatus: 'good' | 'average' | 'bad' | null = null;
       let salaryDiff = 0;
-      
+
       if (actualSalary !== null) {
         if (actualSalary > 100000) {
           actualSalary = actualSalary / 1000000;
         }
-        
+
         const predicted = predictSalary({
           experience: job.experience,
           level: job.level,
@@ -148,7 +195,7 @@ export async function GET(req: Request) {
           categoryId: job.categoryId,
           wardId: job.wardId,
         }, model);
-        
+
         salaryDiff = Math.round(((actualSalary - predicted) / predicted) * 100);
         if (actualSalary >= 1.15 * predicted) {
           salaryStatus = 'good';
@@ -158,7 +205,7 @@ export async function GET(req: Request) {
           salaryStatus = 'average';
         }
       }
-      
+
       return {
         ...job,
         salaryStatus,

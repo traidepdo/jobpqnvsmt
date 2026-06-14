@@ -41,6 +41,8 @@ export default function JobsPage() {
     const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number } | null>(null);
     const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [visibilityFilter, setVisibilityFilter] = useState('');
     const [detailJob, setDetailJob] = useState<JobDetail | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
 
@@ -55,12 +57,18 @@ export default function JobsPage() {
         } catch { /* giữ data cũ */ }
         finally { setDetailLoading(false); }
     };
-    useEffect(() => { fetchJobs(); }, [page, limit, search]);
+    useEffect(() => { fetchJobs(); }, [page, limit, search, statusFilter, visibilityFilter]);
 
     const fetchJobs = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({ page: String(page), limit: String(limit), search });
+            const params = new URLSearchParams({ 
+                page: String(page), 
+                limit: String(limit), 
+                search,
+                status: statusFilter,
+                isVisible: visibilityFilter
+            });
             const res = await fetch(`/api/admin/jobs?${params}`);
             if (!res.ok) throw new Error('Failed to fetch jobs');
             const data = await res.json();
@@ -81,7 +89,7 @@ export default function JobsPage() {
 
     // Search
     const handleSearch = () => { setPage(1); setSearch(searchInput); };
-    const handleClearSearch = () => { setSearchInput(''); setSearch(''); setPage(1); };
+    const handleClearSearch = () => { setSearchInput(''); setSearch(''); setStatusFilter(''); setVisibilityFilter(''); setPage(1); };
     const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSearch(); };
 
     // Delete
@@ -131,7 +139,8 @@ export default function JobsPage() {
                 body: JSON.stringify({ status: newStatus }),
             });
             if (!res.ok) throw new Error();
-            setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: newStatus } : j));
+            const data = await res.json();
+            setJobs(prev => prev.map(j => j.id === jobId ? { ...j, ...data.job } : j));
             showToast(`Đã ${newStatus === 'ACTIVE' ? 'duyệt' : 'từ chối'} tin tuyển dụng "${jobTitle}"`, 'success');
         } catch {
             showToast('Cập nhật trạng thái thất bại.', 'error');
@@ -180,9 +189,9 @@ export default function JobsPage() {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="flex gap-3 mb-5">
-                <div className="relative flex-1">
+            {/* Search and Filters */}
+            <div className="flex flex-wrap gap-3 mb-5">
+                <div className="relative flex-1 min-w-[280px]">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
                     <input
                         type="text"
@@ -197,6 +206,30 @@ export default function JobsPage() {
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-lg leading-none">×</button>
                     )}
                 </div>
+
+                {/* Bộ lọc trạng thái */}
+                <select
+                    value={statusFilter}
+                    onChange={e => { setPage(1); setStatusFilter(e.target.value); }}
+                    className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 focus:bg-white/8 transition-colors cursor-pointer"
+                >
+                    <option value="" className="bg-[#0f1420] text-white">Tất cả trạng thái</option>
+                    <option value="ACTIVE" className="bg-[#0f1420] text-emerald-400">Đang tuyển (Duyệt)</option>
+                    <option value="REJECTED" className="bg-[#0f1420] text-red-400">Từ chối</option>
+                    <option value="CLOSED" className="bg-[#0f1420] text-gray-400">Đã đóng</option>
+                </select>
+
+                {/* Bộ lọc hiển thị */}
+                <select
+                    value={visibilityFilter}
+                    onChange={e => { setPage(1); setVisibilityFilter(e.target.value); }}
+                    className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 focus:bg-white/8 transition-colors cursor-pointer"
+                >
+                    <option value="" className="bg-[#0f1420] text-white">Tất cả hiển thị</option>
+                    <option value="true" className="bg-[#0f1420] text-emerald-400">Hiển thị</option>
+                    <option value="false" className="bg-[#0f1420] text-gray-400">Đã ẩn</option>
+                </select>
+
                 <button onClick={handleSearch}
                     className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors">
                     Tìm kiếm

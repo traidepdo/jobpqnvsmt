@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const experience = searchParams.get('experience') || ''; // ExperienceLevel enum
     const status = searchParams.get('status') || ''; // JobStatus enum
     const categoryId = searchParams.get('categoryId') || '';
+    const isVisibleParam = searchParams.get('isVisible');
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -26,8 +27,17 @@ export async function GET(req: NextRequest) {
 
     // Chỉ filter enum khi có giá trị hợp lệ (không rỗng)
     if (experience) where.experience = experience;
-    if (status) where.status = status;
+    if (status) {
+        where.status = status;
+    } else {
+        where.status = { in: ['ACTIVE', 'REJECTED', 'CLOSED'] };
+    }
     if (categoryId) where.categoryId = categoryId;
+    if (isVisibleParam === 'true') {
+        where.isVisible = true;
+    } else if (isVisibleParam === 'false') {
+        where.isVisible = false;
+    }
 
     const [jobs, total] = await Promise.all([
         prisma.job.findMany({

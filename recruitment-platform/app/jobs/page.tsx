@@ -33,12 +33,13 @@ interface Category {
 
 const SALARY_OPTIONS = [
   { label: 'Tất cả mức lương', value: '' },
-  { label: 'Dưới 5 triệu', value: 'lt5' },
-  { label: 'Trên 5 triệu', value: 'to5' },
-  { label: 'Trên 10', value: 'to10' },
-  { label: 'Trên 20', value: 'to20' },
-  { label: 'Trên 30', value: 'to30' },
-  { label: 'Trên 40', value: 'to40' },
+  { label: 'Dưới 10 triệu', value: 'lt10' },
+  { label: '10 - 15 triệu', value: '10to15' },
+  { label: '15 - 20 triệu', value: '15to20' },
+  { label: '20 - 25 triệu', value: '20to25' },
+  { label: '25 - 30 triệu', value: '25to30' },
+  { label: '30 - 50 triệu', value: '30to50' },
+  { label: 'Trên 50 triệu', value: 'gt50' },
   { label: 'Thỏa thuận', value: 'negotiable' },
 ];
 
@@ -670,9 +671,9 @@ function JobsPageContent() {
                       <button
                         key={s.value}
                         onClick={() => {
-                          const params = new URLSearchParams(searchParams);
+                          const params = new URLSearchParams(searchParams.toString());
                           params.set('sort', s.value);
-                          router.push(`/jobs?${params}`);
+                          router.push(`/jobs?${params.toString()}`);
                         }}
                         className={`px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${sort === s.value ? 'bg-[#00b14f] text-white' : 'text-gray-600 hover:bg-gray-50'
                           }`}
