@@ -223,6 +223,15 @@ export default function Header() {
                                     Đăng tuyển dụng
                                 </Link>
                             )}
+                            {user.role === "CANDIDATE" && (
+                                <Link
+                                    href="/register/employer"
+                                    className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#212f3f] hover:bg-[#18222e] rounded-lg shadow-sm transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                                    Đăng tuyển dụng
+                                </Link>
+                            )}
                             {user.role === "ADMIN" && (
                                 <Link
                                     href="/admin"

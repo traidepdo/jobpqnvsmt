@@ -92,6 +92,9 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.redirect(new URL('/unauthorized', request.url));
             }
             if (isEmployerRoute && userRole !== 'EMPLOYER' && userRole !== 'ADMIN') {
+                if (userRole === 'CANDIDATE') {
+                    return NextResponse.redirect(new URL('/register/employer', request.url));
+                }
                 return NextResponse.redirect(new URL('/unauthorized', request.url));
             }
             if (isCandidateRoute && userRole !== 'CANDIDATE') {

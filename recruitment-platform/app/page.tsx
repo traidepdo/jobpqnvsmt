@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { prisma } from "@/lib/prisma";
 import { companyCardSelect } from "@/lib/prismaSafe";
+import { verifyToken } from "@/lib/auth";
 import "../styles/home.css"
 import Hero from '@/components/hero';
 import JobTop from '@/components/home/Jobtop';
@@ -83,7 +84,9 @@ export default async function PhuQuocJobs() {
   const { categories, companies, wards } = await getHomeData();
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
-  const isLoggedIn = !!token;
+  const payload = token ? await verifyToken(token) : null;
+  const isLoggedIn = !!payload;
+  const isEmployer = payload?.role === 'EMPLOYER';
 
   // ─── Main Render ───────────────────────────────────────────────────────
   return (
@@ -293,7 +296,7 @@ export default async function PhuQuocJobs() {
                   <p className="text-slate-300 text-sm leading-relaxed mb-6">
                     Đăng tin tuyển dụng và tiếp cận nhanh chóng nguồn ứng viên năng động tại Phú Quốc. Quản lý hồ sơ thông minh, chuyên nghiệp.
                   </p>
-                  <Link href={isLoggedIn ? "/employer/dashboard" : "/login?callbackUrl=/employer/dashboard"}
+                  <Link href={isEmployer ? "/employer/dashboard" : "/register/employer"}
                     className="inline-flex items-center justify-center font-bold text-sm text-slate-900 bg-white hover:bg-slate-100 px-6 py-3 rounded-xl transition-all duration-200 hover:scale-[1.03]">
                     Đăng tin tuyển dụng ngay
                   </Link>

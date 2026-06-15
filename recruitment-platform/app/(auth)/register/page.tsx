@@ -23,8 +23,8 @@ export default function RegisterPage() {
         if (password.length < 12) return 3;
         return 4;
     })();
-    const strengthLabel = ['', 'Yếu', 'Trung bình', 'Khá mạnh', 'Rất mạnh'][passwordStrength];
-    const strengthColor = ['', '#ef4444', '#f97316', '#eab308', '#16a34a'][passwordStrength];
+    const strengthLabel = ['', 'Yêu', 'Trung bình', 'Khá mạnh', 'Rất mạnh'][passwordStrength];
+    const strengthColor = ['', '#f43f5e', '#f97316', '#eab308', '#10b981'][passwordStrength];
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,255 +45,339 @@ export default function RegisterPage() {
         finally { setLoading(false); }
     };
 
-    const EyeIcon = ({ open }: { open: boolean }) => open
-        ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" strokeWidth={1.8}/></svg>
-        : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>;
+    const EyeIcon = ({ open }: { open: boolean }) => (
+        <span className="material-symbols-outlined text-[18px]">
+            {open ? 'visibility_off' : 'visibility'}
+        </span>
+    );
 
     return (
         <>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
             <style>{`
                 @keyframes fadeUp {
-                    from { opacity: 0; transform: translateY(16px); }
+                    from { opacity: 0; transform: translateY(20px); }
                     to   { opacity: 1; transform: translateY(0); }
                 }
-                @keyframes floatY {
-                    0%, 100% { transform: translateY(0); }
-                    50%      { transform: translateY(-10px); }
+                @keyframes floatCard1 {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50%      { transform: translateY(-5px) rotate(0.3deg); }
                 }
-                .anim-fade-up { animation: fadeUp 0.5s ease both; }
-                .d1 { animation-delay: .05s; } .d2 { animation-delay: .1s; }
-                .d3 { animation-delay: .15s; } .d4 { animation-delay: .2s; }
-                .d5 { animation-delay: .25s; } .d6 { animation-delay: .3s; }
-                .float-emoji { animation: floatY 3.5s ease-in-out infinite; }
-                input:-webkit-autofill,
-                input:-webkit-autofill:hover,
-                input:-webkit-autofill:focus {
-                    -webkit-box-shadow: 0 0 0 1000px #f3f4f6 inset !important;
-                    -webkit-text-fill-color: #111827 !important;
-                    transition: background-color 5000s;
+                @keyframes floatCard2 {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50%      { transform: translateY(-10px) rotate(-0.3deg); }
+                }
+                @keyframes floatCard3 {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50%      { transform: translateY(-6px) rotate(0.2deg); }
+                }
+                @keyframes kenBurns {
+                    0%   { transform: scale(1) translate(0, 0); }
+                    100% { transform: scale(1.12) translate(-1%, -0.5%); }
+                }
+                @keyframes shimmerEffect {
+                    0%   { transform: translateX(-120%); }
+                    100% { transform: translateX(120%); }
+                }
+
+                .anim-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+                .d1 { animation-delay: 0.05s; }
+                .d2 { animation-delay: 0.1s; }
+                .d3 { animation-delay: 0.15s; }
+                .d4 { animation-delay: 0.2s; }
+                .d5 { animation-delay: 0.25s; }
+                .d6 { animation-delay: 0.3s; }
+                
+                .ken-burns-bg {
+                    animation: kenBurns 35s ease-in-out infinite alternate;
+                }
+                
+                .float-card-1 { animation: floatCard1 6s ease-in-out infinite; }
+                .float-card-2 { animation: floatCard2 8s ease-in-out infinite; }
+                .float-card-3 { animation: floatCard3 7s ease-in-out infinite; }
+
+                .shimmer-btn {
+                    position: relative;
+                    overflow: hidden;
+                }
+                .shimmer-btn::after {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                    transform: translateX(-120%);
+                }
+                .shimmer-btn:hover::after {
+                    animation: shimmerEffect 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                }
+
+                input:-webkit-autofill {
+                    -webkit-box-shadow: 0 0 0 1000px #0b1f19 inset !important;
+                    -webkit-text-fill-color: #ffffff !important;
                 }
             `}</style>
 
-            <div className="min-h-screen flex">
+            <div className="h-screen w-screen relative flex items-center justify-center font-sans overflow-hidden selection:bg-emerald-500 selection:text-white px-6">
+                
+                {/* ── GLOBAL BACKDROP ── */}
+                <div 
+                    className="absolute inset-0 ken-burns-bg bg-cover bg-center"
+                    style={{ 
+                        backgroundImage: `url('https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1200&auto=format&fit=crop')`,
+                    }}
+                />
+                
+                {/* Immersive Dark Emerald-Teal Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#022c22]/98 via-[#041d18]/95 to-[#0b1329]/98 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#021f18] via-transparent to-transparent opacity-90" />
 
-                {/* ── LEFT PANEL ── */}
-                <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 p-10 relative overflow-hidden"
-                    style={{ background: 'linear-gradient(160deg, #15803d 0%, #16a34a 50%, #22c55e 100%)' }}>
-                    <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-white/5" />
-                    <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full bg-white/5" />
-                    <div className="absolute top-1/2 -right-10 w-40 h-40 rounded-full bg-white/5" />
+                {/* ── CONTENT CONTAINER ── */}
+                <div className="relative z-10 w-full max-w-6xl h-full flex flex-col lg:flex-row items-center justify-between lg:justify-around py-6 lg:py-12">
+                    
+                    {/* LEFT PANEL: Branding & Info */}
+                    <div className="hidden lg:flex flex-col justify-between h-full max-w-md text-white py-4">
+                        <div>
+                            {/* Logo */}
+                            <Link href="/" className="inline-flex items-center gap-2.5 group mb-6">
+                                <span className="font-extrabold text-2xl tracking-tight text-white">
+                                    Phú Quốc<span className="text-emerald-400">Jobs</span>
+                                </span>
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                            </Link>
 
-                    {/* Brand */}
-                    <div className="relative z-10">
-                        <Link href="/" className="inline-flex items-center gap-2.5">
-                            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🏝️</div>
-                            <span className="text-white font-bold text-lg">PhuQuocJobs</span>
-                        </Link>
-                    </div>
+                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-black/30 border border-white/25 backdrop-blur-xl mb-6 text-emerald-400 shadow-2xl float-card-1">
+                                <span className="material-symbols-outlined text-[28px]">rocket_launch</span>
+                            </div>
+                            
+                            <h2 className="text-3xl font-extrabold text-white leading-tight mb-4 tracking-tight">
+                                Bắt đầu hành trình sự nghiệp mới
+                            </h2>
+                            
+                            <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                                Tạo tài khoản ứng viên hoàn toàn miễn phí và kết nối trực tiếp đến hàng trăm cơ hội việc làm hấp dẫn tại Phú Quốc ngay hôm nay.
+                            </p>
+                        </div>
 
-                    {/* Content */}
-                    <div className="relative z-10">
-                        <div className="text-5xl mb-6 float-emoji">🚀</div>
-                        <h2 className="text-3xl font-extrabold text-white leading-tight mb-4">
-                            Bắt đầu hành trình<br />sự nghiệp của bạn
-                        </h2>
-                        <p className="text-white/70 text-sm leading-relaxed mb-8">
-                            Tạo tài khoản miễn phí và kết nối với hàng trăm nhà tuyển dụng uy tín tại Phú Quốc.
-                        </p>
+                        {/* Parallax Floating Cards */}
                         <div className="space-y-3">
                             {[
-                                { icon: '✨', text: 'Tạo hồ sơ ứng tuyển chuyên nghiệp' },
-                                { icon: '⚡', text: 'Nộp hồ sơ nhanh chỉ 1 click' },
-                                { icon: '🔔', text: 'Nhận thông báo việc làm phù hợp' },
+                                { icon: 'assignment_ind', title: 'Hồ sơ cá nhân hóa', text: 'Tạo CV trực quan, thu hút sự chú ý của nhà tuyển dụng.' },
+                                { icon: 'electric_bolt', title: 'Ứng tuyển 1-Click', text: 'Nộp hồ sơ trực tiếp đến các resort, nhà hàng chỉ với một chạm.' },
+                                { icon: 'notifications_active', title: 'Thông báo việc làm mới', text: 'Nhận gợi ý công việc dựa trên kỹ năng và vị trí mong muốn.' },
                             ].map((f, i) => (
-                                <div key={i} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
-                                    <span className="text-xl">{f.icon}</span>
-                                    <span className="text-white/90 text-sm font-medium">{f.text}</span>
+                                <div 
+                                    key={i} 
+                                    className={`flex gap-3 p-3.5 rounded-2xl bg-slate-950/20 border border-white/10 backdrop-blur-xl hover:bg-slate-950/45 hover:border-white/20 transition-all duration-500 group shadow-lg float-card-${i + 1}`}
+                                >
+                                    <div className="flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                            <span className="material-symbols-outlined text-[18px]">{f.icon}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-semibold text-white mb-0.5">{f.title}</h4>
+                                        <p className="text-[11px] text-slate-300/80 leading-normal">{f.text}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="relative z-10">
-                        <p className="text-white/40 text-xs">© 2026 PhuQuocJobs. All rights reserved.</p>
-                    </div>
-                </div>
-
-                {/* ── RIGHT PANEL ── */}
-                <div className="flex-1 flex items-center justify-center bg-gray-50 p-6 overflow-y-auto">
-                    <div className="w-full max-w-md py-8">
-
-                        {/* Mobile logo */}
-                        <div className="lg:hidden text-center mb-8 anim-fade-up">
-                            <Link href="/" className="inline-flex items-center gap-2">
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                                    style={{ background: '#16a34a' }}>🏝️</div>
-                                <span className="font-bold text-gray-900 text-lg">PhuQuocJobs</span>
-                            </Link>
-                        </div>
-
-                        {/* Header */}
-                        <div className="mb-7 anim-fade-up d1">
-                            <h1 className="text-2xl font-extrabold text-gray-900">Tạo tài khoản</h1>
-                            <p className="text-gray-500 text-sm mt-1">Miễn phí, nhanh chóng, dễ dàng 🎉</p>
-                        </div>
-
-                        {/* Error */}
-                        {error && (
-                            <div className="mb-5 flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl anim-fade-up">
-                                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10" strokeWidth={2}/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01"/>
-                                </svg>
-                                {error}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleRegister} className="space-y-4">
-                            {/* Họ tên */}
-                            <div className="anim-fade-up d1">
-                                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                                    Họ và tên <span className="text-red-400 normal-case">*</span>
-                                </label>
-                                <div className="flex items-center bg-gray-100 rounded-xl px-3.5 py-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/30 focus-within:shadow-sm transition-all border border-transparent focus-within:border-green-300">
-                                    <svg className="w-4 h-4 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="8" r="4" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                    <input type="text" value={name} onChange={e => setName(e.target.value)} required
-                                        placeholder="Nguyễn Văn A"
-                                        className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"/>
-                                    {name.length > 1 && (
-                                        <svg className="w-4 h-4 text-green-500 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                    )}
-                                </div>
+                    {/* RIGHT PANEL: Immersive Form (No Scroll) */}
+                    <div className="w-full max-w-[460px] bg-black/45 border border-white/10 backdrop-blur-2xl p-6 md:p-8 rounded-3xl shadow-2xl shadow-black/40 anim-fade-up flex flex-col justify-between my-auto">
+                        <div>
+                            {/* Mobile Logo */}
+                            <div className="lg:hidden text-center mb-6">
+                                <Link href="/" className="inline-flex items-center gap-2">
+                                    <span className="font-extrabold text-2xl tracking-tight text-white">
+                                        Phú Quốc<span className="text-emerald-400">Jobs</span>
+                                    </span>
+                                </Link>
                             </div>
 
-                            {/* Email + Phone */}
-                            <div className="grid grid-cols-2 gap-3 anim-fade-up d2">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                                        Email <span className="text-red-400 normal-case">*</span>
-                                    </label>
-                                    <div className="flex items-center bg-gray-100 rounded-xl px-3.5 py-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/30 focus-within:shadow-sm transition-all border border-transparent focus-within:border-green-300">
-                                        <svg className="w-4 h-4 text-gray-400 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <rect x="2" y="4" width="20" height="16" rx="2" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                                            placeholder="email@..."
-                                            className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"/>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                                        Điện thoại <span className="text-red-400 normal-case">*</span>
-                                    </label>
-                                    <div className="flex items-center bg-gray-100 rounded-xl px-3.5 py-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/30 focus-within:shadow-sm transition-all border border-transparent focus-within:border-green-300">
-                                        <svg className="w-4 h-4 text-gray-400 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.14 13.5 19.79 19.79 0 0 1 1.07 5c-.11-1.09.6-2.1 1.67-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L6.91 10.9a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                        </svg>
-                                        <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
-                                            placeholder="09xxxxxxxx"
-                                            className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"/>
-                                    </div>
-                                </div>
+                            {/* Header */}
+                            <div className="mb-6 anim-fade-up d1">
+                                <h1 className="text-2xl font-extrabold text-white tracking-tight">Tạo tài khoản</h1>
+                                <p className="text-slate-300 text-xs mt-1">Miễn phí, nhanh chóng và dễ dàng 👋</p>
                             </div>
 
-                            {/* Password + Confirm */}
-                            <div className="grid grid-cols-2 gap-3 anim-fade-up d3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                                        Mật khẩu <span className="text-red-400 normal-case">*</span>
-                                    </label>
-                                    <div className="flex items-center bg-gray-100 rounded-xl px-3.5 py-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/30 focus-within:shadow-sm transition-all border border-transparent focus-within:border-green-300">
-                                        <svg className="w-4 h-4 text-gray-400 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <rect x="3" y="11" width="18" height="11" rx="2" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                        <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                                            placeholder="••••••••"
-                                            className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"/>
-                                        <button type="button" onClick={() => setShowPassword(s => !s)} tabIndex={-1}
-                                            className="ml-1 text-gray-400 hover:text-gray-600 cursor-pointer shrink-0">
-                                            <EyeIcon open={showPassword}/>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
-                                        Xác nhận <span className="text-red-400 normal-case">*</span>
-                                    </label>
-                                    <div className={`flex items-center rounded-xl px-3.5 py-3 transition-all border ${
-                                        confirmPassword && confirmPassword !== password
-                                            ? 'bg-red-50 border-red-300 focus-within:ring-2 focus-within:ring-red-300/30'
-                                            : 'bg-gray-100 border-transparent focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/30 focus-within:shadow-sm focus-within:border-green-300'
-                                    }`}>
-                                        <svg className="w-4 h-4 text-gray-400 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <input type={showConfirm ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
-                                            placeholder="••••••••"
-                                            className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"/>
-                                        <button type="button" onClick={() => setShowConfirm(s => !s)} tabIndex={-1}
-                                            className="ml-1 text-gray-400 hover:text-gray-600 cursor-pointer shrink-0">
-                                            <EyeIcon open={showConfirm}/>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Strength bar */}
-                            {password.length > 0 && (
-                                <div className="anim-fade-up space-y-1.5">
-                                    <div className="flex items-center gap-1.5">
-                                        {[1,2,3,4].map(s => (
-                                            <div key={s} className="h-1.5 flex-1 rounded-full transition-all duration-300"
-                                                style={{ background: passwordStrength >= s ? strengthColor : '#e5e7eb' }}/>
-                                        ))}
-                                        <span className="text-[11px] ml-1 w-20 text-right font-semibold shrink-0"
-                                            style={{ color: strengthColor || '#9ca3af' }}>{strengthLabel}</span>
+                            {/* Error Alert */}
+                            {error && (
+                                <div className="mb-4 flex items-start gap-2 bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs p-3 rounded-xl anim-fade-up shadow-sm">
+                                    <span className="material-symbols-outlined text-[18px] shrink-0 text-rose-400">error</span>
+                                    <div>
+                                        <p className="font-semibold">Đăng ký thất bại</p>
+                                        <p className="text-[10px] text-rose-300 mt-0.5">{error}</p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Submit */}
-                            <div className="anim-fade-up d5 pt-1">
-                                <button type="submit" disabled={loading}
-                                    className="w-full py-3 rounded-xl font-bold text-white text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:opacity-90 active:scale-[0.98]"
-                                    style={{ background: 'linear-gradient(135deg, #15803d, #22c55e)' }}>
-                                    {loading
-                                        ? <span className="flex items-center justify-center gap-2">
-                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                                            </svg>
-                                            Đang tạo tài khoản…
-                                          </span>
-                                        : 'Tạo tài khoản Ứng viên'
-                                    }
-                                </button>
-                            </div>
-                        </form>
+                            {/* Compact Form */}
+                            <form onSubmit={handleRegister} className="space-y-3.5">
+                                {/* Name Field */}
+                                <div className="anim-fade-up d1">
+                                    <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Họ và tên *</label>
+                                    <div className="flex items-center bg-black/20 rounded-xl px-3.5 py-2.5 border border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:shadow-[0_0_12px_rgba(16,185,129,0.25)] transition-all duration-300">
+                                        <span className="material-symbols-outlined text-slate-400 mr-2.5 shrink-0 text-[16px]">person</span>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                            required
+                                            placeholder="Nguyễn Văn A"
+                                            className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email & Phone Row */}
+                                <div className="grid grid-cols-2 gap-3.5 anim-fade-up d2">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Email *</label>
+                                        <div className="flex items-center bg-black/20 rounded-xl px-3 py-2.5 border border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all duration-300">
+                                            <span className="material-symbols-outlined text-slate-400 mr-2 shrink-0 text-[16px]">mail</span>
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={e => setEmail(e.target.value)}
+                                                required
+                                                placeholder="email@..."
+                                                className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full min-w-0"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Điện thoại *</label>
+                                        <div className="flex items-center bg-black/20 rounded-xl px-3 py-2.5 border border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all duration-300">
+                                            <span className="material-symbols-outlined text-slate-400 mr-2 shrink-0 text-[16px]">call</span>
+                                            <input
+                                                type="tel"
+                                                value={phone}
+                                                onChange={e => setPhone(e.target.value)}
+                                                required
+                                                placeholder="09xxxxxxxx"
+                                                className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full min-w-0"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Password & Confirm Password Row */}
+                                <div className="grid grid-cols-2 gap-3.5 anim-fade-up d3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Mật khẩu *</label>
+                                        <div className="flex items-center bg-black/20 rounded-xl px-3 py-2.5 border border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all duration-300">
+                                            <span className="material-symbols-outlined text-slate-400 mr-1.5 shrink-0 text-[16px]">lock</span>
+                                            <input
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                                required
+                                                placeholder="••••••••"
+                                                className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full min-w-0"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(s => !s)}
+                                                tabIndex={-1}
+                                                className="ml-1 text-slate-400 hover:text-white cursor-pointer shrink-0"
+                                            >
+                                                <EyeIcon open={showPassword} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Xác nhận *</label>
+                                        <div className={`flex items-center rounded-xl px-3 py-2.5 border transition-all duration-300 ${
+                                            confirmPassword && confirmPassword !== password
+                                                ? 'bg-rose-500/10 border-rose-400/30'
+                                                : 'bg-black/20 border-white/10 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20'
+                                        }`}>
+                                            <span className="material-symbols-outlined text-slate-400 mr-1.5 shrink-0 text-[16px]">verified_user</span>
+                                            <input
+                                                type={showConfirm ? 'text' : 'password'}
+                                                value={confirmPassword}
+                                                onChange={e => setConfirmPassword(e.target.value)}
+                                                required
+                                                placeholder="••••••••"
+                                                className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full min-w-0"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirm(s => !s)}
+                                                tabIndex={-1}
+                                                className="ml-1 text-slate-400 hover:text-white cursor-pointer shrink-0"
+                                            >
+                                                <EyeIcon open={showConfirm} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Password Strength Meter */}
+                                {password.length > 0 && (
+                                    <div className="anim-fade-up space-y-1.5 py-0.5">
+                                        <div className="flex items-center justify-between text-[10px]">
+                                            <span className="text-slate-400 font-medium">Độ bảo mật:</span>
+                                            <span className="font-bold" style={{ color: strengthColor }}>{strengthLabel}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            {[1, 2, 3, 4].map(s => (
+                                                <div
+                                                    key={s}
+                                                    className="h-1 flex-1 rounded-full transition-all duration-300"
+                                                    style={{ background: passwordStrength >= s ? strengthColor : 'rgba(255,255,255,0.1)' }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Submit Button */}
+                                <div className="anim-fade-up d5 pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="shimmer-btn w-full py-3.5 rounded-xl font-bold text-white text-xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.01] shadow-lg shadow-emerald-500/20 active:scale-[0.99] flex items-center justify-center gap-1.5"
+                                    >
+                                        {loading ? (
+                                            <span className="flex items-center justify-center gap-1.5">
+                                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                                </svg>
+                                                Đang xử lý...
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <span>Tạo tài khoản ứng viên</span>
+                                                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
 
                         {/* Footer */}
-                        <div className="mt-7 text-center space-y-3 anim-fade-up d6">
-                            <p className="text-sm text-gray-500">
+                        <div className="mt-6 text-center space-y-3 anim-fade-up d6">
+                            <p className="text-xs text-slate-300">
                                 Đã có tài khoản?{' '}
-                                <Link href="/login" className="font-bold hover:underline" style={{ color: '#16a34a' }}>
+                                <Link href="/login" className="font-bold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors">
                                     Đăng nhập ngay
                                 </Link>
                             </p>
-                            <div className="pt-3 border-t border-gray-100">
-                                <p className="text-xs text-gray-400">
+                            
+                            <div className="pt-3 border-t border-white/10">
+                                <p className="text-[10px] text-slate-400">
                                     Bạn đại diện cho công ty?{' '}
-                                    <Link href="/register/employer" className="font-bold hover:underline" style={{ color: '#16a34a' }}>
+                                    <Link href="/register/employer" className="font-bold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors">
                                         Đăng ký Nhà tuyển dụng 🏢
                                     </Link>
                                 </p>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
