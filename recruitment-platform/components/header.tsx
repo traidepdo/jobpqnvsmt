@@ -194,6 +194,7 @@ export default function Header() {
                         <ul className="flex gap-3 list-none m-0 p-0 h-full items-center">
                             <NavItem label="Trang chủ" href="/" />
                             <NavItem label="Việc làm" href="/jobs" dropdown={JOB_DROPDOWN} />
+                            <NavItem label="Công ty" href="/companies" />
                             <NavItem label="Tạo CV" href="/tao-cv" dropdown={CV_DROPDOWN} />
                             <NavItem label="Blog" href="/blog" dropdown={BLOG_DROPDOWN} />
                         </ul>

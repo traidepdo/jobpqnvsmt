@@ -72,8 +72,9 @@ export async function middleware(request: NextRequest) {
     const isAdminRoute = pathname.startsWith('/admin');
     const isEmployerRoute = pathname.startsWith('/employer');
     const isCandidateRoute = pathname.startsWith('/candidate');
+    const isTaoCvRoute = pathname.startsWith('/tao-cv');
 
-    if (isAdminRoute || isEmployerRoute || isCandidateRoute) {
+    if (isAdminRoute || isEmployerRoute || isCandidateRoute || isTaoCvRoute) {
         if (!token) {
             if (isAdminRoute) {
                 return NextResponse.redirect(new URL('/admin/login', request.url));
@@ -116,5 +117,6 @@ export const config = {
         '/login',
         '/admin/login',
         '/register/:path*',
+        '/tao-cv/:path*',
     ],
 };

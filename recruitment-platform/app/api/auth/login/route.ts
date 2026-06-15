@@ -25,7 +25,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid password" }, { status: 401 })
         }
         // 4. Tạo JWT Token bằng thư viện jose
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-key-123');
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
         const token = await new SignJWT({ id: user.id, name: user.name, role: user.role })
             .setProtectedHeader({ alg: 'HS256' })
             .setExpirationTime('1d') // Token có giá trị trong 1 ngày
