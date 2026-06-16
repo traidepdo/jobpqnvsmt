@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Sender = { id: string; name: string; avatar?: string | null };
@@ -76,7 +76,7 @@ function GroupAvatar({ name, size = 9 }: { name: string; size?: number }) {
     );
 }
 
-export default function EmployerMessagesPage() {
+function EmployerMessagesPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeId = searchParams.get("id");
@@ -694,5 +694,17 @@ export default function EmployerMessagesPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function EmployerMessagesPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[calc(100vh-64px-48px)] items-center justify-center bg-white text-gray-500 font-sans">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#0052CC]"></div>
+            </div>
+        }>
+            <EmployerMessagesPageContent />
+        </Suspense>
     );
 }

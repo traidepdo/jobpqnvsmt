@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDateVi } from '@/lib/jobLabels';
 
@@ -83,7 +83,7 @@ function GroupAvatar({ name, size = 9 }: { name: string; size?: number }) {
     );
 }
 
-export default function CandidateMessagesPage() {
+function CandidateMessagesPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeId = searchParams.get('id');
@@ -589,5 +589,17 @@ export default function CandidateMessagesPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CandidateMessagesPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[calc(100vh-56px-40px)] items-center justify-center bg-[#f5f7fa] text-gray-400 font-sans">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#0052CC]"></div>
+            </div>
+        }>
+            <CandidateMessagesPageContent />
+        </Suspense>
     );
 }
