@@ -255,3 +255,43 @@ Khi nhà tuyển dụng nhấp vào **"Chấm điểm CV"**:
    ```bash
    python manage.py runserver
    ```
+
+### 5.3. Hướng dẫn Chạy nhanh trên Ubuntu (Ubuntu Quick Start)
+Nếu bạn đang sử dụng hệ điều hành Ubuntu/Linux, hãy làm theo các bước tối ưu sau đây để cài đặt cấu hình và khởi chạy dự án:
+
+#### 1. Cấu hình biến môi trường PATH (Chỉ cần chạy 1 lần)
+Chạy lệnh sau trong Terminal để đăng ký đường dẫn cài đặt Node.js và Python local:
+```bash
+echo 'export PATH="/home/ngoan/.local/node-v20/bin:/home/ngoan/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### 2. Khởi chạy dự án hàng ngày (Chạy trên 4 Tab Terminal khác nhau)
+
+* **Terminal 1: Khởi động Redis Container (Docker)**
+  ```bash
+  sudo docker start redis-jobs || sudo docker run -d --name redis-jobs -p 6379:6379 redis
+  ```
+
+* **Terminal 2: Khởi chạy Frontend (Next.js)**
+  ```bash
+  cd recruitment-platform
+  npm run dev
+  ```
+  *(Ứng dụng chạy tại: `http://localhost:3000`)*
+
+* **Terminal 3: Khởi chạy AI Backend (Django)**
+  ```bash
+  cd SeverAI
+  source env/bin/activate
+  python manage.py runserver
+  ```
+  *(Server AI chạy tại: `http://127.0.0.1:8000`)*
+
+* **Terminal 4: Khởi chạy Celery Worker (Xử lý hàng đợi AI)**
+  ```bash
+  cd SeverAI
+  source env/bin/activate
+  celery -A job_recommender worker --loglevel=info
+  ```
+
