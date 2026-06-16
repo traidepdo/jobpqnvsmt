@@ -4,16 +4,16 @@ export function HeroBg() {
         <>
             {/* ── Animated green blobs ── */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="blob-1 absolute -top-48 -left-48 w-[700px] h-[700px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.25) 0%, transparent 70%)' }} />
-                <div className="blob-2 absolute top-1/3 -right-56 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%)' }} />
-                <div className="blob-3 absolute -bottom-48 left-1/4 w-[550px] h-[550px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.14) 0%, transparent 70%)' }} />
-                <div className="blob-4 absolute top-1/4 left-1/2 w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 70%)' }} />
-                <div className="blob-5 absolute bottom-1/4 -right-20 w-[450px] h-[450px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)' }} />
-
+                <div className="blob-1 absolute -top-48 -left-48 w-[700px] h-[700px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.05) 0%, transparent 70%)' }} />
+                <div className="blob-2 absolute top-1/3 -right-56 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.03) 0%, transparent 70%)' }} />
+                <div className="blob-3 absolute -bottom-48 left-1/4 w-[550px] h-[550px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.02) 0%, transparent 70%)' }} />
+                <div className="blob-4 absolute top-1/4 left-1/2 w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(5,150,105,0.02) 0%, transparent 70%)' }} />
+                <div className="blob-5 absolute bottom-1/4 -right-20 w-[450px] h-[450px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.015) 0%, transparent 70%)' }} />
+ 
                 {/* Light orbs */}
-                <div className="orb-1 absolute top-1/3 left-1/4 w-56 h-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.2) 0%, transparent 70%)' }} />
-                <div className="orb-2 absolute bottom-1/3 right-1/3 w-40 h-40 rounded-full" style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.22) 0%, transparent 70%)' }} />
-                <div className="orb-3 absolute top-2/3 left-2/3 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.2) 0%, transparent 70%)' }} />
+                <div className="orb-1 absolute top-1/3 left-1/4 w-56 h-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.04) 0%, transparent 70%)' }} />
+                <div className="orb-2 absolute bottom-1/3 right-1/3 w-40 h-40 rounded-full" style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%)' }} />
+                <div className="orb-3 absolute top-2/3 left-2/3 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle, rgba(22,163,74,0.04) 0%, transparent 70%)' }} />
 
                 {/* Grid */}
                 <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />

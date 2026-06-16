@@ -12,7 +12,7 @@ export function HeroSlider({ images, heroImg, scrollY }) {
                     alt=""
                     aria-hidden
                     className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
-                    style={{ opacity: i === heroImg ? 0.08 : 0 }}
+                    style={{ opacity: i === heroImg ? 0.22 : 0 }}
                 />
             ))}
         </div>

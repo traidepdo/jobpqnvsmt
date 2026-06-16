@@ -82,6 +82,7 @@ export default function JobViewPage() {
   const [applySuccess, setApplySuccess] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'requirements' | 'benefits'>('description');
@@ -158,7 +159,25 @@ export default function JobViewPage() {
     async function checkAuth(jobData: JobDetails) {
       try {
         const res = await fetch('/api/auth/me');
-        if (!res.ok) return;
+        if (!res.ok) {
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
+        }
+        const data = await res.json();
+        if (!data.user) {
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
+        }
+
+        setUser(data.user);
+
+        if (data.user.role !== 'CANDIDATE') {
+          setIsAuthenticated(false);
+          return;
+        }
+
         setIsAuthenticated(true);
         const [resumeRes, savedRes, applicationsRes] = await Promise.all([
           fetch('/api/candidate/resumes'),
@@ -201,8 +220,27 @@ export default function JobViewPage() {
   };
   const userApplication = applications.find((app: any) => app.jobId === job?.id);
   const isApplied = !!userApplication;
+  const handleApplyClick = () => {
+    if (!user) {
+      router.push(`/login?callbackUrl=/jobs/${params.slug}`);
+      return;
+    }
+    if (user.role !== 'CANDIDATE') {
+      alert('Tài khoản của bạn không phải là tài khoản ứng viên. Vui lòng đăng nhập tài khoản ứng viên để ứng tuyển.');
+      return;
+    }
+    setShowApplyModal(true);
+  };
+
   const handleToggleSave = async () => {
-    if (!isAuthenticated) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
+    if (!user) {
+      router.push(`/login?callbackUrl=/jobs/${params.slug}`);
+      return;
+    }
+    if (user.role !== 'CANDIDATE') {
+      alert('Tài khoản của bạn không phải là tài khoản ứng viên. Vui lòng đăng nhập tài khoản ứng viên để lưu công việc.');
+      return;
+    }
     if (!job) return;
     setSaveLoading(true);
     try {
@@ -336,7 +374,8 @@ export default function JobViewPage() {
 
   const handleApplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
+    if (!user) { router.push(`/login?callbackUrl=/jobs/${params.slug}`); return; }
+    if (user.role !== 'CANDIDATE') { alert('Tài khoản của bạn không phải là tài khoản ứng viên.'); return; }
     if (!selectedResumeId && !cvFile) { alert('Vui lòng chọn CV hoặc tải file lên.'); return; }
     
     if (job?.quizId) {
@@ -610,7 +649,7 @@ export default function JobViewPage() {
               <div className="flex items-center gap-2 flex-shrink-0 mt-1">
                 {!checkAplicated() ? (
                   <button
-                    onClick={() => isAuthenticated ? setShowApplyModal(true) : router.push(`/login?callbackUrl=/jobs/${params.slug}`)}
+                    onClick={handleApplyClick}
                     className="apply-btn bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm px-5 py-2.5 rounded-xl cursor-pointer hidden md:block"
                   >
                     Ứng tuyển ngay
@@ -649,7 +688,7 @@ export default function JobViewPage() {
             <div className="mt-4 md:hidden">
               {!checkAplicated() ? (
                 <button
-                  onClick={() => isAuthenticated ? setShowApplyModal(true) : router.push(`/login?callbackUrl=/jobs/${params.slug}`)}
+                  onClick={handleApplyClick}
                   className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
                 >
                   Ứng tuyển ngay
@@ -837,7 +876,7 @@ export default function JobViewPage() {
                   <p className="text-white/60 text-xs mb-4 leading-relaxed">Phản hồi phỏng vấn trong 2–3 ngày làm việc.</p>
                   {!checkAplicated() ? (
                     <button
-                      onClick={() => isAuthenticated ? setShowApplyModal(true) : router.push(`/login?callbackUrl=/jobs/${params.slug}`)}
+                      onClick={handleApplyClick}
                       className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
                     >
                       Nộp hồ sơ ngay
