@@ -151,11 +151,11 @@ export default function JobCategoryBlogPage() {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.push(`/blogs/${slug}?page=1&search=${encodeURIComponent(searchInput)}`);
+        router.push(`/blog-category/${slug}?page=1&search=${encodeURIComponent(searchInput)}`);
     };
 
     const handlePage = (p: number) => {
-        router.push(`/blogs/${slug}?page=${p}&search=${encodeURIComponent(currentSearch)}`);
+        router.push(`/blog-category/${slug}?page=${p}&search=${encodeURIComponent(currentSearch)}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -287,7 +287,7 @@ export default function JobCategoryBlogPage() {
                                 />
                                 {searchInput && (
                                     <button type="button"
-                                        onClick={() => { setSearchInput(''); router.push(`/blogs/${slug}`); }}
+                                        onClick={() => { setSearchInput(''); router.push(`/blog-category/${slug}`); }}
                                         className="text-slate-400 hover:text-slate-600 transition-colors text-xs leading-none">
                                         ✕
                                     </button>

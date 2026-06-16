@@ -30,15 +30,31 @@ export default function HtmlViewer({ content, toc }: { content: string; toc: Toc
         }
     };
 
+    // Inject <base target="_top"> to force all links inside the iframe to navigate the top-level window.
+    let processedContent = content;
+    if (content && !content.includes('<base target=')) {
+        if (/HTML/i.test(content)) {
+            if (/<head[^>]*>/i.test(content)) {
+                processedContent = content.replace(/(<head[^>]*>)/i, '$1<base target="_top">');
+            } else if (/<html[^>]*>/i.test(content)) {
+                processedContent = content.replace(/(<html[^>]*>)/i, '$1<head><base target="_top"></head>');
+            } else {
+                processedContent = `<base target="_top">${content}`;
+            }
+        } else {
+            processedContent = `<base target="_top">${content}`;
+        }
+    }
+
     return (
         <div className="fixed inset-0 w-full h-full my-15 bg-white flex">
             {/* Cột trái: Iframe hiển thị Landing Page */}
             <div className="flex-1 h-full">
                 <iframe
                     ref={iframeRef}
-                    srcDoc={content}
+                    srcDoc={processedContent}
                     className="w-full h-full border-0"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-top-navigation-by-user-activation"
                     title="Landing Page"
                 />
             </div>
