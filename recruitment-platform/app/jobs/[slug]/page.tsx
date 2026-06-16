@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { companyPublicSelect } from '@/lib/prismaSafe';
 import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
-import JobDetailsClient from './JobDetailsClient';
+import JobDetailsClient from '@/components/jobs/JobDetailsClient';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
