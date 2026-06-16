@@ -1,36 +1,38 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { companyPublicSelect } from '@/lib/prismaSafe';
 import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
 import JobDetailsClient from '@/components/jobs/JobDetailsClient';
-
+import { cache } from 'react';
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
-
+interface JobResponse {
+  title: string;
+  description: string;
+}
+const getdatametadata = cache(async (slug: string): Promise<JobResponse> => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const data = await fetch(`${baseUrl}/api/public/jobs/metadata/${slug}`);
+  if (!data.ok) {
+    return { title: "Không tìm thấy công việc | Phú Quốc Jobs", description: "Công việc này đã đóng hoặc không tồn tại." };
+  }
+  const jobResponse: JobResponse = await data.json();
+  return jobResponse;
+})
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const job = await prisma.job.findUnique({
-    where: { slug },
-    select: {
-      title: true,
-      company: { select: { name: true } },
-      ward: { select: { name: true } },
-    }
-  });
+  const jobResponse = await getdatametadata(slug);
 
-  if (!job) {
+  if (!jobResponse.title) {
     return {
       title: 'Không tìm thấy công việc | Phú Quốc Jobs',
       description: 'Công việc này đã đóng hoặc không tồn tại.'
     };
   }
 
-  const title = `${job.title} - ${job.company.name} | Phú Quốc Jobs`;
-  const description = `${job.title} tuyển dụng tại ${job.company.name} (${job.ward?.name || 'Phú Quốc'}). Mức lương hấp dẫn, môi trường làm việc chuyên nghiệp. Nộp hồ sơ ứng tuyển ngay!`;
+  const title = jobResponse.title;
+  const description = jobResponse.description;
 
   return {
     title,
@@ -43,72 +45,76 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
+const dataJob = cache(async (slug: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const data = await fetch(`${baseUrl}/api/public/jobs/${slug}`);
+  if (!data.ok) {
+    return null;
+  }
+  const jobData = await data.json();
+  return jobData;
+})
+
+interface RelatedJob {
+  id: string;
+  title: string;
+  slug: string;
+  [key: string]: unknown;
+}
+
+const getRelatedJobs = cache(async (slug: string): Promise<RelatedJob[]> => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  try {
+    const data = await fetch(`${baseUrl}/api/public/jobs/${slug}/recommend`);
+    if (!data.ok) {
+      return [];
+    }
+    const relatedJobs = await data.json() as RelatedJob[];
+    return relatedJobs;
+  } catch (err) {
+    console.error("Error fetching related jobs from API route:", err);
+    return [];
+  }
+})
+
+const getJobState = cache(async (slug: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const cookieStore = await cookies();
+  const data = await fetch(`${baseUrl}/api/public/jobs/${slug}/state`, {
+    headers: {
+      cookie: cookieStore.toString(),
+    },
+  });
+  if (!data.ok) {
+    return null;
+  }
+  const jobState = await data.json();
+  return jobState;
+})
+
+
 export default async function JobViewPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // 1. Fetch main job detail from DB
-  const job = await prisma.job.findUnique({
-    where: { slug },
-    include: {
-      company: { select: companyPublicSelect },
-      category: { select: { name: true } },
-      ward: { select: { name: true } }
-    }
-  });
+  const job = await dataJob(slug);
 
   if (!job) {
     notFound();
   }
 
-  // 2. Fetch User & Auth related data
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  let userResumes: { id: string; title: string }[] = [];
+  let initialSaved = false;
+  let initialApplications: { id: string; jobId: string; status: string }[] = [];
   let user = null;
   let isAuthenticated = false;
-  let userResumes: any[] = [];
-  let initialSaved = false;
-  let initialApplications: any[] = [];
 
-  if (token) {
-    try {
-      const payload = await verifyToken(token);
-      if (payload) {
-        user = payload;
-        if (payload.role === 'CANDIDATE') {
-          isAuthenticated = true;
-
-          // Fetch user resumes, save status, and applications in parallel
-          const [resumes, savedJobRecord, candidateApps] = await Promise.all([
-            prisma.resume.findMany({
-              where: { userId: payload.id },
-              orderBy: { updatedAt: 'desc' },
-              select: {
-                id: true,
-                title: true,
-              }
-            }),
-            prisma.savedJob.findUnique({
-              where: { userId_jobId: { userId: payload.id, jobId: job.id } }
-            }),
-            prisma.application.findMany({
-              where: { userId: payload.id },
-              orderBy: { createdAt: 'desc' },
-              select: {
-                id: true,
-                jobId: true,
-                status: true,
-              }
-            })
-          ]);
-
-          userResumes = resumes;
-          initialSaved = !!savedJobRecord;
-          initialApplications = candidateApps;
-        }
-      }
-    } catch (err) {
-      console.error("Error reading token in Job Page Server Component:", err);
-    }
+  const jobState = await getJobState(slug);
+  if (jobState) {
+    userResumes = jobState.resumes;
+    initialSaved = jobState.savedJobRecord;
+    initialApplications = jobState.applications;
+    user = jobState.user;
+    isAuthenticated = jobState.isAuthenticated;
   }
 
   // 3. Compute Salary Analysis directly on the server
@@ -170,67 +176,7 @@ export default async function JobViewPage({ params }: PageProps) {
   }
 
   // 4. Fetch Related Jobs directly on the server
-  let relatedJobs: any[] = [];
-  try {
-    let recommendedIds: string[] = [];
-
-    // Query Django recommender API
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
-        },
-        next: { revalidate: 60 } // Cache recommendations for 60s
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const recommendations = data.recommendations || [];
-        recommendedIds = recommendations.map((r: any) => r.id);
-      }
-    } catch (fetchError) {
-      console.warn("Django Recommender API is offline. Falling back to DB-based recommendation.");
-    }
-
-    // Fallback: Query jobs in the same category if Django recommendations are empty or service is offline
-    if (recommendedIds.length === 0) {
-      relatedJobs = await prisma.job.findMany({
-        where: {
-          categoryId: job.categoryId,
-          id: { not: job.id },
-          isVisible: true
-        },
-        take: 4,
-        include: {
-          company: { select: companyPublicSelect },
-          category: { select: { name: true } },
-          ward: { select: { name: true } }
-        }
-      });
-    } else {
-      // Query rich details from Prisma for these IDs
-      const richRelatedJobs = await prisma.job.findMany({
-        where: {
-          id: { in: recommendedIds },
-          isVisible: true
-        },
-        include: {
-          company: { select: companyPublicSelect },
-          category: { select: { name: true } },
-          ward: { select: { name: true } }
-        }
-      });
-
-      // Sort them to preserve the similarity order returned by Django
-      relatedJobs = recommendedIds
-        .map((id: string) => richRelatedJobs.find((j: any) => j.id === id))
-        .filter(Boolean);
-    }
-  } catch (err) {
-    console.error("Error fetching related jobs in Server Component:", err);
-  }
+  const relatedJobs = await getRelatedJobs(slug);
 
   // 5. Build JSON-LD schemas
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
@@ -307,7 +253,7 @@ export default async function JobViewPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     'name': 'Việc làm liên quan',
-    'itemListElement': relatedJobs.map((item, index) => ({
+    'itemListElement': relatedJobs.map((item: RelatedJob, index: number) => ({
       '@type': 'ListItem',
       'position': index + 1,
       'url': `${baseUrl}/jobs/${item.slug}`,
@@ -329,8 +275,8 @@ export default async function JobViewPage({ params }: PageProps) {
     experience: job.experience,
     level: job.level,
     quantity: job.quantity,
-    deadline: job.deadline ? job.deadline.toISOString() : null,
-    createdAt: job.createdAt ? job.createdAt.toISOString() : '',
+    deadline: job.deadline ? new Date(job.deadline).toISOString() : null,
+    createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : '',
     company: {
       id: job.company.id,
       name: job.company.name,
