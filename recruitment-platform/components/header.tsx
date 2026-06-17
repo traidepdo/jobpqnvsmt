@@ -20,6 +20,11 @@ const JOB_DROPDOWN = [
     { icon: "location_on", label: "Việc làm tại Phú Quốc", desc: "Cơ hội ngay tại địa phương", href: "/jobs?location=phu-quoc" },
     { icon: "trending_up", label: "Việc làm nổi bật", desc: "Hot jobs tuần này", href: "/jobs?featured=true" },
 ];
+const COMPANY_DROPDOWN = [
+    { icon: "search", label: "Tìm kiếm công ty", desc: "Khám phá hàng nghìn công ty", href: "/companies" },
+    { icon: "bookmark", label: "Công ty đã lưu", desc: "Danh sách công ty yêu thích", href: "/candidate/saved-companies" },
+    { icon: "trending_up", label: "Công ty nổi bật", desc: "Hot companies tuần này", href: "/companies/top-companies" },
+];
 
 const CV_DROPDOWN = [
     { icon: "add_circle", label: "Tạo CV mới", desc: "Bắt đầu từ mẫu chuyên nghiệp", href: "/tao-cv" },
@@ -194,7 +199,7 @@ export default function Header() {
                         <ul className="flex gap-3 list-none m-0 p-0 h-full items-center">
                             <NavItem label="Trang chủ" href="/" />
                             <NavItem label="Việc làm" href="/jobs" dropdown={JOB_DROPDOWN} />
-                            <NavItem label="Công ty" href="/companies" />
+                            <NavItem label="Công ty" href="/companies" dropdown={COMPANY_DROPDOWN} />
                             <NavItem label="Tạo CV" href="/tao-cv" dropdown={CV_DROPDOWN} />
                             <NavItem label="Blog" href="/blog" dropdown={BLOG_DROPDOWN} />
                         </ul>

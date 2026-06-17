@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
+
 // ============================================
 // ENUMS
 // ============================================
@@ -24,11 +25,11 @@ enum InterviewStatus {
   COMPLETED
   CANCELLED
 }
+
 enum BlogType {
   RICH_TEXT
   HTML_PAGE
 }
-
 
 enum Role {
   ADMIN
@@ -37,9 +38,9 @@ enum Role {
 }
 
 enum CompanySize {
-  SMALL      // 1-50
-  MEDIUM     // 51-200
-  LARGE      // 201-500
+  SMALL // 1-50
+  MEDIUM // 51-200
+  LARGE // 201-500
   ENTERPRISE // 500+
 }
 
@@ -103,6 +104,7 @@ enum NotificationType {
   JOB_DEADLINE
   SYSTEM
 }
+
 enum TemplateCategory {
   BASIC
   PROFESSIONAL
@@ -112,23 +114,23 @@ enum TemplateCategory {
 }
 
 model ResumeTemplate {
-  id          String           @id @default(cuid())
-  name        String
-  slug        String           @unique
-  description String?          @db.Text
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique
+  description  String? @db.Text
   thumbnailUrl String?
 
   // Nội dung template
-  htmlContent String           @db.Text  // HTML layout với placeholder variables
-  cssContent  String           @db.Text  // CSS riêng của template
+  htmlContent String @db.Text // HTML layout với placeholder variables
+  cssContent  String @db.Text // CSS riêng của template
 
-  category    TemplateCategory @default(BASIC)
+  category TemplateCategory @default(BASIC)
 
-  isActive    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  resumes     Resume[]
+  resumes Resume[]
 
   @@map("resume_templates")
 }
@@ -151,30 +153,31 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  company        Company?
-  resumes        Resume[]
-  applications   Application[]
-  savedJobs      SavedJob[]
-  savedCompanies SavedCompany[]
-  notifications  Notification[]
-  blogs          Blog[]
-  employerConversations Conversation[] @relation("EmployerConversations")
-  candidateConversations Conversation[] @relation("CandidateConversations")
-  messages              Message[]
-  adminConversations AdminConversation[] @relation("EmployerAdminConversations")
-  adminMessages      AdminMessage[]      @relation("AdminMessageSender")
-  groupConversations GroupConversation[]
-  groupMembers       GroupMember[]
-  groupMessages      GroupMessage[]
-  quizzes            Quiz[]
+  company                Company?
+  resumes                Resume[]
+  applications           Application[]
+  savedJobs              SavedJob[]
+  savedCompanies         SavedCompany[]
+  notifications          Notification[]
+  blogs                  Blog[]
+  employerConversations  Conversation[]      @relation("EmployerConversations")
+  candidateConversations Conversation[]      @relation("CandidateConversations")
+  messages               Message[]
+  adminConversations     AdminConversation[] @relation("EmployerAdminConversations")
+  adminMessages          AdminMessage[]      @relation("AdminMessageSender")
+  groupConversations     GroupConversation[]
+  groupMembers           GroupMember[]
+  groupMessages          GroupMessage[]
+  quizzes                Quiz[]
+
   @@map("users")
 }
 
 model Province {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  slug      String     @unique
-  createdAt DateTime   @default(now())
+  slug      String   @unique
+  createdAt DateTime @default(now())
 
   districts District[]
 
@@ -209,27 +212,30 @@ model Ward {
 }
 
 model Company {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String
-  slug          String      @unique
+  slug          String       @unique
   logo          String?
   website       String?
-  description   String?     @db.Text
+  description   String?      @db.Text
   wardId        String?
   addressDetail String?
   size          CompanySize?
   industry      String?
-  ownerId       String      @unique
-  isApproved    Boolean     @default(false)
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  ownerId       String       @unique
+  isApproved    Boolean      @default(false)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  owner          User           @relation(fields: [ownerId], references: [id])
-  ward           Ward?          @relation(fields: [wardId], references: [id])
-  jobs           Job[]
-  savedByUsers   SavedCompany[]
+  owner        User           @relation(fields: [ownerId], references: [id])
+  ward         Ward?          @relation(fields: [wardId], references: [id])
+  jobs         Job[]
+  savedByUsers SavedCompany[]
 
+  @@index([isActive, isApproved])
+  @@index([industry])
+  @@index([wardId])
   @@map("companies")
 }
 
@@ -285,26 +291,27 @@ model Job {
   longitude     Float?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
-  category     Category      @relation(fields: [categoryId], references: [id])
-  company      Company       @relation(fields: [companyId], references: [id])
-  ward         Ward?         @relation(fields: [wardId], references: [id])
-  quiz         Quiz?         @relation(fields: [quizId], references: [id])
-  tags         JobTag[]
-  applications Application[]
-  savedByUsers SavedJob[]
-  embedding    JobEmbedding?
+  category      Category         @relation(fields: [categoryId], references: [id])
+  company       Company          @relation(fields: [companyId], references: [id])
+  ward          Ward?            @relation(fields: [wardId], references: [id])
+  quiz          Quiz?            @relation(fields: [quizId], references: [id])
+  tags          JobTag[]
+  applications  Application[]
+  savedByUsers  SavedJob[]
+  embedding     JobEmbedding?
 
   @@index([companyId])
   @@index([categoryId])
   @@index([wardId])
   @@index([status, createdAt])
+  @@index([status, companyId])
   @@map("jobs")
 }
 
 model JobEmbedding {
-  jobId     String                     @id @map("job_id")
+  jobId     String                      @id @map("job_id")
   embedding Unsupported("vector(768)")?
-  job       Job                        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job       Job                         @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@map("job_embeddings")
 }
@@ -348,23 +355,23 @@ model Application {
 }
 
 model Resume {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   userId      String
-  title       String   @default("Hồ sơ của tôi")
+  title       String          @default("Hồ sơ của tôi")
   address     String?
-  summary     String?  @db.Text
-  socialLinks Json?    @map("socicallink") // [{platform, url}]
-  education   Json?    // [{school, degree, field, startYear, endYear, description, GPA}]
-  experience  Json?    // [{company, position, startYear, endYear, description}]
-  projects    Json?    // [{name, position, link, description}]
+  summary     String?         @db.Text
+  socialLinks Json?           @map("socicallink") // [{platform, url}]
+  education   Json? // [{school, degree, field, startYear, endYear, description, GPA}]
+  experience  Json? // [{company, position, startYear, endYear, description}]
+  projects    Json? // [{name, position, link, description}]
   degree      String?
-  templateId  String?          // nullable — resume cũ không cần template
-  template    ResumeTemplate?  @relation(fields: [templateId], references: [id])
+  templateId  String? // nullable — resume cũ không cần template
+  template    ResumeTemplate? @relation(fields: [templateId], references: [id])
   languages   String?
-  cvData     Json?
-  avatarUrl String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  cvData      Json?
+  avatarUrl   String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   user         User          @relation(fields: [userId], references: [id])
   applications Application[]
@@ -436,7 +443,7 @@ model Blog {
   authorId    String
   views       Int      @default(0)
   isPublished Boolean  @default(false)
-  type        BlogType  @default(RICH_TEXT)
+  type        BlogType @default(RICH_TEXT)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -458,83 +465,84 @@ model BlogTag {
   @@unique([blogId, tagId])
   @@map("blog_tags")
 }
-model Conversation {
-    id            String    @id @default(cuid())
-    applicationId String    @unique
-    employerId    String
-    candidateId   String
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
 
-    application   Application @relation(fields: [applicationId], references: [id])
-    employer      User        @relation("EmployerConversations", fields: [employerId], references: [id])
-    candidate     User        @relation("CandidateConversations", fields: [candidateId], references: [id])
-    messages      Message[]
-    @@map("conversations")
+model Conversation {
+  id            String   @id @default(cuid())
+  applicationId String   @unique
+  employerId    String
+  candidateId   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id])
+  employer    User        @relation("EmployerConversations", fields: [employerId], references: [id])
+  candidate   User        @relation("CandidateConversations", fields: [candidateId], references: [id])
+  messages    Message[]
+
+  @@map("conversations")
 }
 
 model Message {
-    id             String       @id @default(cuid())
-    conversationId String
-    senderId       String
-    content        String
-    createdAt      DateTime     @default(now())
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
   readAt         DateTime?
-    conversation   Conversation @relation(fields: [conversationId], references: [id])
-    sender         User         @relation(fields: [senderId], references: [id])
-    @@index([conversationId, createdAt])
-    @@map("messages")
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
 }
 
 enum CandidateInterviewStatus {
-  PENDING    // Chờ candidate xác nhận
-  CONFIRMED  // Candidate đồng ý
-  DECLINED   // Candidate từ chối
+  PENDING // Chờ candidate xác nhận
+  CONFIRMED // Candidate đồng ý
+  DECLINED // Candidate từ chối
 }
 
 model Interview {
-  id              String                  @id @default(cuid())
-  applicationId   String                  @unique
+  id              String                   @id @default(cuid())
+  applicationId   String                   @unique
   scheduledAt     DateTime
-  type            InterviewType           @default(ONLINE)
+  type            InterviewType            @default(ONLINE)
   location        String
-  notes           String?                 @db.Text
-  status          InterviewStatus         @default(SCHEDULED)
+  notes           String?                  @db.Text
+  status          InterviewStatus          @default(SCHEDULED)
   candidateStatus CandidateInterviewStatus @default(PENDING) // thêm dòng này
-  declineReason   String?                 @db.Text           // lý do từ chối
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  declineReason   String?                  @db.Text // lý do từ chối
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@map("interviews")
 }
 
-
-
 model AdminConversation {
-  id               String         @id @default(cuid())
-  employerId       String         @unique   // mỗi employer chỉ có 1 thread
-  claimedByAdminId String?                  // admin nào đã nhận xử lý
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id               String   @id @default(cuid())
+  employerId       String   @unique // mỗi employer chỉ có 1 thread
+  claimedByAdminId String? // admin nào đã nhận xử lý
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  employer         User           @relation("EmployerAdminConversations", fields: [employerId], references: [id])
-  messages         AdminMessage[]
+  employer User           @relation("EmployerAdminConversations", fields: [employerId], references: [id])
+  messages AdminMessage[]
 
   @@map("admin_conversations")
 }
 
 model AdminMessage {
-  id             String            @id @default(cuid())
+  id             String    @id @default(cuid())
   conversationId String
   senderId       String
   content        String
-  createdAt      DateTime          @default(now())
+  createdAt      DateTime  @default(now())
   readAt         DateTime?
 
-  conversation   AdminConversation @relation(fields: [conversationId], references: [id])
-  sender         User              @relation("AdminMessageSender", fields: [senderId], references: [id])
+  conversation AdminConversation @relation(fields: [conversationId], references: [id])
+  sender       User              @relation("AdminMessageSender", fields: [senderId], references: [id])
 
   @@map("admin_messages")
 }
@@ -546,9 +554,9 @@ model GroupConversation {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  employer  User     @relation(fields: [employerId], references: [id])
-  members   GroupMember[]
-  messages  GroupMessage[]
+  employer User           @relation(fields: [employerId], references: [id])
+  members  GroupMember[]
+  messages GroupMessage[]
 
   @@map("group_conversations")
 }
@@ -580,41 +588,39 @@ model GroupMessage {
 }
 
 model Quiz {
-  id          String     @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
-  description String?    @db.Text
-  timeLimit   Int        @default(15) // giới hạn thời gian (phút)
+  description String?  @db.Text
+  timeLimit   Int      @default(15) // giới hạn thời gian (phút)
   employerId  String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  employer    User       @relation(fields: [employerId], references: [id], onDelete: Cascade)
-  questions   Question[]
-  jobs        Job[]
+  employer  User       @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  questions Question[]
+  jobs      Job[]
 
   @@map("quizzes")
 }
 
 model Question {
-  id            String   @id @default(cuid())
+  id            String @id @default(cuid())
   quizId        String
-  content       String   @db.Text
-  options       Json     // Danh sách các câu trả lời dạng mảng chuỗi ["A", "B", "C", "D"]
-  correctOption Int      // Chỉ số của câu trả lời đúng (0, 1, 2, 3)
+  content       String @db.Text
+  options       Json // Danh sách các câu trả lời dạng mảng chuỗi ["A", "B", "C", "D"]
+  correctOption Int // Chỉ số của câu trả lời đúng (0, 1, 2, 3)
 
-  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@map("questions")
 }
 
 model SalaryModel {
   id        String   @id @default(cuid())
-  weights   Json     // Map of feature -> coefficient
+  weights   Json // Map of feature -> coefficient
   intercept Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("salary_models")
 }
-
-

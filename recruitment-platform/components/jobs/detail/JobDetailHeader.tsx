@@ -62,7 +62,22 @@ export default function JobDetailHeader({
     <>
       {/* ── Hero Banner ─────────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-4 pb-6">
+          {/* Visual Breadcrumbs */}
+          <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-4 flex-wrap" aria-label="Breadcrumb">
+            <Link href="/" className="hover:text-[#00b14f] transition-colors">Trang chủ</Link>
+            <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
+            <Link href="/jobs" className="hover:text-[#00b14f] transition-colors">Việc làm</Link>
+            <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
+            <Link href={`/jobs?category=${encodeURIComponent(job.category.name)}`} className="hover:text-[#00b14f] transition-colors">
+              {job.category.name}
+            </Link>
+            <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
+            <span className="text-gray-500 font-medium truncate max-w-[200px] md:max-w-[300px]" title={job.title}>
+              {job.title}
+            </span>
+          </nav>
+
           <div className="flex gap-4 items-start">
             {/* Logo */}
             <div className="w-14 h-14 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">

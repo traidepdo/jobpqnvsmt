@@ -13,7 +13,15 @@ const INDUSTRIES = [
     { label: "Dịch vụ khách hàng", value: "Service" },
 ];
 
-export default function CompanyFilter({ initialSearch, initialIndustry }: { initialSearch: string; initialIndustry: string }) {
+export default function CompanyFilter({ 
+    initialSearch, 
+    initialIndustry,
+    targetPath = '/companies'
+}: { 
+    initialSearch: string; 
+    initialIndustry: string;
+    targetPath?: string;
+}) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
@@ -39,7 +47,7 @@ export default function CompanyFilter({ initialSearch, initialIndustry }: { init
         }
 
         startTransition(() => {
-            router.push(`/companies?${params.toString()}`);
+            router.push(`${targetPath}?${params.toString()}`);
         });
     };
 
