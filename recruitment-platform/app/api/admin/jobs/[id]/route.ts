@@ -49,6 +49,28 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         },
     });
 
+    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE') {
+        try {
+            const followers = await prisma.savedCompany.findMany({
+                where: { companyId: updated.companyId },
+                select: { userId: true }
+            });
+            if (followers.length > 0) {
+                await prisma.notification.createMany({
+                    data: followers.map(f => ({
+                        userId: f.userId,
+                        type: 'JOB_APPROVED',
+                        title: `Tin tuyển dụng mới từ ${updated.company.name}`,
+                        content: `Công ty ${updated.company.name} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
+                        refId: updated.slug,
+                    }))
+                });
+            }
+        } catch (err) {
+            console.error("Failed to notify followers on manual job approval (PATCH):", err);
+        }
+    }
+
     return NextResponse.json({ job: updated });
 }
 
@@ -98,6 +120,28 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
             });
         } catch (err) {
             console.error("Failed to create rejection notification:", err);
+        }
+    }
+
+    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE') {
+        try {
+            const followers = await prisma.savedCompany.findMany({
+                where: { companyId: updated.companyId },
+                select: { userId: true }
+            });
+            if (followers.length > 0) {
+                await prisma.notification.createMany({
+                    data: followers.map(f => ({
+                        userId: f.userId,
+                        type: 'JOB_APPROVED',
+                        title: `Tin tuyển dụng mới từ ${updated.company.name}`,
+                        content: `Công ty ${updated.company.name} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
+                        refId: updated.slug,
+                    }))
+                });
+            }
+        } catch (err) {
+            console.error("Failed to notify followers on manual job approval (PUT):", err);
         }
     }
 

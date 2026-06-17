@@ -136,7 +136,7 @@ export default function JobForm({
         e.preventDefault();
         onSubmit(form);
       }}
-      className="space-y-6 max-w-3xl"
+      className="space-y-6 w-full"
     >
       <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
         <h3 className="font-bold text-[#041b3c]">Thông tin cơ bản</h3>
@@ -187,13 +187,12 @@ export default function JobForm({
         </div>
 
         {salaryAnalysis && (
-          <div className={`text-xs p-3 rounded-lg border transition-all duration-200 ${
-            salaryAnalysis.status === 'bad' 
-              ? 'bg-[#FFF9E6] border-[#FFE599] text-[#805B00]' 
-              : salaryAnalysis.status === 'good'
-                ? 'bg-[#E6F9F0] border-[#99E6C4] text-[#006633]'
-                : 'bg-[#E6F0FF] border-[#99C2FF] text-[#004080]'
-          }`}>
+          <div className={`text-xs p-3 rounded-lg border transition-all duration-200 ${salaryAnalysis.status === 'bad'
+            ? 'bg-[#FFF9E6] border-[#FFE599] text-[#805B00]'
+            : salaryAnalysis.status === 'good'
+              ? 'bg-[#E6F9F0] border-[#99E6C4] text-[#006633]'
+              : 'bg-[#E6F0FF] border-[#99C2FF] text-[#004080]'
+            }`}>
             <div className="flex items-start gap-2">
               <span className="text-sm">
                 {salaryAnalysis.status === 'bad' ? '⚠️' : salaryAnalysis.status === 'good' ? '✨' : 'ℹ️'}

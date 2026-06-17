@@ -135,10 +135,43 @@ def moderate_job_task(job_id):
         detected_words.append(f"{word} ({score}đ)")
 
     # 5. Cập nhật trạng thái Job
+    previous_status = job.status
     if total_score < THRESHOLD:
         job.status = 'ACTIVE' # APPROVED -> ACTIVE
         job.rejectreason = None
         status_result = 'ACTIVE'
+
+        # If the job status transitions to ACTIVE, notify company followers
+        if previous_status != 'ACTIVE':
+            try:
+                import uuid
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    # Lấy tên công ty
+                    cursor.execute("SELECT name FROM companies WHERE id = %s", [job.companyid])
+                    comp_row = cursor.fetchone()
+                    company_name = comp_row[0] if comp_row else "Doanh nghiệp"
+
+                    # Lấy danh sách candidate đang theo dõi công ty
+                    cursor.execute('SELECT "userId" FROM saved_companies WHERE "companyId" = %s', [job.companyid])
+                    followers = cursor.fetchall()
+                    if followers:
+                        for follower in followers:
+                            follower_id = follower[0]
+                            notif_id = f"cl{uuid.uuid4().hex[:23]}"  # cuid-like 25-char id
+                            cursor.execute(
+                                'INSERT INTO notifications (id, "userId", type, title, content, "refId", "isRead", "createdAt") '
+                                'VALUES (%s, %s, \'JOB_APPROVED\', %s, %s, %s, FALSE, NOW())',
+                                [
+                                    notif_id,
+                                    follower_id,
+                                    f'Tin tuyển dụng mới từ {company_name}',
+                                    f'Công ty {company_name} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "{job.title}".',
+                                    job.slug
+                                ]
+                            )
+            except Exception as e:
+                print(f"Failed to create candidate notifications in Celery task: {e}")
     else:
         job.status = 'PENDING'
         reason = f"Tổng điểm nghi vấn [{total_score} điểm] vượt ngưỡng {THRESHOLD}. Danh sách từ phát hiện: {', '.join(detected_words)}"

@@ -91,7 +91,7 @@ export default function EmployerJobsPage() {
   const isHiddenTab = TABS[activeTab].isVisible === 'false';
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 w-full">
       {/* Filter Tabs */}
       <div className="flex flex-wrap gap-2">
         {TABS.map((tab, idx) => (

@@ -133,6 +133,64 @@ export async function DELETE(
     return NextResponse.json({ error: 'Không tìm thấy tin tuyển dụng' }, { status: 404 });
   }
 
-  await prisma.job.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+  try {
+    // 1. Tìm các đơn ứng tuyển liên quan đến tin tuyển dụng này
+    const applications = await prisma.application.findMany({
+      where: { jobId: id },
+      select: { id: true },
+    });
+    const appIds = applications.map(a => a.id);
+
+    // 2. Tìm các cuộc hội thoại liên quan đến các đơn ứng tuyển
+    const conversations = await prisma.conversation.findMany({
+      where: { applicationId: { in: appIds } },
+      select: { id: true },
+    });
+    const convIds = conversations.map(c => c.id);
+
+    // 3. Thực hiện xóa tuần tự theo chuỗi phụ thuộc trong Transaction
+    await prisma.$transaction([
+      // Xóa tất cả tin nhắn trong các cuộc hội thoại của tin tuyển dụng này
+      prisma.message.deleteMany({
+        where: { conversationId: { in: convIds } },
+      }),
+      // Xóa các cuộc hội thoại
+      prisma.conversation.deleteMany({
+        where: { id: { in: convIds } },
+      }),
+      // Xóa các buổi phỏng vấn của các đơn ứng tuyển
+      prisma.interview.deleteMany({
+        where: { applicationId: { in: appIds } },
+      }),
+      // Xóa các đơn ứng tuyển
+      prisma.application.deleteMany({
+        where: { id: { in: appIds } },
+      }),
+      // Xóa các lượt lưu tin tuyển dụng này của ứng viên
+      prisma.savedJob.deleteMany({
+        where: { jobId: id },
+      }),
+      // Xóa các thẻ liên kết với công việc
+      prisma.jobTag.deleteMany({
+        where: { jobId: id },
+      }),
+      // Xóa dữ liệu nhúng (embedding) của công việc
+      prisma.jobEmbedding.deleteMany({
+        where: { jobId: id },
+      }),
+      // Cuối cùng là xóa tin tuyển dụng
+      prisma.job.delete({
+        where: { id },
+      }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete job error:', error);
+    return NextResponse.json(
+      { error: 'Không thể xóa tin tuyển dụng. Vui lòng thử lại sau.' },
+      { status: 500 },
+    );
+  }
 }
+

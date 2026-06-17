@@ -84,7 +84,7 @@ export default function EmployerApplicationsPage() {
     if (filter) params.set('status', filter);
     if (filterCategory) params.set('categoryId', filterCategory);
     if (filterJob) params.set('jobId', filterJob);
-    
+
     const q = params.toString() ? `?${params.toString()}` : '';
     fetch(`/api/employer/applications${q}`)
       .then(r => r.json())
@@ -197,7 +197,7 @@ export default function EmployerApplicationsPage() {
     PENDING: 'Chuyển về chờ',
   };
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 w-full">
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {['', 'PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED'].map(s => (
@@ -211,7 +211,7 @@ export default function EmployerApplicationsPage() {
             </button>
           ))}
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-500 font-semibold">Công việc:</span>
@@ -283,13 +283,12 @@ export default function EmployerApplicationsPage() {
                     </span>
                   )}
                   {app.matchScore !== undefined && app.matchScore !== null && (
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
-                      app.matchScore >= 75
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : app.matchScore >= 50
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${app.matchScore >= 75
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : app.matchScore >= 50
                         ? 'bg-amber-50 text-amber-700 border-amber-200'
                         : 'bg-rose-50 text-rose-700 border-rose-200'
-                    }`}>
+                      }`}>
                       <span className="material-symbols-outlined text-[13px]">psychology</span>
                       AI Match: {app.matchScore}%
                     </span>
@@ -320,15 +319,14 @@ export default function EmployerApplicationsPage() {
                   {/* Khối Đánh giá độ tương thích AI */}
                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                        app.matchScore !== undefined && app.matchScore !== null
-                          ? app.matchScore >= 75
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : app.matchScore >= 50
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center ${app.matchScore !== undefined && app.matchScore !== null
+                        ? app.matchScore >= 75
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : app.matchScore >= 50
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-rose-100 text-rose-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
+                        : 'bg-slate-100 text-slate-700'
+                        }`}>
                         <span className="material-symbols-outlined text-[20px]">psychology</span>
                       </div>
                       <div>
