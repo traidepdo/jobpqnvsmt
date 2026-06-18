@@ -4,6 +4,7 @@ import { requireEmployer } from '@/lib/requireEmployer';
 import { slugify } from '@/lib/slugify';
 import { JobLevel, JobType, ExperienceLevel, JobStatus } from '@prisma/client';
 
+
 export async function GET(req: Request) {
   const auth = await requireEmployer();
   if (auth.error) return auth.error;
@@ -119,6 +120,9 @@ export async function POST(req: Request) {
         ward: { select: { name: true } },
       },
     });
+
+    // Real-time search embedding generation is disabled on Node.js side to optimize RAM.
+    // The search suggestion API now uses high-performance native unaccent SQL text queries.
 
     // Trigger Django Celery moderation task asynchronously if status is PROCESSING
     if (status === 'PROCESSING') {

@@ -22,6 +22,7 @@ interface RouteParams {
     level?: string;
     sort?: string;
     page?: string;
+    company?: string;
   }>;
 }
 
@@ -224,9 +225,21 @@ export default async function JobsPage({ searchParams }: RouteParams) {
       orderBy = { createdAt: 'desc' };
   }
 
+  const companySlug = params.company?.trim() || '';
+
+  let activeCompanyName = '';
+  if (companySlug) {
+    const comp = await prisma.company.findUnique({
+      where: { slug: companySlug },
+      select: { name: true }
+    });
+    if (comp) activeCompanyName = comp.name;
+  }
+
   const where = {
     status: JobStatus.ACTIVE,
     ...(category && { category: { slug: category } }),
+    ...(companySlug && { company: { slug: companySlug } }),
     ...(type && { type: type as never }),
     ...(experience && { experience: experience as never }),
     ...(level && { level: level as never }),
@@ -234,7 +247,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
   };
 
   // Run DB Queries in parallel
-  const [rawJobs, total, categories, topCompanies] = await Promise.all([
+  const [rawJobs, total, categories, topCompanies, wards] = await Promise.all([
     prisma.job.findMany({
       where,
       skip,
@@ -271,23 +284,31 @@ export default async function JobsPage({ searchParams }: RouteParams) {
         slug: true,
         jobs: {
           where: { status: JobStatus.ACTIVE },
-          select: { id: true }
+          select: { id: true, appliesCount: true }
         }
       },
       take: 20 // Lấy nhiều hơn để lọc các công ty có ít nhất 1 job hoạt động
+    }),
+    prisma.ward.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' }
     })
   ]);
 
-  // Map & Sort các công ty có nhiều việc làm hoạt động nhất
+  // Map & Sort các công ty hot nhất dựa trên tổng số lượt ứng tuyển của các job
   const featuredCompanies = topCompanies
-    .map(c => ({
-      name: c.name,
-      logo: c.logo,
-      slug: c.slug,
-      jobCount: c.jobs.length
-    }))
+    .map(c => {
+      const totalApplies = c.jobs.reduce((sum, j) => sum + (j.appliesCount || 0), 0);
+      return {
+        name: c.name,
+        logo: c.logo,
+        slug: c.slug,
+        totalApplies,
+        jobCount: c.jobs.length
+      };
+    })
     .filter(c => c.jobCount > 0)
-    .sort((a, b) => b.jobCount - a.jobCount)
+    .sort((a, b) => b.totalApplies - a.totalApplies)
     .slice(0, 6);
 
   // Apply AI Salary prediction analysis
@@ -362,7 +383,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     }
   }
 
-  const activeFilterCount = [category, type, salary, experience, level].filter(Boolean).length;
+  const activeFilterCount = [category, type, salary, experience, level, companySlug].filter(Boolean).length;
   const totalPages = Math.ceil(total / limit) || 1;
   const getCategoryName = (v: string) => categories.find(c => c.slug === v)?.name || v;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
@@ -418,6 +439,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     if (query) q.push(`query=${encodeURIComponent(query)}`);
     if (location) q.push(`location=${encodeURIComponent(location)}`);
     if (category) q.push(`category=${encodeURIComponent(category)}`);
+    if (companySlug) q.push(`company=${encodeURIComponent(companySlug)}`);
     if (salary) q.push(`salary=${encodeURIComponent(salary)}`);
     if (type) q.push(`type=${encodeURIComponent(type)}`);
     if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
@@ -430,11 +452,25 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     if (query) q.push(`query=${encodeURIComponent(query)}`);
     if (location) q.push(`location=${encodeURIComponent(location)}`);
     if (category) q.push(`category=${encodeURIComponent(category)}`);
+    if (companySlug) q.push(`company=${encodeURIComponent(companySlug)}`);
     if (salary) q.push(`salary=${encodeURIComponent(salary)}`);
     if (type) q.push(`type=${encodeURIComponent(type)}`);
     if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
     if (level) q.push(`level=${encodeURIComponent(level)}`);
     if (sort) q.push(`sort=${encodeURIComponent(sort)}`);
+    return `/jobs?${q.join('&')}`;
+  };
+
+  const getFilterRemoveLink = (filterType: 'category' | 'salary' | 'experience' | 'type' | 'level' | 'company') => {
+    const q = [`sort=${sort}`];
+    if (query) q.push(`query=${encodeURIComponent(query)}`);
+    if (location) q.push(`location=${encodeURIComponent(location)}`);
+    if (category && filterType !== 'category') q.push(`category=${encodeURIComponent(category)}`);
+    if (companySlug && filterType !== 'company') q.push(`company=${encodeURIComponent(companySlug)}`);
+    if (salary && filterType !== 'salary') q.push(`salary=${encodeURIComponent(salary)}`);
+    if (type && filterType !== 'type') q.push(`type=${encodeURIComponent(type)}`);
+    if (experience && filterType !== 'experience') q.push(`experience=${encodeURIComponent(experience)}`);
+    if (level && filterType !== 'level') q.push(`level=${encodeURIComponent(level)}`);
     return `/jobs?${q.join('&')}`;
   };
 
@@ -453,7 +489,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
       )}
 
       {/* Search form component */}
-      <JobSearchForm initialQuery={query} initialLocation={location} />
+      <JobSearchForm initialQuery={query} initialLocation={location} wards={wards} />
 
       {/* Main Layout Grid */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-5">
@@ -497,11 +533,11 @@ export default async function JobsPage({ searchParams }: RouteParams) {
               activeFilterCount={activeFilterCount}
             />
 
-            {/* FEATURED COMPANIES (SORTED BY ACTIVE JOB COUNT DESCENDING) */}
+            {/* FEATURED COMPANIES (HOT COMPANIES BY APPLICATIONS COUNT) */}
             {featuredCompanies.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mt-4">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-[13px] font-semibold text-gray-800">Công ty nhiều việc làm nhất</h3>
+                  <h3 className="text-[13px] font-semibold text-gray-800">Công ty Hot</h3>
                   <Link href="/companies" className="text-[12px] text-[#00b14f] hover:underline font-medium">
                     Xem tất cả
                   </Link>
@@ -510,7 +546,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
                   {featuredCompanies.map(c => (
                     <Link
                       key={c.slug}
-                      href={`/companies/${c.slug}`}
+                      href={`/jobs?company=${c.slug}`}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
                     >
                       <div className="w-9 h-9 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -524,7 +560,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-gray-800 group-hover:text-[#00b14f] transition-colors line-clamp-1">{c.name}</p>
-                        <p className="text-[11px] text-[#00b14f] font-semibold">{c.jobCount} việc làm đang tuyển</p>
+                        <p className="text-[11px] text-gray-400 font-semibold">{c.totalApplies} lượt ứng tuyển</p>
                       </div>
                     </Link>
                   ))}
@@ -570,40 +606,48 @@ export default async function JobsPage({ searchParams }: RouteParams) {
                 {category && (
                   <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
                     {getCategoryName(category)}
-                    <Link href={getSortFilterLink(sort).replace(`&category=${encodeURIComponent(category)}`, '')} className="hover:text-red-500 cursor-pointer">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <Link href={getFilterRemoveLink('category')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </Link>
+                  </span>
+                )}
+                {companySlug && activeCompanyName && (
+                  <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
+                    Công ty: {activeCompanyName}
+                    <Link href={getFilterRemoveLink('company')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </Link>
                   </span>
                 )}
                 {salary && (
                   <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
                     {SALARY_OPTIONS.find(o => o.value === salary)?.label}
-                    <Link href={getSortFilterLink(sort).replace(`&salary=${encodeURIComponent(salary)}`, '')} className="hover:text-red-500 cursor-pointer">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <Link href={getFilterRemoveLink('salary')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </Link>
                   </span>
                 )}
                 {experience && (
                   <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
                     {EXPERIENCE_OPTIONS.find(o => o.value === experience)?.label}
-                    <Link href={getSortFilterLink(sort).replace(`&experience=${encodeURIComponent(experience)}`, '')} className="hover:text-red-500 cursor-pointer">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <Link href={getFilterRemoveLink('experience')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </Link>
                   </span>
                 )}
                 {type && (
                   <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
                     {TYPE_OPTIONS.find(o => o.value === type)?.label}
-                    <Link href={getSortFilterLink(sort).replace(`&type=${encodeURIComponent(type)}`, '')} className="hover:text-red-500 cursor-pointer">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <Link href={getFilterRemoveLink('type')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </Link>
                   </span>
                 )}
                 {level && (
                   <span className="inline-flex items-center gap-1.5 bg-[#00b14f]/10 text-[#00963e] text-[12px] font-medium px-2.5 py-1 rounded-full">
                     {LEVEL_OPTIONS.find(o => o.value === level)?.label}
-                    <Link href={getSortFilterLink(sort).replace(`&level=${encodeURIComponent(level)}`, '')} className="hover:text-red-500 cursor-pointer">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <Link href={getFilterRemoveLink('level')} className="hover:text-red-500 cursor-pointer">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </Link>
                   </span>
                 )}

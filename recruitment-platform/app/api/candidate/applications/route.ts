@@ -114,6 +114,13 @@ export async function POST(req: Request) {
         },
       });
 
+      // Increment appliesCount on the job model
+      await tx.job.update({
+        where: { id: jobId },
+        data: { appliesCount: { increment: 1 } },
+      });
+
+
       // Thông báo cho ứng viên
       await tx.notification.create({
         data: {

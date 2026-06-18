@@ -79,12 +79,12 @@ export default function Hero({ wards }) {
                 </p>
 
                 {/* 3. Khối Search Box chứa tương tác logic phức tạp */}
-                <div className="fade-up d-400">
+                <div className="fade-up d-400 relative z-20">
                     <SearchBox wards={wards} />
                 </div>
 
                 {/* Stats */}
-                <div className="fade-up d-500 flex justify-center gap-10 mt-10">
+                <div className="fade-up d-500 flex justify-center gap-10 mt-10 relative z-10">
                     {[['1,200+', 'Việc làm'], ['350+', 'Nhà tuyển dụng'], ['8,000+', 'Ứng viên']].map(([n, l], i) => (
                         <div key={l} className="text-center" style={{ animationDelay: `${0.5 + i * 0.1}s` }}>
                             <div className="text-2xl font-extrabold text-white mb-0.5" style={{ textShadow: '0 0 20px rgba(34,197,94,0.5)' }}>{n}</div>

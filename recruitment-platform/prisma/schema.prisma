@@ -299,6 +299,9 @@ model Job {
   applications  Application[]
   savedByUsers  SavedJob[]
   embedding     JobEmbedding?
+  viewsCount      Int       @default(0) @map("views_count")
+  appliesCount    Int       @default(0) @map("applies_count")
+  searchEmbedding Unsupported("vector(384)")? @map("search_embedding")
 
   @@index([companyId])
   @@index([categoryId])
