@@ -9,7 +9,7 @@ export const companyPublicSelect = {
   industry: true,
   size: true,
   addressDetail: true,
-  ward: { select: { name: true } },
+  ward: { select: { name: true, slug: true } },
 } as const;
 
 export const companyCardSelect = {

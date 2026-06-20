@@ -55,6 +55,68 @@ interface Meta {
   wards: { id: string; name: string }[];
 }
 
+interface SalaryInputProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  error?: boolean;
+  placeholder: string;
+  inputCls: string;
+}
+
+function SalaryInputField({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  inputCls
+}: SalaryInputProps) {
+  const [localVal, setLocalVal] = useState(value || '');
+  const [prevValue, setPrevValue] = useState(value);
+  const [isFocused, setIsFocused] = useState(false);
+
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (!isFocused) {
+      setLocalVal(value || '');
+    }
+  }
+
+  const formatVND = (val: string) => {
+    if (!val) return '';
+    const clean = val.replace(/\D/g, '');
+    return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const clean = e.target.value.replace(/\D/g, '');
+    setLocalVal(clean);
+    onChange(clean);
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          className={`${inputCls} pr-8 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''}`}
+          value={isFocused ? localVal : formatVND(localVal)}
+          onChange={handleTextChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder={placeholder}
+        />
+        <span className="absolute right-3 text-gray-400 text-sm font-semibold pointer-events-none">đ</span>
+      </div>
+      {isFocused && localVal && (
+        <p className="text-[11px] text-gray-400 mt-0.5 font-medium">Định dạng: {formatVND(localVal)}đ</p>
+      )}
+    </div>
+  );
+}
+
 export default function JobForm({
   initial,
   onSubmit,
@@ -79,6 +141,41 @@ export default function JobForm({
       .then(r => r.json())
       .then(d => setQuizzes(d.quizzes || []));
   }, []);
+
+  const [salaryType, setSalaryType] = useState<'negotiable' | 'range'>(
+    (initial?.salaryMin || initial?.salaryMax) ? 'range' : 'negotiable'
+  );
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  // Helper validation function
+  const validateSalary = (minVal: string, maxVal: string, type: 'negotiable' | 'range') => {
+    if (type === 'negotiable') {
+      return '';
+    }
+
+    if (!minVal || !maxVal) {
+      return 'Vui lòng nhập đầy đủ cả mức lương tối thiểu và mức lương tối đa';
+    }
+
+    const minNum = parseInt(minVal, 10);
+    const maxNum = parseInt(maxVal, 10);
+
+    if (minNum < 1000000) {
+      return 'Mức lương tối thiểu không được thấp hơn 1.000.000đ';
+    }
+
+    if (maxNum < 1000000) {
+      return 'Mức lương tối đa không được thấp hơn 1.000.000đ';
+    }
+
+    if (minNum > maxNum) {
+      return 'Lương tối thiểu không được lớn hơn lương tối đa';
+    }
+
+    return '';
+  };
+
+  const salaryError = hasAttemptedSubmit ? validateSalary(form.salaryMin, form.salaryMax, salaryType) : '';
 
   const [salaryAnalysis, setSalaryAnalysis] = useState<{
     predictedSalary: number;
@@ -134,6 +231,15 @@ export default function JobForm({
     <form
       onSubmit={e => {
         e.preventDefault();
+        setHasAttemptedSubmit(true);
+        const err = validateSalary(form.salaryMin, form.salaryMax, salaryType);
+        if (err) {
+          const el = document.getElementById('salary-section');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+        }
         onSubmit(form);
       }}
       className="space-y-6 w-full"
@@ -173,18 +279,66 @@ export default function JobForm({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
+      <div id="salary-section" className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
         <h3 className="font-bold text-[#041b3c]">Lương & địa điểm</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối thiểu (VNĐ)</label>
-            <input type="number" className={inputCls} value={form.salaryMin} onChange={e => set('salaryMin', e.target.value)} placeholder="VD: 10000000 (10 triệu)" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Lương tối đa (VNĐ)</label>
-            <input type="number" className={inputCls} value={form.salaryMax} onChange={e => set('salaryMax', e.target.value)} placeholder="VD: 20000000 (20 triệu)" />
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-2">Hình thức lương *</label>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="salaryType"
+                value="negotiable"
+                checked={salaryType === 'negotiable'}
+                onChange={() => {
+                  setSalaryType('negotiable');
+                  setForm(f => ({ ...f, salaryMin: '', salaryMax: '' }));
+                }}
+                className="w-4 h-4 text-[#0052CC] border-gray-300 focus:ring-[#0052CC]"
+              />
+              Lương thỏa thuận
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+              <input
+                type="radio"
+                name="salaryType"
+                value="range"
+                checked={salaryType === 'range'}
+                onChange={() => setSalaryType('range')}
+                className="w-4 h-4 text-[#0052CC] border-gray-300 focus:ring-[#0052CC]"
+              />
+              Nhập khoảng lương
+            </label>
           </div>
         </div>
+
+        {salaryType === 'range' && (
+          <div className="space-y-2 animate-fadeIn">
+            <div className="grid grid-cols-2 gap-4">
+              <SalaryInputField
+                label="Lương tối thiểu (VNĐ) *"
+                value={form.salaryMin}
+                onChange={val => set('salaryMin', val)}
+                error={!!(salaryError && (!form.salaryMin || parseInt(form.salaryMin, 10) < 1000000 || (form.salaryMax && parseInt(form.salaryMin, 10) > parseInt(form.salaryMax, 10))))}
+                placeholder="VD: 1.000.000"
+                inputCls={inputCls}
+              />
+              <SalaryInputField
+                label="Lương tối đa (VNĐ) *"
+                value={form.salaryMax}
+                onChange={val => set('salaryMax', val)}
+                error={!!(salaryError && (!form.salaryMax || parseInt(form.salaryMax, 10) < 1000000 || (form.salaryMin && parseInt(form.salaryMin, 10) > parseInt(form.salaryMax, 10))))}
+                placeholder="VD: 20.000.000"
+                inputCls={inputCls}
+              />
+            </div>
+            {salaryError && (
+              <p className="text-xs text-red-500 font-medium">{salaryError}</p>
+            )}
+            <p className="text-[11px] text-gray-400">Mức lương nhập vào phải từ 1.000.000đ trở lên và mức lương tối thiểu không vượt quá tối đa.</p>
+          </div>
+        )}
 
         {salaryAnalysis && (
           <div className={`text-xs p-3 rounded-lg border transition-all duration-200 ${salaryAnalysis.status === 'bad'

@@ -47,6 +47,7 @@ export default function JobSearchForm({
   const [loading, setLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const clientCacheRef = useRef<Record<string, Suggestion[]>>({});
 
@@ -88,6 +89,13 @@ export default function JobSearchForm({
       return;
     }
 
+    // Only show suggestions if the input is actively focused
+    const isFocused = document.activeElement === inputRef.current;
+    if (!isFocused) {
+      setIsOpen(false);
+      return;
+    }
+
     // 1. Kiểm tra Hot Keywords
     if (HOT_KEYWORDS[trimmed]) {
       setSuggestions(HOT_KEYWORDS[trimmed]);
@@ -120,7 +128,11 @@ export default function JobSearchForm({
         const results = data.suggestions || [];
         clientCacheRef.current[trimmed] = results;
         setSuggestions(results);
-        setIsOpen(true);
+        
+        // Double check focus before opening dropdown
+        if (document.activeElement === inputRef.current) {
+          setIsOpen(true);
+        }
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error('Fetch suggestions failed:', err);
@@ -148,6 +160,7 @@ export default function JobSearchForm({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
+                ref={inputRef}
                 value={queryInput}
                 onChange={e => setQueryInput(e.target.value)}
                 onFocus={() => queryInput && setIsOpen(true)}

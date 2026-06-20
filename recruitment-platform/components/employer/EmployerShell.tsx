@@ -35,6 +35,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
   const [unreadMessages, setUnreadMessages] = useState(0);
   // Thêm state
   const [unreadSupport, setUnreadSupport] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const loadUnreadSupport = () => {
     fetch('/api/employer/admin-conversations/unread')
@@ -88,6 +89,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
         }
         setUserName(d.user.name);
         if (d.user.company) setCompany(d.user.company);
+        setLoading(false);
       })
       .catch(() => router.push('/login'));
   }, [pathname, router]);
@@ -110,8 +112,19 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     NAV.find(n => pathname === n.href)?.label ||
     (pathname.includes('/edit') ? 'Sửa tin tuyển dụng' : 'Nhà tuyển dụng');
 
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#f0f4ff]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-[3px] border-gray-200 border-t-[#0052CC] rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm font-medium animate-pulse">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-[#f0f4ff]">
+    <div className="flex h-screen overflow-hidden bg-[#f0f4ff]">
 
       {/* ── Sidebar ── */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-[68px]'} flex-shrink-0 flex flex-col transition-all duration-300 bg-white border-r border-gray-100 shadow-sm`}>
@@ -172,7 +185,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
         )}
 
         {/* Nav items */}
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
           {NAV.map(item => {
             const active =
               pathname === item.href ||

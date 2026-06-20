@@ -6,7 +6,7 @@ import { formatSalary } from '@/lib/jobLabels';
 import { JobDetails } from '@/components/jobs/JobDetailsClient';
 
 interface JobDetailHeaderProps {
-  job: any;
+  job: JobDetails;
   salaryAnalysis: {
     predictedSalary: number;
     actualSalary: number | null;
@@ -69,7 +69,7 @@ export default function JobDetailHeader({
             <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
             <Link href="/jobs" className="hover:text-[#00b14f] transition-colors">Việc làm</Link>
             <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
-            <Link href={`/jobs?category=${encodeURIComponent(job.category.name)}`} className="hover:text-[#00b14f] transition-colors">
+            <Link href={`/jobs?category=${job.category.slug}`} className="hover:text-[#00b14f] transition-colors">
               {job.category.name}
             </Link>
             <span className="material-symbols-outlined text-[13px] text-gray-300">chevron_right</span>
@@ -102,10 +102,10 @@ export default function JobDetailHeader({
                 </span>
                 {salaryAnalysis && (
                   <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1 ${salaryAnalysis.status === 'good'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                      : salaryAnalysis.status === 'bad'
-                        ? 'bg-amber-50 text-amber-700 border-amber-100'
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                    : salaryAnalysis.status === 'bad'
+                      ? 'bg-amber-50 text-amber-700 border-amber-100'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-100'
                     }`} title={salaryAnalysis.comparisonMessage}>
                     <span>
                       {salaryAnalysis.status === 'good' ? '✨' : salaryAnalysis.status === 'bad' ? '⚠️' : 'ℹ️'}
@@ -138,7 +138,7 @@ export default function JobDetailHeader({
                   {job.ward?.name || 'Phú Quốc'}
                 </span>
                 {job.deadline && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1" suppressHydrationWarning>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                     </svg>

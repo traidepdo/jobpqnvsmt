@@ -22,14 +22,20 @@ export async function GET(
 
         // 2. Query Django recommender API (with fallback on failure)
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 800);
+
             const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
                 },
+                signal: controller.signal,
                 next: { revalidate: 60 } // Cache recommendations for 60s
             });
+
+            clearTimeout(timeoutId);
 
             if (response.ok) {
                 const data = await response.json();
@@ -37,7 +43,7 @@ export async function GET(
                 recommendedIds = recommendations.map((r: any) => r.id);
             }
         } catch (fetchError) {
-            console.warn("Django Recommender API is offline. Falling back to DB-based recommendation.");
+            console.warn("Django Recommender API is offline or timed out. Falling back to DB-based recommendation.");
         }
 
         // 3. Fallback: Query jobs in the same category if Django recommendations are empty or service is offline

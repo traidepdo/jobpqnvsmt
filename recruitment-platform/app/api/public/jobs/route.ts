@@ -23,6 +23,25 @@ function getSalaryMinCondition(operator: 'lte' | 'gte', value: number) {
   };
 }
 
+function getSalaryMaxCondition(operator: 'lte' | 'gte', value: number) {
+  return {
+    OR: [
+      {
+        AND: [
+          { salaryMax: { [operator]: value / 1_000_000, not: null } },
+          { salaryMax: { lt: 100_000 } }
+        ]
+      },
+      {
+        AND: [
+          { salaryMax: { [operator]: value, not: null } },
+          { salaryMax: { gte: 100_000 } }
+        ]
+      }
+    ]
+  };
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -62,7 +81,7 @@ export async function GET(req: Request) {
     if (salary) {
       switch (salary) {
         case 'lt10':
-          andConditions.push(getSalaryMinCondition('lte', 10_000_000));
+          andConditions.push(getSalaryMaxCondition('lte', 10_000_000));
           break;
         case '10to15':
           andConditions.push({
@@ -119,10 +138,10 @@ export async function GET(req: Request) {
         orderBy = { createdAt: 'desc' };
         break;
       case 'minsalary':
-        orderBy = { salaryMin: 'asc' };
+        orderBy = { salaryMin: { sort: 'asc', nulls: 'last' } };
         break;
       case 'maxsalary':
-        orderBy = { salaryMin: 'desc' };
+        orderBy = { salaryMin: { sort: 'desc', nulls: 'last' } };
         break;
       default:
         orderBy = { createdAt: 'desc' };

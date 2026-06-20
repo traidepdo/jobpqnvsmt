@@ -16,12 +16,12 @@ export async function GET(
                 company: { select: companyPublicSelect },
                 category: {
                     select: {
-                        name: true
+                        name: true, slug: true
                     }
                 },
                 ward: {
                     select: {
-                        name: true
+                        name: true, slug: true
                     }
                 }
             }

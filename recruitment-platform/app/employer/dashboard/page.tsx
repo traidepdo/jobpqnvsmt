@@ -57,9 +57,8 @@ function StatCard({ label, value, icon, color, href }: {
     </>
   );
 
-  const className = `bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4 transition-all duration-200 ${
-    href ? 'hover:shadow-md hover:border-blue-200 hover:scale-[1.02] cursor-pointer' : ''
-  }`;
+  const className = `bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-start gap-4 transition-all duration-200 ${href ? 'hover:shadow-md hover:border-blue-200 hover:scale-[1.02] cursor-pointer' : ''
+    }`;
 
   if (href) {
     return (
@@ -125,7 +124,7 @@ export default function EmployerDashboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full">
 
       {/* Banner chờ duyệt */}
       {!data.companyApproved && (

@@ -44,13 +44,13 @@ function Avatar({ name, avatar, size = 9 }: { name: string; avatar?: string | nu
                 src={resolvedAvatar}
                 alt={name}
                 style={{ width: `${sizeInPx}px`, height: `${sizeInPx}px` }}
-                className="rounded-full object-cover flex-shrink-0"
+                className="rounded-full object-cover flex-shrink-0 border border-gray-100"
                 onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                     const parent = (e.target as HTMLElement).parentElement;
                     if (parent && !parent.querySelector('.avatar-fallback')) {
                         const fallback = document.createElement('div');
-                        fallback.className = "avatar-fallback rounded-full bg-[#0052CC] flex items-center justify-center text-white font-bold flex-shrink-0";
+                        fallback.className = "avatar-fallback rounded-full bg-[#00b14f] flex items-center justify-center text-white font-bold flex-shrink-0";
                         fallback.style.width = `${sizeInPx}px`;
                         fallback.style.height = `${sizeInPx}px`;
                         fallback.style.fontSize = `${sizeInPx * 0.4}px`;
@@ -63,7 +63,7 @@ function Avatar({ name, avatar, size = 9 }: { name: string; avatar?: string | nu
     }
     return (
         <div
-            className="avatar-fallback rounded-full bg-[#0052CC] flex items-center justify-center text-white font-bold flex-shrink-0"
+            className="avatar-fallback rounded-full bg-[#00b14f] flex items-center justify-center text-white font-bold flex-shrink-0"
             style={{ width: `${sizeInPx}px`, height: `${sizeInPx}px`, fontSize: `${sizeInPx * 0.4}px` }}
         >
             {name?.[0]?.toUpperCase() || '?'}
@@ -100,6 +100,7 @@ function CandidateMessagesPageContent() {
 
     // UI state
     const [activeTab, setActiveTab] = useState<'direct' | 'group'>('direct');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const bottomRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -306,11 +307,25 @@ function CandidateMessagesPageContent() {
         }
     };
 
+    // Filter conversations based on query
+    const filteredConversations = useMemo(() => {
+        return conversations.filter(c =>
+            c.employer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.application?.job?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [conversations, searchQuery]);
+
+    const filteredGroupConvs = useMemo(() => {
+        return groupConvs.filter(g =>
+            g.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [groupConvs, searchQuery]);
+
     return (
-        <div className="flex h-[calc(100vh-56px-40px)] bg-[#f5f7fa] rounded-2xl border border-gray-150 overflow-hidden shadow-sm">
+        <div className="flex h-[calc(100vh-56px-40px)] bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-md">
             {/* ── Sidebar ── */}
             <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col">
-                <div className="px-5 py-4 border-b border-gray-100 flex flex-col gap-2">
+                <div className="px-5 py-4 border-b border-gray-100 flex flex-col gap-3">
                     <h2 className="font-bold text-[#041b3c] text-lg flex items-center gap-2">
                         Tin nhắn
                         {totalUnread > 0 && (
@@ -320,39 +335,69 @@ function CandidateMessagesPageContent() {
                         )}
                     </h2>
 
+                    {/* Search bar */}
+                    <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
+                            search
+                        </span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Tìm cuộc trò chuyện..."
+                            className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:bg-white focus:border-[#00b14f] focus:ring-2 focus:ring-green-100 transition-all placeholder-gray-400"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        )}
+                    </div>
+
                     {/* Tabs */}
-                    <div className="flex border border-gray-100 rounded-lg p-0.5 bg-gray-50/60 mt-1">
+                    <div className="flex border border-gray-100 rounded-xl p-0.5 bg-gray-50/60">
                         <button
-                            onClick={() => setActiveTab('direct')}
-                            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'direct' ? 'bg-white text-[#0052CC] shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                                }`}
+                            onClick={() => { setActiveTab('direct'); }}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                                activeTab === 'direct'
+                                    ? 'bg-white text-[#00b14f] shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600'
+                            }`}
                         >
                             Cá nhân
                         </button>
                         <button
-                            onClick={() => setActiveTab('group')}
-                            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'group' ? 'bg-white text-[#0052CC] shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                                }`}
+                            onClick={() => { setActiveTab('group'); }}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                                activeTab === 'group'
+                                    ? 'bg-white text-[#00b14f] shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600'
+                            }`}
                         >
                             Nhóm
                         </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto divide-y divide-gray-50/50 bg-gray-50/20">
                     {loadingConvs ? (
                         <div className="flex justify-center py-12">
-                            <div className="w-7 h-7 border-2 border-gray-200 border-t-[#0052CC] rounded-full animate-spin" />
+                            <div className="w-7 h-7 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
                         </div>
                     ) : activeTab === 'direct' ? (
-                        conversations.length === 0 ? (
-                            <div className="px-5 py-12 text-center">
-                                <span className="material-symbols-outlined text-[40px] text-gray-300">chat_bubble</span>
-                                <p className="text-sm text-gray-400 mt-2">Chưa có cuộc trò chuyện nào</p>
-                                <p className="text-xs text-gray-300 mt-1">Khi được chấp nhận ứng tuyển, nhà tuyển dụng sẽ mở chat với bạn</p>
+                        filteredConversations.length === 0 ? (
+                            <div className="px-6 py-16 text-center">
+                                <span className="material-symbols-outlined text-[42px] text-gray-300">chat_bubble</span>
+                                <p className="text-xs font-semibold text-gray-500 mt-3">Chưa có cuộc trò chuyện nào</p>
+                                <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                                    Khi được chấp nhận ứng tuyển, nhà tuyển dụng sẽ mở chat với bạn.
+                                </p>
                             </div>
                         ) : (
-                            conversations.map(conv => {
+                            filteredConversations.map(conv => {
                                 const lastMsg = conv.messages[0];
                                 const isActive = conv.id === activeId && activeType === 'direct';
                                 const hasUnread = conv.unreadCount > 0;
@@ -360,74 +405,96 @@ function CandidateMessagesPageContent() {
                                     <button
                                         key={conv.id}
                                         onClick={() => selectConv(conv.id, 'direct')}
-                                        className={`w-full text-left px-4 py-3.5 flex gap-3 items-start transition-colors border-b border-gray-55 cursor-pointer ${isActive ? 'bg-blue-50 border-l-2 border-l-[#0052CC]'
-                                            : hasUnread ? 'bg-blue-50/40 hover:bg-blue-50/60'
-                                                : 'hover:bg-gray-50'
-                                            }`}
+                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${
+                                            isActive
+                                                ? 'bg-green-50/60 border-l-[3.5px] border-l-[#00b14f]'
+                                                : hasUnread
+                                                ? 'bg-green-50/15 hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
+                                                : 'hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
+                                        }`}
                                     >
                                         <div className="relative flex-shrink-0">
                                             <Avatar name={conv.employer?.name} avatar={conv.employer?.avatar} size={10} />
-                                            {hasUnread && (
-                                                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
-                                                    {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-                                                </span>
-                                            )}
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm truncate ${hasUnread ? 'font-bold text-[#041b3c]' : 'font-semibold text-[#041b3c]'}`}>
-                                                {conv.employer?.name ?? 'Nhà tuyển dụng'}
-                                            </p>
+                                            <div className="flex justify-between items-baseline gap-1">
+                                                <p className={`text-[13px] truncate ${
+                                                    hasUnread ? 'font-bold text-[#041b3c]' : 'font-semibold text-[#041b3c]'
+                                                }`}>
+                                                    {conv.employer?.name ?? 'Nhà tuyển dụng'}
+                                                </p>
+                                                <span className="text-[9px] text-gray-400 flex-shrink-0 font-medium">
+                                                    {lastMsg ? formatDateVi(lastMsg.createdAt) : formatDateVi(conv.updatedAt)}
+                                                </span>
+                                            </div>
                                             {conv.application?.job?.title && (
-                                                <p className="text-[11px] text-[#0052CC] truncate">{conv.application.job.title}</p>
+                                                <p className="text-[11px] text-[#00b14f] font-semibold truncate mt-0.5">
+                                                    {conv.application.job.title}
+                                                </p>
                                             )}
                                             {lastMsg && (
-                                                <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-[#041b3c] font-medium' : 'text-gray-400'}`}>
+                                                <p className={`text-xs truncate mt-1 ${
+                                                    hasUnread ? 'text-gray-900 font-bold' : 'text-gray-400'
+                                                }`}>
                                                     {lastMsg.senderId === currentUserId ? 'Bạn: ' : ''}{lastMsg.content}
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-gray-300 flex-shrink-0 mt-0.5">
-                                            {lastMsg ? formatDateVi(lastMsg.createdAt) : formatDateVi(conv.updatedAt)}
-                                        </span>
+                                        {hasUnread && (
+                                            <span className="absolute right-4 bottom-4 bg-red-500 text-white text-[9px] font-bold min-w-[15px] h-3.5 px-0.5 rounded-full flex items-center justify-center shadow-[0_2px_4px_rgba(239,68,68,0.2)]">
+                                                {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })
                         )
                     ) : (
-                        groupConvs.length === 0 ? (
-                            <div className="px-5 py-12 text-center">
-                                <span className="material-symbols-outlined text-[40px] text-gray-300">groups</span>
-                                <p className="text-sm text-gray-400 mt-2">Chưa có nhóm trò chuyện nào</p>
-                                <p className="text-xs text-gray-300 mt-1">Nhà tuyển dụng sẽ thêm bạn vào nhóm khi cần</p>
+                        filteredGroupConvs.length === 0 ? (
+                            <div className="px-6 py-16 text-center">
+                                <span className="material-symbols-outlined text-[42px] text-gray-300">groups</span>
+                                <p className="text-xs font-semibold text-gray-500 mt-3">Chưa có nhóm trò chuyện nào</p>
+                                <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                                    Nhà tuyển dụng sẽ thêm bạn vào nhóm hội thoại khi cần thiết.
+                                </p>
                             </div>
                         ) : (
-                            groupConvs.map(g => {
+                            filteredGroupConvs.map(g => {
                                 const lastMsg = g.messages?.[0];
                                 const isActive = g.id === activeId && activeType === 'group';
                                 return (
                                     <button
                                         key={g.id}
                                         onClick={() => selectConv(g.id, 'group')}
-                                        className={`w-full text-left px-4 py-3.5 flex gap-3 items-start transition-colors border-b border-gray-55 cursor-pointer ${isActive ? 'bg-blue-50 border-l-2 border-l-[#0052CC]' : 'hover:bg-gray-50'
-                                            }`}
+                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${
+                                            isActive
+                                                ? 'bg-green-50/60 border-l-[3.5px] border-l-[#00b14f]'
+                                                : 'hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
+                                        }`}
                                     >
-                                        <GroupAvatar name={g.name} size={10} />
+                                        <div className="relative flex-shrink-0">
+                                            <GroupAvatar name={g.name} size={10} />
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                                        </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm truncate font-semibold text-[#041b3c] ${isActive ? 'text-[#0052CC] font-bold' : ''}`}>
-                                                {g.name}
-                                            </p>
-                                            <p className="text-xs text-gray-400 truncate mt-0.5">
+                                            <div className="flex justify-between items-baseline gap-1">
+                                                <p className={`text-[13px] truncate ${isActive ? 'text-[#00b14f] font-bold' : 'font-semibold text-[#041b3c]'}`}>
+                                                    {g.name}
+                                                </p>
+                                                <span className="text-[9px] text-gray-400 flex-shrink-0 font-medium">
+                                                    {formatDateVi(g.updatedAt)}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-gray-450 truncate mt-0.5">
                                                 {g.members.length} thành viên
                                             </p>
                                             {lastMsg && (
-                                                <p className="text-xs truncate mt-0.5 text-gray-400">
+                                                <p className="text-xs truncate mt-1 text-gray-400">
                                                     {lastMsg.content}
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-gray-300 flex-shrink-0 mt-0.5">
-                                            {formatDateVi(g.updatedAt)}
-                                        </span>
                                     </button>
                                 );
                             })
@@ -440,29 +507,35 @@ function CandidateMessagesPageContent() {
             {activeId && (activeConv || activeGroup) ? (
                 <div className="flex-1 flex flex-col min-w-0 bg-white">
                     {/* Header */}
-                    <div className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between flex-shrink-0">
-                        <div className="flex items-center gap-3 min-w-0">
+                    <div className="bg-white border-b border-gray-100 px-6 py-3.5 flex items-center justify-between flex-shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
+                        <div className="flex items-center gap-3.5 min-w-0">
                             {activeType === 'group' && activeGroup ? (
                                 <>
-                                    <GroupAvatar name={activeGroup.name} size={9} />
+                                    <div className="relative">
+                                        <GroupAvatar name={activeGroup.name} size={10} />
+                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
+                                    </div>
                                     <div className="min-w-0">
-                                        <p className="font-bold text-[#041b3c] text-sm truncate">{activeGroup.name}</p>
-                                        <p className="text-xs text-gray-400 truncate">
+                                        <p className="font-bold text-[#041b3c] text-[14px] truncate">{activeGroup.name}</p>
+                                        <p className="text-[11px] text-gray-400 truncate mt-0.5">
                                             {activeGroup.members.map(m => m.user.name).join(", ")}
                                         </p>
                                     </div>
                                 </>
                             ) : activeConv ? (
                                 <>
-                                    <Avatar name={activeConv.employer?.name} avatar={activeConv.employer?.avatar} size={9} />
+                                    <div className="relative flex-shrink-0">
+                                        <Avatar name={activeConv.employer?.name} avatar={activeConv.employer?.avatar} size={10} />
+                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse" />
+                                    </div>
                                     <div className="min-w-0">
-                                        <p className="font-bold text-[#041b3c] text-sm truncate">
+                                        <p className="font-bold text-[#041b3c] text-[14px] truncate">
                                             {activeConv.employer?.name ?? 'Nhà tuyển dụng'}
                                         </p>
                                         {activeConv.application?.job && (
                                             <Link
                                                 href={`/jobs/${activeConv.application.job.slug}`}
-                                                className="text-xs text-[#0052CC] hover:underline truncate block"
+                                                className="text-[11px] text-[#00b14f] font-semibold hover:underline truncate block mt-0.5"
                                                 target="_blank"
                                             >
                                                 {activeConv.application.job.title}
@@ -476,26 +549,26 @@ function CandidateMessagesPageContent() {
                         {activeType !== 'group' && (
                             <button
                                 onClick={handleDeleteConversation}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
                                 title="Xóa cuộc hội thoại"
                             >
-                                <span className="material-symbols-outlined text-[20px]">delete_forever</span>
+                                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
                                 Xóa hội thoại
                             </button>
                         )}
                     </div>
 
-                    {/* Messages */}
-                    <div ref={containerRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-[#f8faff]">
+                    {/* Messages list */}
+                    <div ref={containerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-gray-50/40">
                         {loadingMsgs && messages.length === 0 ? (
                             <div className="flex justify-center py-12">
-                                <div className="w-7 h-7 border-2 border-gray-200 border-t-[#0052CC] rounded-full animate-spin" />
+                                <div className="w-7 h-7 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
                             </div>
                         ) : messages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-center">
                                 <span className="material-symbols-outlined text-[48px] text-gray-200">chat</span>
-                                <p className="text-sm text-gray-400 mt-2">Chưa có tin nhắn nào</p>
-                                <p className="text-xs text-gray-300">Hãy bắt đầu cuộc trò chuyện!</p>
+                                <p className="text-sm font-semibold text-gray-400 mt-2">Chưa có tin nhắn nào</p>
+                                <p className="text-xs text-gray-300 mt-1">Hãy bắt đầu cuộc trò chuyện!</p>
                             </div>
                         ) : (
                             messages.map((msg, i) => {
@@ -504,19 +577,19 @@ function CandidateMessagesPageContent() {
                                     i === 0 ||
                                     new Date(messages[i - 1].createdAt).toDateString() !== new Date(msg.createdAt).toDateString();
                                 return (
-                                    <div key={msg.id}>
+                                    <div key={msg.id} className="space-y-1">
                                         {showDate && (
-                                            <div className="text-center my-3">
-                                                <span className="text-[11px] text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-100">
+                                            <div className="text-center my-4">
+                                                <span className="text-[10px] font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
                                                     {formatDateVi(msg.createdAt)}
                                                 </span>
                                             </div>
                                         )}
-                                        <div className={`flex gap-2 group ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
-                                            {!isMine && <Avatar name={msg.sender.name} avatar={msg.sender.avatar} size={7} />}
+                                        <div className={`flex gap-2.5 group ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                                            {!isMine && <Avatar name={msg.sender.name} avatar={msg.sender.avatar} size={8} />}
                                             <div className={`max-w-[70%] flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
                                                 {!isMine && activeType === 'group' && (
-                                                    <p className="text-[10px] text-gray-400 mb-0.5 ml-1">{msg.sender.name}</p>
+                                                    <p className="text-[10px] text-gray-400 font-semibold mb-0.5 ml-1">{msg.sender.name}</p>
                                                 )}
                                                 <div className="flex items-center gap-2">
                                                     {isMine && (
@@ -528,19 +601,22 @@ function CandidateMessagesPageContent() {
                                                             <span className="material-symbols-outlined text-[16px]">delete</span>
                                                         </button>
                                                     )}
-                                                    <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMine
-                                                        ? 'bg-[#0052CC] text-white rounded-tr-sm'
-                                                        : 'bg-white text-[#041b3c] border border-gray-100 rounded-tl-sm shadow-sm'
-                                                        }`}>
+                                                    <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
+                                                        isMine
+                                                            ? 'bg-[#00b14f] text-white rounded-tr-sm shadow-green-600/5'
+                                                            : 'bg-white text-gray-800 border border-gray-100 rounded-tl-sm'
+                                                    }`}>
                                                         {msg.content}
                                                     </div>
                                                 </div>
-                                                <div className={`flex items-center gap-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
-                                                    <span className="text-[10px] text-gray-300">
+                                                <div className={`flex items-center gap-1.5 px-1.5 ${isMine ? 'flex-row-reverse' : ''}`}>
+                                                    <span className="text-[9px] text-gray-350 font-medium">
                                                         {new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                     {isMine && (
-                                                        <span className={`material-symbols-outlined text-[12px] ${msg.readAt ? 'text-[#0052CC]' : 'text-gray-300'}`}>
+                                                        <span className={`material-symbols-outlined text-[13px] ${
+                                                            msg.readAt ? 'text-[#00b14f] font-bold' : 'text-gray-350'
+                                                        }`}>
                                                             done_all
                                                         </span>
                                                     )}
@@ -554,24 +630,41 @@ function CandidateMessagesPageContent() {
                         <div ref={bottomRef} />
                     </div>
 
-                    {/* Input */}
-                    <div className="bg-white border-t border-gray-100 px-4 py-3 flex gap-3 items-end flex-shrink-0">
-                        <textarea
-                            ref={textareaRef}
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-                            }}
-                            placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"
-                            rows={1}
-                            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-[#0052CC] focus:ring-1 focus:ring-[#0052CC] transition-all max-h-32 leading-relaxed"
-                            style={{ minHeight: '42px' }}
-                        />
+                    {/* Floating input container */}
+                    <div className="bg-white px-5 py-4 border-t border-gray-100 flex items-center gap-3.5 flex-shrink-0">
+                        {/* Plus attachment icon placeholder */}
+                        <button 
+                            className="w-9 h-9 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 flex items-center justify-center text-gray-400 hover:text-[#00b14f] transition-all cursor-pointer flex-shrink-0"
+                            title="Đính kèm"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                        </button>
+                        
+                        {/* Textarea input wrapper */}
+                        <div className="flex-1 relative flex items-center bg-gray-50 border border-gray-150 rounded-2xl px-4 py-2 focus-within:bg-white focus-within:border-[#00b14f] focus-within:ring-2 focus-within:ring-green-50/30 transition-all duration-200">
+                            <textarea
+                                ref={textareaRef}
+                                value={input}
+                                onChange={e => setInput(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+                                }}
+                                placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"
+                                rows={1}
+                                className="flex-1 bg-transparent resize-none text-[13px] text-gray-800 placeholder-gray-400 outline-none max-h-32 leading-relaxed self-center py-1.5"
+                                style={{ minHeight: '24px' }}
+                            />
+                            {/* Smile button placeholder */}
+                            <button className="text-gray-400 hover:text-[#00b14f] transition-colors cursor-pointer self-end mb-1 ml-2 flex-shrink-0">
+                                <span className="material-symbols-outlined text-[18px]">sentiment_satisfied</span>
+                            </button>
+                        </div>
+
+                        {/* Send button */}
                         <button
                             onClick={sendMessage}
                             disabled={!input.trim() || sending}
-                            className="w-10 h-10 bg-[#0052CC] hover:bg-[#0040a2] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
+                            className="w-10 h-10 bg-[#00b14f] hover:bg-[#009f47] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-2xl flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer shadow-sm shadow-[#00b14f]/15 hover:shadow-md active:scale-[0.98]"
                         >
                             {sending ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -582,10 +675,12 @@ function CandidateMessagesPageContent() {
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 bg-gray-50/15">
                     <span className="material-symbols-outlined text-[64px] text-gray-200">forum</span>
-                    <p className="mt-3 font-medium text-gray-400">Chọn cuộc trò chuyện</p>
-                    <p className="text-sm text-gray-300 mt-1">để bắt đầu nhắn tin với nhà tuyển dụng</p>
+                    <p className="mt-3 font-semibold text-[#041b3c] text-sm">Chọn cuộc trò chuyện</p>
+                    <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                        Để bắt đầu nhắn tin trao đổi trực tiếp với nhà tuyển dụng.
+                    </p>
                 </div>
             )}
         </div>
@@ -596,7 +691,7 @@ export default function CandidateMessagesPage() {
     return (
         <Suspense fallback={
             <div className="flex h-[calc(100vh-56px-40px)] items-center justify-center bg-[#f5f7fa] text-gray-400 font-sans">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#0052CC]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#00b14f]"></div>
             </div>
         }>
             <CandidateMessagesPageContent />

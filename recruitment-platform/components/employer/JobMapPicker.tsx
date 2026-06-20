@@ -20,10 +20,16 @@ export default function JobMapPicker({
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState(addressDetail);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
+
+  // Autocomplete & suggestions states
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingSuggestions, setSearchingSuggestions] = useState(false);
 
   // Default coordinate for Phu Quoc center if none is provided
   const defaultLat = 10.2289;
@@ -31,6 +37,35 @@ export default function JobMapPicker({
 
   const latNum = latitude ? parseFloat(latitude) : defaultLat;
   const lngNum = longitude ? parseFloat(longitude) : defaultLng;
+
+  // Refs to avoid stale closures in Leaflet event listeners
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Reverse geocoding function to translate coordinates to street address
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.display_name) {
+          setSearchQuery(data.display_name);
+          setShowSuggestions(false);
+        }
+      }
+    } catch (err) {
+      console.error('Error reverse geocoding:', err);
+    }
+  };
+
+  const reverseGeocodeRef = useRef(reverseGeocode);
+  useEffect(() => {
+    reverseGeocodeRef.current = reverseGeocode;
+  });
 
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
@@ -64,14 +99,16 @@ export default function JobMapPicker({
     // Listen to dragend on marker
     marker.on('dragend', () => {
       const position = marker.getLatLng();
-      onChange(position.lat.toFixed(6), position.lng.toFixed(6));
+      onChangeRef.current(position.lat.toFixed(6), position.lng.toFixed(6));
+      reverseGeocodeRef.current?.(position.lat, position.lng);
     });
 
     // Listen to map clicks to place marker
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
       marker.setLatLng([lat, lng]);
-      onChange(lat.toFixed(6), lng.toFixed(6));
+      onChangeRef.current(lat.toFixed(6), lng.toFixed(6));
+      reverseGeocodeRef.current?.(lat, lng);
     });
 
     return () => {
@@ -96,6 +133,87 @@ export default function JobMapPicker({
     }
   }, [latitude, longitude]);
 
+  // Debounce logic for fetching location suggestions
+  useEffect(() => {
+    if (!showSuggestions) return;
+
+    if (!searchQuery.trim() || searchQuery.length < 3) {
+      setSuggestions([]);
+      setSearchingSuggestions(false);
+      return;
+    }
+
+    const isSelected = suggestions.some(item => item.display_name === searchQuery);
+    if (isSelected) return;
+
+    setSearchingSuggestions(true);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const query = `${searchQuery}, Phú Quốc, Kiên Giang, Việt Nam`;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setSuggestions(data);
+          } else {
+            // Fallback search without specific suffix
+            const fallbackRes = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`
+            );
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              setSuggestions(fallbackData);
+            } else {
+              setSuggestions([]);
+            }
+          }
+        } else {
+          setSuggestions([]);
+        }
+      } catch (err) {
+        console.error('Error fetching suggestions:', err);
+        setSuggestions([]);
+      } finally {
+        setSearchingSuggestions(false);
+      }
+    }, 500); // 500ms debounce to avoid Nominatim rate limits
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, showSuggestions]);
+
+  // Click outside suggestions list handling
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (item: any) => {
+    const { lat, lon, display_name } = item;
+    const newLat = parseFloat(lat);
+    const newLng = parseFloat(lon);
+
+    setSearchQuery(display_name);
+    setSuggestions([]);
+    setShowSuggestions(false);
+
+    if (leafletMapRef.current && markerRef.current) {
+      leafletMapRef.current.setView([newLat, newLng], 15);
+      markerRef.current.setLatLng([newLat, newLng]);
+      onChange(newLat.toFixed(6), newLng.toFixed(6));
+    }
+  };
+
   // Geocoding search function using Nominatim API
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -103,6 +221,7 @@ export default function JobMapPicker({
 
     setSearching(true);
     setError('');
+    setShowSuggestions(false);
 
     try {
       // Append Phu Quoc, Kien Giang to help narrow down the search on the island
@@ -155,24 +274,47 @@ export default function JobMapPicker({
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Nhập địa chỉ cơ sở tuyển dụng để tìm nhanh (VD: 125 Trần Hưng Đạo)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 h-10 px-3 text-xs border border-gray-200 rounded-lg outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
-        />
+        <div ref={containerRef} className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Nhập địa chỉ cơ sở tuyển dụng để tìm nhanh (VD: 125 Trần Hưng Đạo)"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            className="w-full h-10 px-3 text-xs border border-gray-200 rounded-lg outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+          />
+          {showSuggestions && (searchingSuggestions || suggestions.length > 0) && (
+            <ul className="absolute left-0 right-0 top-11 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] max-h-60 overflow-y-auto divide-y divide-gray-100 text-xs">
+              {searchingSuggestions ? (
+                <li className="px-3 py-2.5 text-gray-400 italic">Đang tải gợi ý địa điểm...</li>
+              ) : (
+                suggestions.map((item, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleSelectSuggestion(item)}
+                    className="px-3 py-2.5 hover:bg-[#0052CC]/5 hover:text-[#0052CC] cursor-pointer transition-colors leading-relaxed text-gray-700"
+                  >
+                    {item.display_name}
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => handleSearch()}
           disabled={searching}
-          className="h-10 px-4 bg-[#0052CC] hover:bg-[#0040a2] text-white text-xs font-bold rounded-lg disabled:opacity-60 cursor-pointer flex items-center gap-1.5"
+          className="h-10 px-4 bg-[#0052CC] hover:bg-[#0040a2] text-white text-xs font-bold rounded-lg disabled:opacity-60 cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
         >
           {searching ? 'Đang tìm...' : 'Tìm vị trí'}
         </button>

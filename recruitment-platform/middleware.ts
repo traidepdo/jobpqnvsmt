@@ -49,7 +49,13 @@ export async function middleware(request: NextRequest) {
                 const userRole = payload.role as string;
                 if (userRole === 'ADMIN') return NextResponse.redirect(new URL('/admin/dashboard', request.url));
                 if (userRole === 'EMPLOYER') return NextResponse.redirect(new URL('/employer/dashboard', request.url));
-                if (userRole === 'CANDIDATE') return NextResponse.redirect(new URL('/', request.url));
+                if (userRole === 'CANDIDATE') {
+                    const callbackUrl = request.nextUrl.searchParams.get('callbackUrl');
+                    if (callbackUrl) {
+                        return NextResponse.redirect(new URL(callbackUrl, request.url));
+                    }
+                    return NextResponse.redirect(new URL('/', request.url));
+                }
             } catch {
                 const response = NextResponse.next();
                 response.cookies.delete('token');

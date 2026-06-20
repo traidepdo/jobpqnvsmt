@@ -63,6 +63,7 @@ export default function CandidateShell({
   const [collapsed, setCollapsed] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Lấy tổng số tin nhắn chưa đọc
   const loadUnread = () => {
@@ -110,7 +111,10 @@ export default function CandidateShell({
     fetch('/api/auth/me')
       .then(r => r.json())
       .then(d => {
-        if (d.user) setUser(d.user);
+        if (d.user) {
+          setUser(d.user);
+          setLoading(false);
+        }
         else router.push('/login?callbackUrl=' + encodeURIComponent(pathname));
       })
       .catch(() => router.push('/login'));
@@ -137,8 +141,19 @@ export default function CandidateShell({
       .map(w => w[0].toUpperCase())
       .join('') ?? '?';
 
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#f4f7f6]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-[3px] border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm font-medium animate-pulse">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-[#f4f7f6]">
+    <div className="flex h-screen overflow-hidden bg-[#f4f7f6]">
       {/* ── Sidebar ─────────────────────────────────── */}
       <aside
         className={`${collapsed ? 'w-[68px]' : 'w-[240px]'} flex-shrink-0 bg-white border-r border-gray-100 flex flex-col transition-all duration-300`}
@@ -174,7 +189,7 @@ export default function CandidateShell({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-hidden">
+        <nav className="flex-1 px-2.5 py-1 space-y-0.5 overflow-y-auto">
           {NAV_GROUPS.map(group => (
             <div key={group.label}>
               {!collapsed && (

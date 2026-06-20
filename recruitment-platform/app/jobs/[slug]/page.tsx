@@ -80,10 +80,12 @@ const getRelatedJobs = cache(async (slug: string): Promise<RelatedJob[]> => {
 const getJobState = cache(async (slug: string) => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const cookieStore = await cookies();
+  const cookieString = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
   const data = await fetch(`${baseUrl}/api/public/jobs/${slug}/state`, {
     headers: {
-      cookie: cookieStore.toString(),
+      cookie: cookieString,
     },
+    cache: 'no-store',
   });
   if (!data.ok) {
     return null;
@@ -96,7 +98,13 @@ const getJobState = cache(async (slug: string) => {
 export default async function JobViewPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const job = await dataJob(slug);
+  // Run all independent data fetches in parallel on the server
+  const [job, jobState, relatedJobs, model] = await Promise.all([
+    dataJob(slug),
+    getJobState(slug),
+    getRelatedJobs(slug),
+    getLatestModel(),
+  ]);
 
   if (!job) {
     notFound();
@@ -108,7 +116,6 @@ export default async function JobViewPage({ params }: PageProps) {
   let user = null;
   let isAuthenticated = false;
 
-  const jobState = await getJobState(slug);
   if (jobState) {
     userResumes = jobState.resumes;
     initialSaved = jobState.savedJobRecord;
@@ -120,7 +127,6 @@ export default async function JobViewPage({ params }: PageProps) {
   // 3. Compute Salary Analysis directly on the server
   let salaryAnalysis = null;
   try {
-    const model = await getLatestModel();
     const predictedSalary = predictSalary({
       experience: job.experience,
       level: job.level,
@@ -175,8 +181,6 @@ export default async function JobViewPage({ params }: PageProps) {
     console.error("Error computing salary analysis in Server Component:", err);
   }
 
-  // 4. Fetch Related Jobs directly on the server
-  const relatedJobs = await getRelatedJobs(slug);
 
   // 5. Build JSON-LD schemas
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
@@ -286,10 +290,10 @@ export default async function JobViewPage({ params }: PageProps) {
       size: job.company.size,
       industry: job.company.industry,
       addressDetail: job.company.addressDetail,
-      ward: job.company.ward ? { name: job.company.ward.name } : null
+      ward: job.company.ward ? { name: job.company.ward.name, slug: job.company.ward.slug } : null
     },
-    category: { name: job.category.name },
-    ward: job.ward ? { name: job.ward.name } : null,
+    category: { name: job.category.name, slug: job.category.slug },
+    ward: job.ward ? { name: job.ward.name, slug: job.ward.slug } : null,
     addressDetail: job.addressDetail,
     quizId: job.quizId,
     latitude: job.latitude,

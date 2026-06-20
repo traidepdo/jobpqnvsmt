@@ -201,6 +201,13 @@ export default function EmployerCandidatesPage() {
     // State quản lý kích hoạt bật/tắt Modal xem CV
     const [cvModal, setCvModal] = useState<{ id: string; name: string } | null>(null);
 
+    // State quản lý ứng viên đang được mở rộng thông tin chi tiết
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const toggleExpand = (id: string) => {
+        setExpandedId(prev => prev === id ? null : id);
+    };
+
     useEffect(() => {
         const fetchCandidates = async () => {
             try {
@@ -290,7 +297,7 @@ export default function EmployerCandidatesPage() {
                         key={tab.key}
                         onClick={() => setFilterStatus(tab.key)}
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer ${filterStatus === tab.key
-                            ? "bg-[#00b14f] text-white shadow-sm"
+                            ? "bg-[#0052CC] text-white shadow-sm"
                             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                             }`}
                     >
@@ -311,145 +318,177 @@ export default function EmployerCandidatesPage() {
                     <p className="text-sm">Không tìm thấy hồ sơ ứng viên lưu trữ nào ở mục này.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCandidates.map(candidate => (
-                        <div
-                            key={candidate.id}
-                            className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5 hover:shadow-md hover:border-[#00b14f]/30 transition-all flex flex-col justify-between relative group"
-                        >
-                            {/* Icon Bookmark màu vàng cố định hiển thị ở góc */}
-                            <button
-                                disabled={updatingId === candidate.id}
-                                onClick={() => toggleBookmark(candidate.id, candidate.isBookmarked)}
-                                className="absolute top-4 right-4 text-amber-500 hover:text-gray-400 transition-colors cursor-pointer disabled:opacity-50"
-                                title="Bỏ lưu hồ sơ khỏi mục tiềm năng"
+                <div className="space-y-4">
+                    {filteredCandidates.map(candidate => {
+                        const isExpanded = expandedId === candidate.id;
+                        return (
+                            <div
+                                key={candidate.id}
+                                className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden hover:border-[#0052CC]/30 transition-all"
                             >
-                                <span className="material-symbols-outlined text-[22px] fill-amber-500">
-                                    bookmark
-                                </span>
-                            </button>
-
-                            <div className="space-y-4">
-                                {/* THÔNG TIN NHÂN SỰ CƠ BẢN */}
-                                <div className="flex gap-4 items-start pr-6">
-                                    <img
-                                        src={candidate.user.avatar
-                                            ? candidate.user.avatar.startsWith('http')
-                                                ? candidate.user.avatar // Nếu là link mạng thì giữ nguyên
-                                                : `${candidate.user.avatar.replace(/^(employer\/)?(public\/)?/, '')}` // 🌟 Xóa sạch chữ employer/ hoặc public/ nếu có, và bắt đầu bằng dấu /
-                                            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                                        alt={candidate.user.name}
-                                        className="w-12 h-12 rounded-full object-cover bg-gray-100 border border-gray-100 flex-shrink-0"
-                                    />
-                                    <div className="min-w-0">
-                                        <h3 className="text-base font-semibold text-gray-800 truncate mb-0.5 group-hover:text-[#00b14f] transition-colors">
-                                            {candidate.user.name}
-                                        </h3>
-                                        <p className="text-xs text-gray-500 flex items-center gap-1 mb-0.5 truncate">
-                                            <span className="material-symbols-outlined text-[14px]">mail</span>
-                                            {candidate.user.email}
-                                        </p>
-                                        {candidate.user.phone && (
-                                            <p className="text-xs text-gray-400 flex items-center gap-1 mb-1">
-                                                <span className="material-symbols-outlined text-[14px]">call</span>
-                                                {candidate.user.phone}
-                                            </p>
-                                        )}
-                                        <div className="mt-1.5">{getStatusBadge(candidate.status)}</div>
-                                    </div>
-                                </div>
-
-                                {/* BLOCK TÓM TẮT CV ĐỒNG BỘ STYLE */}
-                                {candidate.resume ? (
-                                    <div className="bg-gray-50 rounded-xl p-3.5 space-y-2.5 border border-gray-100">
-                                        <p className="text-xs font-semibold text-gray-500">
-                                            CV hệ thống: <span className="text-[#041b3c]">{candidate.resume.title || "CV chưa đặt tên"}</span>
-                                        </p>
-
-                                        {candidate.resume.summary && (
-                                            <p className="text-xs text-gray-600 line-clamp-2 italic">{candidate.resume.summary}</p>
-                                        )}
-
-                                        <ResumeSummaryBlock
-                                            education={candidate.resume.education}
-                                            experience={candidate.resume.experience}
+                                {/* DÒNG THÔNG TIN CHÍNH (ROW HEADER) */}
+                                <div
+                                    onClick={() => toggleExpand(candidate.id)}
+                                    className="p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-gray-50/50 transition-colors select-none"
+                                >
+                                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                                        <img
+                                            src={candidate.user.avatar
+                                                ? candidate.user.avatar.startsWith('http')
+                                                    ? candidate.user.avatar
+                                                    : `/${candidate.user.avatar.replace(/^(employer\/)?(public\/)?/, '')}`
+                                                : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
+                                            alt={candidate.user.name}
+                                            className="w-11 h-11 rounded-full object-cover bg-gray-100 border border-gray-100 flex-shrink-0"
                                         />
-                                    </div>
-                                ) : candidate.cvUrl ? (
-                                    <div className="bg-amber-50/60 rounded-xl p-3 text-center border border-amber-100/70">
-                                        <p className="text-xs text-amber-700 font-medium flex items-center justify-center gap-1">
-                                            <span className="material-symbols-outlined text-[16px]">link</span>
-                                            Ứng viên tải lên File CV gốc đính kèm
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-gray-400 italic">Hồ sơ này không đính kèm thông tin CV.</p>
-                                )}
+                                        <div className="min-w-0 flex-1 grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 md:items-center">
+                                            <div>
+                                                <h3 className="text-sm md:text-base font-semibold text-gray-800 truncate mb-0.5">
+                                                    {candidate.user.name}
+                                                </h3>
+                                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[13px]">mail</span>
+                                                        {candidate.user.email}
+                                                    </span>
+                                                    {candidate.user.phone && (
+                                                        <span className="flex items-center gap-1">
+                                                            <span className="material-symbols-outlined text-[13px]">call</span>
+                                                            {candidate.user.phone}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
 
-                                {/* VỊ TRÍ TUYỂN DỤNG GẮN LIỀN */}
-                                <div className="space-y-1 pt-1">
-                                    <div className="flex gap-2 items-start text-xs text-gray-600">
-                                        <span className="text-gray-400 font-medium flex-shrink-0">Ứng tuyển:</span>
-                                        <span className="font-semibold text-gray-800 line-clamp-1">{candidate.job.title}</span>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Vị trí ứng tuyển</p>
+                                                <p className="text-xs md:text-sm font-semibold text-gray-700 truncate">{candidate.job.title}</p>
+                                            </div>
+
+                                            <div className="flex md:justify-end items-center gap-4">
+                                                <div className="text-right hidden md:block">
+                                                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Ngày nộp</p>
+                                                    <p className="text-xs font-semibold text-gray-600">{new Date(candidate.createdAt).toLocaleDateString('vi-VN')}</p>
+                                                </div>
+                                                <div>
+                                                    {getStatusBadge(candidate.status)}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-2 items-center text-xs text-gray-500">
-                                        <span className="text-gray-400 font-medium flex-shrink-0">Ngày nộp:</span>
-                                        <span>{new Date(candidate.createdAt).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* KHỐI CÁC NÚT THAO TÁC VÀ ĐIỀU HƯỚNG CHÍNH */}
-                            <div className="space-y-2 pt-4 mt-4 border-t border-gray-100">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <a
-                                        href={candidate.cvUrl || '#'}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className={`w-full py-2 border border-gray-200 text-gray-700 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1 hover:bg-gray-50 hover:border-gray-300 transition-colors ${!candidate.cvUrl ? 'pointer-events-none opacity-50 bg-gray-50' : ''}`}
-                                    >
-                                        <span className="material-symbols-outlined text-[16px]">description</span>
-                                        Tải CV gốc
-                                    </a>
-
-                                    {/* 🌟 Nút "Xem CV đầy đủ" đã tích hợp e.stopPropagation và kích hoạt State Modal */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCvModal({ id: candidate.id, name: candidate.user.name });
-                                        }}
-                                        className="w-full py-2 bg-[#0052CC] hover:bg-[#0040a2] text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                                    >
-                                        <span className="material-symbols-outlined text-[16px]">visibility</span>
-                                        Xem CV đầy đủ
-                                    </button>
-                                </div>
-
-                                {candidate.status === "PENDING" && (
-                                    <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <div className="flex items-center justify-end gap-2 md:pl-4 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
                                         <button
                                             disabled={updatingId === candidate.id}
-                                            onClick={() => handleUpdateStatus(candidate.id, "ACCEPTED")}
-                                            className="w-full py-2 bg-[#00b14f] hover:bg-[#009940] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleBookmark(candidate.id, candidate.isBookmarked);
+                                            }}
+                                            className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                                            title="Bỏ lưu hồ sơ khỏi mục tiềm năng"
                                         >
-                                            <span className="material-symbols-outlined text-[16px]">check</span>
-                                            Tiếp nhận
+                                            <span className="material-symbols-outlined text-[20px] fill-amber-500">
+                                                bookmark
+                                            </span>
                                         </button>
-                                        <button
-                                            disabled={updatingId === candidate.id}
-                                            onClick={() => handleUpdateStatus(candidate.id, "REJECTED")}
-                                            className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50"
-                                        >
-                                            <span className="material-symbols-outlined text-[16px]">close</span>
-                                            Từ chối
-                                        </button>
+
+                                        <div className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center">
+                                            <span className={`material-symbols-outlined text-[20px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                keyboard_arrow_down
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* DROPDOWN THÔNG TIN CHI TIẾT */}
+                                {isExpanded && (
+                                    <div className="px-4 pb-5 md:px-5 border-t border-gray-100 bg-gray-50/30 pt-4 space-y-4 animate-fadeIn">
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                            
+                                            {/* Phần CV Chi tiết bên trái */}
+                                            <div className="lg:col-span-2 space-y-4">
+                                                {candidate.resume ? (
+                                                    <div className="bg-white rounded-xl p-4 border border-gray-200/80 shadow-sm space-y-3">
+                                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                            CV hệ thống: <span className="text-[#041b3c] font-bold normal-case">{candidate.resume.title || "CV chưa đặt tên"}</span>
+                                                        </p>
+
+                                                        {candidate.resume.summary && (
+                                                            <p className="text-xs md:text-sm text-gray-600 italic bg-gray-50 p-2.5 rounded-lg border-l-2 border-[#0052CC]">{candidate.resume.summary}</p>
+                                                        )}
+
+                                                        <ResumeSummaryBlock
+                                                            education={candidate.resume.education}
+                                                            experience={candidate.resume.experience}
+                                                        />
+                                                    </div>
+                                                ) : candidate.cvUrl ? (
+                                                    <div className="bg-amber-50/40 rounded-xl p-4 border border-amber-100 text-center">
+                                                        <p className="text-xs md:text-sm text-amber-800 font-medium flex items-center justify-center gap-1.5">
+                                                            <span className="material-symbols-outlined text-[18px]">link</span>
+                                                            Ứng viên tải lên File CV gốc đính kèm. Sử dụng nút tải xuống bên phải để xem.
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic">Hồ sơ này không đính kèm thông tin CV.</p>
+                                                )}
+                                            </div>
+
+                                            {/* Phần Thao tác bên phải */}
+                                            <div className="flex flex-col justify-center space-y-3 bg-white p-4 rounded-xl border border-gray-200/80 shadow-sm self-start w-full">
+                                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Thao tác hồ sơ</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <a
+                                                        href={candidate.cvUrl || '#'}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className={`py-2 border border-gray-200 text-gray-700 rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1 hover:bg-gray-50 hover:border-gray-300 transition-colors ${!candidate.cvUrl ? 'pointer-events-none opacity-50 bg-gray-50' : ''}`}
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">download</span>
+                                                        Tải CV gốc
+                                                    </a>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCvModal({ id: candidate.id, name: candidate.user.name });
+                                                        }}
+                                                        className="py-2 bg-[#0052CC] hover:bg-[#0040a2] text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                                        Xem CV đầy đủ
+                                                    </button>
+                                                </div>
+
+                                                {(candidate.status === "PENDING" || candidate.status === "REVIEWING") && (
+                                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-100 mt-2">
+                                                        <button
+                                                            disabled={updatingId === candidate.id}
+                                                            onClick={() => handleUpdateStatus(candidate.id, "ACCEPTED")}
+                                                            className="py-2 bg-[#00b14f] hover:bg-[#009940] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">check</span>
+                                                            Tiếp nhận
+                                                        </button>
+                                                        <button
+                                                            disabled={updatingId === candidate.id}
+                                                            onClick={() => handleUpdateStatus(candidate.id, "REJECTED")}
+                                                            className="py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">close</span>
+                                                            Từ chối
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                        </div>
                                     </div>
                                 )}
                             </div>
-
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

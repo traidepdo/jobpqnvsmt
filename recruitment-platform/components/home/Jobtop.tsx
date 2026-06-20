@@ -1,9 +1,8 @@
-import Link from "next/link"
+"use client";
+import Link from "next/link";
 import { formatSalary, getJobTypeLabel } from '@/lib/jobLabels';
-import { prisma } from "@/lib/prisma";
-import { companyCardSelect } from "@/lib/prismaSafe";
-import { getLatestModel, predictSalary } from "@/lib/salaryPredictor";
 import ReloadButton from "./ReloadButton";
+import { useState, useEffect } from "react";
 
 interface Job {
     id: string;
@@ -20,83 +19,39 @@ interface Job {
     salaryDiff?: number;
 }
 
-async function getFeaturedJobs() {
-    try {
-        const featuredJobsRaw = await prisma.job.findMany({
-            where: { status: "ACTIVE" },
-            take: 4,
-            orderBy: { createdAt: "desc" },
-            include: {
-                company: { select: companyCardSelect },
-                category: {
-                    select: {
-                        name: true
-                    }
-                },
-                ward: {
-                    select: {
-                        name: true
-                    }
-                }
-            }
-        });
+export default function JobTop() {
+    const [featuredJobs, setFeaturedJobs] = useState<Job[]>([]);
+    const [loading, setLoading] = useState(true);
 
-        const model = await getLatestModel();
-        return featuredJobsRaw.map(job => {
-            const min = job.salaryMin;
-            const max = job.salaryMax;
-            
-            let actualSalary: number | null = null;
-            if (min !== null && max !== null) {
-                actualSalary = (min + max) / 2;
-            } else if (min !== null) {
-                actualSalary = min;
-            } else if (max !== null) {
-                actualSalary = max;
-            }
-            
-            let salaryStatus: 'good' | 'average' | 'bad' | null = null;
-            let salaryDiff = 0;
-            
-            if (actualSalary !== null) {
-                if (actualSalary > 100000) {
-                    actualSalary = actualSalary / 1000000;
+    useEffect(() => {
+        let isMounted = true;
+        async function fetchJobs() {
+            try {
+                setLoading(true);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/home/jobtop`);
+                if (!res.ok) {
+                    throw new Error('Failed to fetch job top');
                 }
-                
-                const predicted = predictSalary({
-                    experience: job.experience,
-                    level: job.level,
-                    type: job.type,
-                    categoryId: job.categoryId,
-                    wardId: job.wardId,
-                }, model);
-                
-                salaryDiff = Math.round(((actualSalary - predicted) / predicted) * 100);
-                if (actualSalary >= 1.15 * predicted) {
-                    salaryStatus = 'good';
-                } else if (actualSalary < 0.9 * predicted) {
-                    salaryStatus = 'bad';
-                } else {
-                    salaryStatus = 'average';
+                const data: { jobTop: Job[] } = await res.json();
+                if (isMounted) {
+                    setFeaturedJobs(data.jobTop);
+                }
+            } catch (error) {
+                console.error("Error fetching featured jobs:", error);
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
                 }
             }
-            
-            return {
-                ...job,
-                salaryStatus,
-                salaryDiff
-            };
-        }) as Job[];
-    } catch (error) {
-        console.error("Error fetching featured jobs:", error);
-        return [];
-    }
-}
-
-export default async function JobTop() {
-    const featuredJobs = await getFeaturedJobs();
+        }
+        fetchJobs();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
+
         <section className="py-6 pb-24 px-6 max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex items-end justify-between mb-12">
@@ -115,7 +70,24 @@ export default async function JobTop() {
                 </Link>
             </div>
 
-            {featuredJobs.length === 0 ? (
+            {loading ? (
+                /* Skeleton Loader */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="animate-pulse bg-white rounded-2xl p-5 border border-gray-100 flex gap-4">
+                            <div className="w-14 h-14 bg-gray-100 rounded-xl shrink-0" />
+                            <div className="flex-1 space-y-3 py-1">
+                                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                                <div className="flex gap-2 pt-2">
+                                    <div className="h-5 bg-gray-100 rounded w-20" />
+                                    <div className="h-5 bg-gray-100 rounded w-20" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : featuredJobs.length === 0 ? (
                 <div className="text-center py-20 rounded-3xl"
                     style={{ background: 'rgba(255,255,255,0.8)', border: '2px dashed rgba(22,163,74,0.2)' }}>
                     <div className="text-5xl mb-4">💼</div>
@@ -234,5 +206,5 @@ export default async function JobTop() {
                 </>
             )}
         </section>
-    )
+    );
 }

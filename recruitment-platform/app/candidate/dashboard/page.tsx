@@ -64,7 +64,7 @@ export default function CandidateDashboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="bg-gradient-to-r from-[#00b14f] to-[#009940] rounded-2xl p-6 md:p-8 text-white shadow-lg">
         <h2 className="text-xl font-bold mb-1">Chào mừng trở lại!</h2>
         <p className="text-white/80 text-sm mb-5">Quản lý CV, đơn ứng tuyển và việc làm đã lưu tại một nơi.</p>

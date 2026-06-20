@@ -32,10 +32,10 @@ export interface JobDetails {
     size?: string | null;
     industry: string | null;
     addressDetail: string | null;
-    ward?: { name: string } | null;
+    ward?: { name: string, slug: string } | null;
   };
-  category: { name: string };
-  ward: { name: string } | null;
+  category: { name: string, slug: string };
+  ward: { name: string, slug: string } | null;
   addressDetail: string | null;
   quizId: string | null;
   latitude: number | null;
