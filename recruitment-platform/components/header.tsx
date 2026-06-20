@@ -200,7 +200,9 @@ export default function Header() {
                             <NavItem label="Trang chủ" href="/" />
                             <NavItem label="Việc làm" href="/jobs" dropdown={JOB_DROPDOWN} />
                             <NavItem label="Công ty" href="/companies" dropdown={COMPANY_DROPDOWN} />
-                            <NavItem label="Tạo CV" href="/tao-cv" dropdown={CV_DROPDOWN} />
+                            {(!user || user.role === "CANDIDATE") && (
+                                <NavItem label="Tạo CV" href="/tao-cv" dropdown={CV_DROPDOWN} />
+                            )}
                             <NavItem label="Blog" href="/blog" dropdown={BLOG_DROPDOWN} />
                         </ul>
                     </nav>

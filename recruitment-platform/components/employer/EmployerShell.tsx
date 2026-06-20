@@ -257,15 +257,6 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
 
         {/* Bottom */}
         <div className="p-3 space-y-2 border-t border-gray-100">
-          {sidebarOpen && (
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#0052CC] to-[#0040a2] text-white">
-              <p className="text-xs font-bold mb-1">Nâng cấp Pro</p>
-              <p className="text-[10px] text-white/70 mb-2">Đăng tin không giới hạn & xem CV ứng viên</p>
-              <button className="w-full py-1.5 bg-white text-[#0052CC] text-xs font-bold rounded-lg hover:bg-blue-50 transition-colors">
-                Xem gói Pro
-              </button>
-            </div>
-          )}
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer
@@ -279,7 +270,6 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
 
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col min-w-0">
-
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
           <div className="flex items-center gap-4">

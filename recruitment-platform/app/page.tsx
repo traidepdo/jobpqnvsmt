@@ -245,22 +245,26 @@ export default async function PhuQuocJobsPage() {
         {/* DUAL CTA SECTION */}
         <SectionWrapper>
           <section className="py-24 px-6 max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)' }}>
-                <div className="relative z-10 max-w-md">
-                  <span className="text-xs font-bold uppercase text-green-400 tracking-wider">Dành cho ứng viên</span>
-                  <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Khởi tạo sự nghiệp tại Đảo Ngọc</h3>
-                  <Link href={isLoggedIn ? "/tao-cv" : "/login?callbackUrl=/tao-cv"} className="inline-flex items-center justify-center font-bold text-sm text-green-900 bg-green-400 hover:bg-green-300 px-6 py-3 rounded-xl transition-all">Tạo CV chuyên nghiệp</Link>
+            <div className={`grid grid-cols-1 ${!isLoggedIn ? 'md:grid-cols-2' : ''} gap-8`}>
+              {(!isLoggedIn || !isEmployer) && (
+                <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)' }}>
+                  <div className="relative z-10 max-w-md">
+                    <span className="text-xs font-bold uppercase text-green-400 tracking-wider">Dành cho ứng viên</span>
+                    <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Khởi tạo sự nghiệp tại Đảo Ngọc</h3>
+                    <Link href={isLoggedIn ? "/tao-cv" : "/login?callbackUrl=/tao-cv"} className="inline-flex items-center justify-center font-bold text-sm text-green-900 bg-green-400 hover:bg-green-300 px-6 py-3 rounded-xl transition-all">Tạo CV chuyên nghiệp</Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
-                <div className="relative z-10 max-w-md">
-                  <span className="text-xs font-bold uppercase text-blue-400 tracking-wider">Dành cho nhà tuyển dụng</span>
-                  <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Tìm kiếm nhân tài phù hợp nhanh nhất</h3>
-                  <Link href={isEmployer ? "/employer/dashboard" : "/register/employer"} className="inline-flex items-center justify-center font-bold text-sm text-slate-900 bg-white hover:bg-slate-100 px-6 py-3 rounded-xl transition-all">Đăng tin tuyển dụng ngay</Link>
+              {(!isLoggedIn || isEmployer) && (
+                <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
+                  <div className="relative z-10 max-w-md">
+                    <span className="text-xs font-bold uppercase text-blue-400 tracking-wider">Dành cho nhà tuyển dụng</span>
+                    <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Tìm kiếm nhân tài phù hợp nhanh nhất</h3>
+                    <Link href={isEmployer ? "/employer/dashboard" : "/register/employer"} className="inline-flex items-center justify-center font-bold text-sm text-slate-900 bg-white hover:bg-slate-100 px-6 py-3 rounded-xl transition-all">Đăng tin tuyển dụng ngay</Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </section>
         </SectionWrapper>

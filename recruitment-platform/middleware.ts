@@ -78,7 +78,7 @@ export async function middleware(request: NextRequest) {
     const isAdminRoute = pathname.startsWith('/admin');
     const isEmployerRoute = pathname.startsWith('/employer');
     const isCandidateRoute = pathname.startsWith('/candidate');
-    const isTaoCvRoute = pathname.startsWith('/tao-cv');
+    const isTaoCvRoute = pathname.startsWith('/tao-cv') || pathname.startsWith('/sua-cv');
 
     if (isAdminRoute || isEmployerRoute || isCandidateRoute || isTaoCvRoute) {
         if (!token) {
@@ -106,6 +106,9 @@ export async function middleware(request: NextRequest) {
             if (isCandidateRoute && userRole !== 'CANDIDATE') {
                 return NextResponse.redirect(new URL('/unauthorized', request.url));
             }
+            if (isTaoCvRoute && userRole !== 'CANDIDATE') {
+                return NextResponse.redirect(new URL('/unauthorized', request.url));
+            }
         } catch {
             const response = NextResponse.redirect(
                 new URL(isAdminRoute ? '/admin/login' : '/login', request.url)
@@ -127,5 +130,6 @@ export const config = {
         '/admin/login',
         '/register/:path*',
         '/tao-cv/:path*',
+        '/sua-cv/:path*',
     ],
 };

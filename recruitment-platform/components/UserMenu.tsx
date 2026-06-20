@@ -184,6 +184,69 @@ export default function UserMenu({ user }: UserMenuProps) {
                                 Việc đã lưu
                             </Link>
                         </>
+                    ) : user.role === 'EMPLOYER' ? (
+                        <>
+                            <Link
+                                href={config.dashboardUrl}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    business
+                                </span>
+                                Quản lý công ty
+                            </Link>
+                            <Link
+                                href={"/employer/company"}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    info
+                                </span>
+                                Quản lý thông tin công ty
+                            </Link>
+                            <Link
+                                href={"/employer/jobs"}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    description
+                                </span>
+                                Quản lý tin tuyển dụng
+                            </Link>
+                            <Link
+                                href={"/employer/quizzes"}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    quiz
+                                </span>
+                                Quản lý bài test
+                            </Link>
+                            <Link
+                                href={"/employer/applications"}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    manage_history
+                                </span>
+                                Quản lý đơn ứng tuyển
+                            </Link>
+                            <Link
+                                href={"/employer/interviews"}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    history_edu
+                                </span>
+                                Lịch phỏng vấn
+                            </Link>
+                        </>
                     ) : (
                         <Link
                             href={config.dashboardUrl}
@@ -191,10 +254,11 @@ export default function UserMenu({ user }: UserMenuProps) {
                             className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
                         >
                             <span className="material-symbols-outlined text-[20px] text-gray-500">
-                                dashboard
+                                business
                             </span>
                             Quản lý hồ sơ
                         </Link>
+
                     )}
                 </div>
 
