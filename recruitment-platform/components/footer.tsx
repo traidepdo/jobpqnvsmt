@@ -89,25 +89,42 @@ export default function Footer() {
     return (
         <footer className="bg-[#041b3c] text-white">
             {/* Top banner */}
-            <div className="bg-[#00b14f] py-10">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-white">Bạn đang tìm việc làm phù hợp?</h3>
-                        <p className="text-green-200 text-sm mt-1">Hàng nghìn việc làm chất lượng đang chờ bạn khám phá</p>
+            <div className="bg-[#00b14f] py-4.5 overflow-hidden border-y border-white/10 relative flex items-center">
+                {/* CSS for infinite marquee */}
+                <style dangerouslySetInnerHTML={{
+                    __html: `
+                    @keyframes marquee {
+                        0% { transform: translateX(0%); }
+                        100% { transform: translateX(-50%); }
+                    }
+                    .animate-marquee {
+                        display: flex;
+                        width: max-content;
+                        animation: marquee 30s linear infinite;
+                    }
+                    .animate-marquee:hover {
+                        animation-play-state: paused;
+                    }
+                `}} />
+
+                <div className="animate-marquee whitespace-nowrap flex gap-12 text-[13px] md:text-sm font-extrabold text-white/90 uppercase tracking-widest">
+                    {/* First copy */}
+                    <div className="flex gap-12 shrink-0 items-center">
+                        <span>✦ Phú Quốc Jobs</span>
+                        <span>✦ Kết nối nhà tuyển dụng hàng đầu</span>
+                        <span>✦ Tìm việc làm nhanh chóng</span>
+                        <span>✦ Hàng nghìn cơ hội việc làm chất lượng</span>
+                        <span>✦ Phân tích lương thông minh bằng AI</span>
+                        <span>✦ Tạo hồ sơ CV chuyên nghiệp</span>
                     </div>
-                    <div className="flex gap-3 flex-shrink-0">
-                        <Link
-                            href="/jobs"
-                            className="px-6 py-2.5 bg-white text-[#00b14f] font-bold text-sm rounded-lg hover:bg-green-50 transition-colors"
-                        >
-                            Tìm việc ngay
-                        </Link>
-                        <Link
-                            href="/employer/jobs/new"
-                            className="px-6 py-2.5 bg-transparent border border-white/50 text-white font-bold text-sm rounded-lg hover:bg-white/10 transition-colors"
-                        >
-                            Đăng tuyển dụng
-                        </Link>
+                    {/* Second copy for seamless loop */}
+                    <div className="flex gap-12 shrink-0 items-center">
+                        <span>✦ Phú Quốc Jobs</span>
+                        <span>✦ Kết nối nhà tuyển dụng hàng đầu</span>
+                        <span>✦ Tìm việc làm nhanh chóng</span>
+                        <span>✦ Hàng nghìn cơ hội việc làm chất lượng</span>
+                        <span>✦ Phân tích lương thông minh bằng AI</span>
+                        <span>✦ Tạo hồ sơ CV chuyên nghiệp</span>
                     </div>
                 </div>
             </div>

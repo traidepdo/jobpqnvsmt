@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Hero from '@/components/hero';
 import JobTop from '@/components/home/Jobtop';
 import SectionWrapper from '@/components/home/SectionWrapper';
+import InteractiveCareerTool from '@/components/home/InteractiveCareerTool';
 import "../styles/home.css";
 
 async function fetchHomeData() {
@@ -135,7 +136,7 @@ export default async function PhuQuocJobsPage() {
                       }}
                     >
                       {/* Shimmer Light Reflection effect */}
-                      <div 
+                      <div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full"
                         style={{
                           transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -143,21 +144,21 @@ export default async function PhuQuocJobsPage() {
                       />
 
                       {/* Double Glowing background blobs */}
-                      <div 
+                      <div
                         className="absolute -top-8 -right-8 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20"
                         style={{
                           transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       />
-                      <div 
+                      <div
                         className="absolute -bottom-8 -left-8 w-24 h-24 bg-[#00b14f]/5 rounded-full blur-xl group-hover:bg-[#00b14f]/15"
                         style={{
                           transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       />
-                      
+
                       {/* Bottom sliding gradient border indicator */}
-                      <div 
+                      <div
                         className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-emerald-500 via-green-400 to-[#00b14f] scale-x-0 group-hover:scale-x-100 origin-left"
                         style={{
                           transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -165,7 +166,7 @@ export default async function PhuQuocJobsPage() {
                       />
 
                       {/* Company Logo container */}
-                      <div 
+                      <div
                         className="w-18 h-18 rounded-2xl bg-gray-50 border border-gray-100/50 flex items-center justify-center overflow-hidden mb-4 group-hover:bg-white group-hover:border-green-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.015)]"
                         style={{
                           boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
@@ -182,7 +183,7 @@ export default async function PhuQuocJobsPage() {
                             }}
                           />
                         ) : (
-                          <div 
+                          <div
                             className="w-full h-full bg-green-50/50 flex items-center justify-center text-3xl group-hover:scale-105"
                             style={{
                               transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -194,7 +195,7 @@ export default async function PhuQuocJobsPage() {
                       </div>
 
                       {/* Company Name */}
-                      <h3 
+                      <h3
                         className="text-xs font-bold text-gray-800 group-hover:text-[#00b14f] line-clamp-1 w-full px-1"
                         style={{
                           transition: 'color 0.4s ease'
@@ -204,7 +205,7 @@ export default async function PhuQuocJobsPage() {
                       </h3>
 
                       {/* Job Count Badge */}
-                      <div 
+                      <div
                         className="bg-green-50/70 text-[#00b14f] text-[10px] font-extrabold px-3 py-1.5 rounded-full mt-4 flex items-center gap-1.5 group-hover:bg-[#00b14f] group-hover:text-white group-hover:shadow-[0_4px_12px_rgba(0,177,79,0.25)]"
                         style={{
                           transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -215,7 +216,7 @@ export default async function PhuQuocJobsPage() {
                       </div>
 
                       {/* Arrow icon sliding right */}
-                      <div 
+                      <div
                         className="flex items-center gap-1 text-[10px] font-extrabold text-[#00b14f] mt-4 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
                         style={{
                           transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -244,29 +245,11 @@ export default async function PhuQuocJobsPage() {
 
         {/* DUAL CTA SECTION */}
         <SectionWrapper>
-          <section className="py-24 px-6 max-w-6xl mx-auto">
-            <div className={`grid grid-cols-1 ${!isLoggedIn ? 'md:grid-cols-2' : ''} gap-8`}>
-              {(!isLoggedIn || !isEmployer) && (
-                <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)' }}>
-                  <div className="relative z-10 max-w-md">
-                    <span className="text-xs font-bold uppercase text-green-400 tracking-wider">Dành cho ứng viên</span>
-                    <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Khởi tạo sự nghiệp tại Đảo Ngọc</h3>
-                    <Link href={isLoggedIn ? "/tao-cv" : "/login?callbackUrl=/tao-cv"} className="inline-flex items-center justify-center font-bold text-sm text-green-900 bg-green-400 hover:bg-green-300 px-6 py-3 rounded-xl transition-all">Tạo CV chuyên nghiệp</Link>
-                  </div>
-                </div>
-              )}
-
-              {(!isLoggedIn || isEmployer) && (
-                <div className="relative rounded-3xl overflow-hidden min-h-[300px] flex items-center p-8 md:p-12" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
-                  <div className="relative z-10 max-w-md">
-                    <span className="text-xs font-bold uppercase text-blue-400 tracking-wider">Dành cho nhà tuyển dụng</span>
-                    <h3 className="text-2xl font-extrabold text-white mt-2 mb-3">Tìm kiếm nhân tài phù hợp nhanh nhất</h3>
-                    <Link href={isEmployer ? "/employer/dashboard" : "/register/employer"} className="inline-flex items-center justify-center font-bold text-sm text-slate-900 bg-white hover:bg-slate-100 px-6 py-3 rounded-xl transition-all">Đăng tin tuyển dụng ngay</Link>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
+          <InteractiveCareerTool
+            categories={categories}
+            isLoggedIn={isLoggedIn}
+            isEmployer={isEmployer}
+          />
         </SectionWrapper>
 
         <div className="h-8" />
