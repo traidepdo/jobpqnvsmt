@@ -2,7 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
-import JobDetailsClient from '@/components/jobs/JobDetailsClient';
+import JobDetailsClient, { JobDetails } from '@/components/jobs/JobDetailsClient';
+import { JobDetail } from '@/lib/types/JobDetail';
 import { cache } from 'react';
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -11,6 +12,7 @@ interface JobResponse {
   title: string;
   description: string;
 }
+
 const getdatametadata = cache(async (slug: string): Promise<JobResponse> => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const data = await fetch(`${baseUrl}/api/public/jobs/metadata/${slug}`);
@@ -45,14 +47,14 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-const dataJob = cache(async (slug: string) => {
+const dataJob = cache(async (slug: string): Promise<JobDetail | null> => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const data = await fetch(`${baseUrl}/api/public/jobs/${slug}`);
   if (!data.ok) {
     return null;
   }
   const jobData = await data.json();
-  return jobData;
+  return jobData as JobDetail;
 })
 
 interface RelatedJob {
@@ -265,41 +267,6 @@ export default async function JobViewPage({ params }: PageProps) {
     }))
   } : null;
 
-  // Cast job to JobDetails for client component validation
-  const serializedJob = {
-    id: job.id,
-    title: job.title,
-    slug: job.slug,
-    description: job.description,
-    requirements: job.requirements,
-    benefits: job.benefits,
-    salaryMin: job.salaryMin,
-    salaryMax: job.salaryMax,
-    type: job.type,
-    experience: job.experience,
-    level: job.level,
-    quantity: job.quantity,
-    deadline: job.deadline ? new Date(job.deadline).toISOString() : null,
-    createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : '',
-    company: {
-      id: job.company.id,
-      name: job.company.name,
-      logo: job.company.logo,
-      website: job.company.website,
-      description: job.company.description,
-      size: job.company.size,
-      industry: job.company.industry,
-      addressDetail: job.company.addressDetail,
-      ward: job.company.ward ? { name: job.company.ward.name, slug: job.company.ward.slug } : null
-    },
-    category: { name: job.category.name, slug: job.category.slug },
-    ward: job.ward ? { name: job.ward.name, slug: job.ward.slug } : null,
-    addressDetail: job.addressDetail,
-    quizId: job.quizId,
-    latitude: job.latitude,
-    longitude: job.longitude,
-  };
-
   return (
     <>
       <script
@@ -318,7 +285,7 @@ export default async function JobViewPage({ params }: PageProps) {
       )}
 
       <JobDetailsClient
-        job={serializedJob}
+        job={job as unknown as JobDetails}
         relatedJobs={relatedJobs}
         salaryAnalysis={salaryAnalysis}
         initialSaved={initialSaved}

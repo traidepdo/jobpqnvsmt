@@ -65,3 +65,12 @@ export function formatSalary(min: number | null, max: number | null): string {
   if (max) return `Đến ${fmt(max)}`;
   return 'Thỏa thuận';
 }
+
+export const ALL_STATUSES = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Chờ xem xét', value: 'PENDING' },
+  { label: 'Đang xem xét', value: 'REVIEWING' },
+  { label: 'Phỏng vấn', value: 'INTERVIEW' },
+  { label: 'Đã nhận', value: 'ACCEPTED' },
+  { label: 'Không phù hợp', value: 'REJECTED' },
+];
