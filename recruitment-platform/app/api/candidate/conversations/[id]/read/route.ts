@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-key-123');
+import { verifyToken } from '@/lib/auth';
 
 async function getUser() {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     if (!token) return null;
-    try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
-        return payload;
-    } catch { return null; }
+    return verifyToken(token);
 }
 
 // PATCH /api/candidate/conversations/[id]/read

@@ -10,18 +10,12 @@ export async function requireEmployer() {
   }
 
   const payload = await verifyToken(token);
-  if (!payload || payload.role !== 'EMPLOYER') {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  if (!payload) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: payload.id as string }
-  });
-  if (!user) {
-    return { error: NextResponse.json({ error: 'User session invalid' }, { status: 401 }) };
-  }
-  if (!user.isActive || user.isLocked) {
-    return { error: NextResponse.json({ error: 'Tài khoản đã bị khóa hoặc ngừng hoạt động' }, { status: 401 }) };
+  if (payload.role !== 'EMPLOYER') {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 
   const company = await prisma.company.findUnique({

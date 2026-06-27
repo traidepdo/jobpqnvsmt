@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { verifyToken } from './auth';
-import { prisma } from './prisma';
 
 export async function requireCandidate() {
   const token = (await cookies()).get('token')?.value;
@@ -10,19 +9,12 @@ export async function requireCandidate() {
   }
 
   const payload = await verifyToken(token);
-  if (!payload || payload.role !== 'CANDIDATE') {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  if (!payload) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
-  // Check if user still exists in database
-  const user = await prisma.user.findUnique({
-    where: { id: payload.id as string }
-  });
-  if (!user) {
-    return { error: NextResponse.json({ error: 'User session invalid' }, { status: 401 }) };
-  }
-  if (!user.isActive || user.isLocked) {
-    return { error: NextResponse.json({ error: 'Tài khoản đã bị khóa hoặc ngừng hoạt động' }, { status: 401 }) };
+  if (payload.role !== 'CANDIDATE') {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
 
   return { payload };

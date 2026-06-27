@@ -24,9 +24,20 @@ export async function POST(req: Request) {
         if (!isPasswordValid) {
             return NextResponse.json({ error: "Invalid password" }, { status: 401 })
         }
+        // Tăng tokenVersion lên 1 để kick các phiên đăng nhập khác
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { tokenVersion: { increment: 1 } }
+        });
+
         // 4. Tạo JWT Token bằng thư viện jose
         const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-        const token = await new SignJWT({ id: user.id, name: user.name, role: user.role })
+        const token = await new SignJWT({ 
+            id: user.id, 
+            name: user.name, 
+            role: user.role,
+            tokenVersion: updatedUser.tokenVersion 
+        })
             .setProtectedHeader({ alg: 'HS256' })
             .setExpirationTime('1d') // Token có giá trị trong 1 ngày
             .sign(secret);

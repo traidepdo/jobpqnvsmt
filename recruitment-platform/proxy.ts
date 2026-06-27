@@ -7,7 +7,7 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Gắn pathname vào request headers để Server Components có thể đọc

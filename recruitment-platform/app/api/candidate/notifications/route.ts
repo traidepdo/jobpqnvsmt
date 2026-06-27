@@ -1,5 +1,5 @@
 import { requireCandidate } from "@/lib/requireCandidate";
-import { prisma } from "@/lib/prisma";
+import { getNotificationsServer } from "@/lib/services/candidate/notification";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -7,10 +7,10 @@ export async function GET(request: Request) {
     if (auth.error) return auth.error;
     const user = auth.payload;
 
-    const notifications = await prisma.notification.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: "desc" }
-    });
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || undefined;
+
+    const notifications = await getNotificationsServer(user.id, search);
 
     return NextResponse.json({ notifications });
 }

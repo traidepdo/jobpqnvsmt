@@ -12,6 +12,7 @@ export async function GET() {
     select: {
       id: true,
       title: true,
+      isDefault: true,
       address: true,
       summary: true,
       education: true,
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData } = body;
+    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Vui lòng nhập tên hồ sơ' }, { status: 400 });
@@ -51,26 +52,58 @@ export async function POST(req: Request) {
       cleanCvData = Object.keys(rest).length > 0 ? rest : null;
     }
 
-    const resume = await prisma.resume.create({
-      data: {
-        userId: auth.payload.id,
-        title: title.trim(),
-        address: address || null,
-        summary: summary || null,
-        education: education ?? undefined,
-        experience: experience ?? undefined,
-        projects: projects ?? undefined,
-        degree: degree || null,
-        languages: languages || null,
-        socialLinks: socialLinks ?? undefined,
-        templateId: templateId || null,
-        avatarUrl,               // URL Cloudinary thật
-        cvData: cleanCvData ?? undefined, // không có _avatarUrl
-      },
-      include: {
-        template: { select: { id: true, name: true, slug: true } },
-      },
-    });
+    let resume;
+    if (isDefault) {
+      resume = await prisma.$transaction(async (tx) => {
+        await tx.resume.updateMany({
+          where: { userId: auth.payload.id },
+          data: { isDefault: false },
+        });
+        return tx.resume.create({
+          data: {
+            userId: auth.payload.id,
+            title: title.trim(),
+            address: address || null,
+            summary: summary || null,
+            education: education ?? undefined,
+            experience: experience ?? undefined,
+            projects: projects ?? undefined,
+            degree: degree || null,
+            languages: languages || null,
+            socialLinks: socialLinks ?? undefined,
+            templateId: templateId || null,
+            avatarUrl,
+            cvData: cleanCvData ?? undefined,
+            isDefault: true,
+          },
+          include: {
+            template: { select: { id: true, name: true, slug: true } },
+          },
+        });
+      });
+    } else {
+      resume = await prisma.resume.create({
+        data: {
+          userId: auth.payload.id,
+          title: title.trim(),
+          address: address || null,
+          summary: summary || null,
+          education: education ?? undefined,
+          experience: experience ?? undefined,
+          projects: projects ?? undefined,
+          degree: degree || null,
+          languages: languages || null,
+          socialLinks: socialLinks ?? undefined,
+          templateId: templateId || null,
+          avatarUrl,
+          cvData: cleanCvData ?? undefined,
+          isDefault: false,
+        },
+        include: {
+          template: { select: { id: true, name: true, slug: true } },
+        },
+      });
+    }
 
     return NextResponse.json({ resume }, { status: 201 });
   } catch (error) {

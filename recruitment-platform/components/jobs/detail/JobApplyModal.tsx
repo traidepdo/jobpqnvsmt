@@ -30,6 +30,15 @@ export default function JobApplyModal({
   const [applyLoading, setApplyLoading] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
 
+  useEffect(() => {
+    if (userResumes && userResumes.length > 0) {
+      const defaultResume = userResumes.find((r: any) => r.isDefault);
+      if (defaultResume) {
+        setSelectedResumeId(defaultResume.id);
+      }
+    }
+  }, [userResumes]);
+
   // Quiz states
   const [quizPhase, setQuizPhase] = useState<'none' | 'info' | 'quiz'>('none');
   const [quizData, setQuizData] = useState<any>(null);
@@ -348,7 +357,9 @@ export default function JobApplyModal({
                 >
                   <option value="">-- Chọn CV đã tạo --</option>
                   {userResumes.map((r: any) => (
-                    <option key={r.id} value={r.id}>{r.title}</option>
+                    <option key={r.id} value={r.id}>
+                      {r.title} {r.isDefault ? ' (Mặc định)' : ''}
+                    </option>
                   ))}
                 </select>
               ) : (

@@ -109,12 +109,23 @@ export async function GET(req: Request) {
             }
         }
 
+        // Tăng tokenVersion lên 1 để kick các phiên đăng nhập khác
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { tokenVersion: { increment: 1 } }
+        });
+
         // 5. Tạo JWT Token bằng thư viện jose (giống login thông thường)
         if (!process.env.JWT_SECRET) {
             throw new Error("JWT_SECRET environment variable is missing!");
         }
         const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-        const token = await new SignJWT({ id: user.id, name: user.name, role: user.role })
+        const token = await new SignJWT({ 
+            id: user.id, 
+            name: user.name, 
+            role: user.role,
+            tokenVersion: updatedUser.tokenVersion 
+        })
             .setProtectedHeader({ alg: "HS256" })
             .setExpirationTime("1d") // Token có giá trị trong 1 ngày
             .sign(secret);

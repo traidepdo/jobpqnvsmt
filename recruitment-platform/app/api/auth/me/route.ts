@@ -26,6 +26,8 @@ export async function GET() {
                 avatar: true,
                 phone: true,
                 isActive: true,
+                isLocked: true,
+                tokenVersion: true,
                 createdAt: true,
                 company: {
                     select: {
@@ -39,10 +41,24 @@ export async function GET() {
             },
         });
 
-        if (!user) return NextResponse.json({ user: null });
+        if (!user || !user.isActive || user.isLocked) {
+            const response = NextResponse.json({ user: null });
+            response.cookies.delete('token');
+            return response;
+        }
+
+        // Check tokenVersion to kick out old sessions
+        const jwtPayload = payload as any;
+        if (jwtPayload.tokenVersion !== undefined && user.tokenVersion !== jwtPayload.tokenVersion) {
+            const response = NextResponse.json({ user: null });
+            response.cookies.delete('token');
+            return response;
+        }
 
         return NextResponse.json({ user });
     } catch {
-        return NextResponse.json({ user: null });
+        const response = NextResponse.json({ user: null });
+        response.cookies.delete('token');
+        return response;
     }
 }

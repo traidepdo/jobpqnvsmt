@@ -149,6 +149,7 @@ model User {
   phone     String?
   isActive  Boolean  @default(true)
   isLocked  Boolean  @default(false)
+  tokenVersion Int    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -361,6 +362,7 @@ model Resume {
   id          String          @id @default(cuid())
   userId      String
   title       String          @default("Hồ sơ của tôi")
+  isDefault   Boolean         @default(false)
   address     String?
   summary     String?         @db.Text
   socialLinks Json?           @map("socicallink") // [{platform, url}]

@@ -5,15 +5,24 @@ import React, { useState, useEffect } from "react";
 /**
  * TemplateFuturistic — Phong cách tương lai, tối tân (Tech/Dark Mode), sử dụng Google Material Symbols
  */
-export default function TemplateFuturistic({ user = {}, resume = {}, onSave }) {
-    const [userData, setUserData] = useState({
+export default function TemplateFuturistic({
+    user = {},
+    resume = {},
+    onSave,
+    isControlled = false,
+    controlledUserData,
+    controlledResumeData,
+    onControlledChangeUser,
+    onControlledChangeResume
+}) {
+    const [localUserData, setLocalUserData] = useState({
         name: user.name || "Họ và Tên",
         email: user.email || "",
         phone: user.phone || "",
         avatar: user.avatar || "https://i.pravatar.cc/150?img=12",
     });
 
-    const [resumeData, setResumeData] = useState({
+    const [localResumeData, setLocalResumeData] = useState({
         address: resume.address || "",
         summary: resume.summary || "",
         degree: resume.degree || "",
@@ -24,11 +33,17 @@ export default function TemplateFuturistic({ user = {}, resume = {}, onSave }) {
         projects: resume.projects || [],
     });
 
+    const userData = isControlled ? controlledUserData : localUserData;
+    const resumeData = isControlled ? controlledResumeData : localResumeData;
+
+    const setUserData = isControlled ? onControlledChangeUser : setLocalUserData;
+    const setResumeData = isControlled ? onControlledChangeResume : setLocalResumeData;
+
     const [showSaveToast, setShowSaveToast] = useState(false);
 
     // Load saved data on mount
     useEffect(() => {
-        if (resume?.id) return;
+        if (isControlled || resume?.id) return;
         const savedUser = localStorage.getItem("pqjobs_cv_user");
         const savedResume = localStorage.getItem("pqjobs_cv_resume");
         if (savedUser) {
@@ -113,7 +128,7 @@ export default function TemplateFuturistic({ user = {}, resume = {}, onSave }) {
             </div>
 
             {/* Resume Sheet */}
-            <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl overflow-hidden min-h-[1100px] font-sans p-10 print:border-none print:bg-slate-900 print:my-0 print:p-0 print:rounded-none">
+            <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl overflow-hidden min-h-[1100px] font-sans p-10 print:border-none print:bg-slate-900 print:my-0 print:p-10 print:rounded-none">
                 
                 {/* ── Futuristic Header ────────────────────────────────────── */}
                 <header className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-cyan-500/20 pb-8">

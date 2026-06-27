@@ -68,6 +68,9 @@ export default async function CvPage({
           font-family: 'Inter', sans-serif;
         }
         @media print {
+          @page {
+            margin: 12mm 15mm;
+          }
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;

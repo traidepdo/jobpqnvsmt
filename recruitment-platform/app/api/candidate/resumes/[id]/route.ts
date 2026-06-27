@@ -37,7 +37,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData } = body;
+    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault } = body;
 
     const existing = await prisma.resume.findFirst({
       where: { id, userId: auth.payload.id },
@@ -55,26 +55,58 @@ export async function PUT(
       cleanCvData = Object.keys(rest).length > 0 ? rest : null;
     }
 
-    const updated = await prisma.resume.update({
-      where: { id },
-      data: {
-        title: title ? title.trim() : existing.title,
-        address: address !== undefined ? address : existing.address,
-        summary: summary !== undefined ? summary : existing.summary,
-        education: education !== undefined ? (education ?? undefined) : (existing.education as any),
-        experience: experience !== undefined ? (experience ?? undefined) : (existing.experience as any),
-        projects: projects !== undefined ? (projects ?? undefined) : (existing.projects as any),
-        degree: degree !== undefined ? degree : existing.degree,
-        languages: languages !== undefined ? languages : existing.languages,
-        socialLinks: socialLinks !== undefined ? (socialLinks ?? undefined) : (existing.socialLinks as any),
-        templateId: templateId !== undefined ? templateId : existing.templateId,
-        avatarUrl,
-        cvData: cleanCvData !== undefined ? cleanCvData : (existing.cvData as any),
-      },
-      include: {
-        template: { select: { id: true, name: true, slug: true } },
-      },
-    });
+    let updated;
+    if (isDefault) {
+      updated = await prisma.$transaction(async (tx) => {
+        await tx.resume.updateMany({
+          where: { userId: auth.payload.id },
+          data: { isDefault: false },
+        });
+        return tx.resume.update({
+          where: { id },
+          data: {
+            title: title ? title.trim() : existing.title,
+            address: address !== undefined ? address : existing.address,
+            summary: summary !== undefined ? summary : existing.summary,
+            education: education !== undefined ? (education ?? undefined) : (existing.education as any),
+            experience: experience !== undefined ? (experience ?? undefined) : (existing.experience as any),
+            projects: projects !== undefined ? (projects ?? undefined) : (existing.projects as any),
+            degree: degree !== undefined ? degree : existing.degree,
+            languages: languages !== undefined ? languages : existing.languages,
+            socialLinks: socialLinks !== undefined ? (socialLinks ?? undefined) : (existing.socialLinks as any),
+            templateId: templateId !== undefined ? templateId : existing.templateId,
+            avatarUrl,
+            cvData: cleanCvData !== undefined ? cleanCvData : (existing.cvData as any),
+            isDefault: true,
+          },
+          include: {
+            template: { select: { id: true, name: true, slug: true } },
+          },
+        });
+      });
+    } else {
+      updated = await prisma.resume.update({
+        where: { id },
+        data: {
+          title: title ? title.trim() : existing.title,
+          address: address !== undefined ? address : existing.address,
+          summary: summary !== undefined ? summary : existing.summary,
+          education: education !== undefined ? (education ?? undefined) : (existing.education as any),
+          experience: experience !== undefined ? (experience ?? undefined) : (existing.experience as any),
+          projects: projects !== undefined ? (projects ?? undefined) : (existing.projects as any),
+          degree: degree !== undefined ? degree : existing.degree,
+          languages: languages !== undefined ? languages : existing.languages,
+          socialLinks: socialLinks !== undefined ? (socialLinks ?? undefined) : (existing.socialLinks as any),
+          templateId: templateId !== undefined ? templateId : existing.templateId,
+          avatarUrl,
+          cvData: cleanCvData !== undefined ? cleanCvData : (existing.cvData as any),
+          isDefault: isDefault !== undefined ? isDefault : existing.isDefault,
+        },
+        include: {
+          template: { select: { id: true, name: true, slug: true } },
+        },
+      });
+    }
 
     return NextResponse.json({ resume: updated });
   } catch (error) {

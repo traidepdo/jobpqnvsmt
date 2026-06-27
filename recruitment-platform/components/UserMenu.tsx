@@ -151,7 +151,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                                 <span className="material-symbols-outlined text-[20px] text-gray-500">
                                     assignment
                                 </span>
-                                Quản lý hồ sơ
+                                Dashboard
                             </Link>
                             <Link
                                 href="/candidate/resumes"
@@ -182,6 +182,16 @@ export default function UserMenu({ user }: UserMenuProps) {
                                     bookmark
                                 </span>
                                 Việc đã lưu
+                            </Link>
+                            <Link
+                                href="/candidate/follow-employer"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-gray-500">
+                                    people
+                                </span>
+                                Công ty theo dõi
                             </Link>
                         </>
                     ) : user.role === 'EMPLOYER' ? (

@@ -52,7 +52,7 @@ export default function JobTop() {
 
     return (
 
-        <section className="py-6 pb-24 px-6 max-w-6xl mx-auto">
+        <section className="py-6 pb-24 px-6 w-[1300px] mx-auto">
             {/* Header */}
             <div className="flex items-end justify-between mb-12">
                 <div>

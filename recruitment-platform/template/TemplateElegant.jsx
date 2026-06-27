@@ -5,15 +5,24 @@ import React, { useState, useEffect } from "react";
 /**
  * TemplateElegant — Phong cách sang trọng, tối giản, thanh lịch, sử dụng Google Material Symbols
  */
-export default function TemplateElegant({ user = {}, resume = {}, onSave }) {
-    const [userData, setUserData] = useState({
+export default function TemplateElegant({
+    user = {},
+    resume = {},
+    onSave,
+    isControlled = false,
+    controlledUserData,
+    controlledResumeData,
+    onControlledChangeUser,
+    onControlledChangeResume
+}) {
+    const [localUserData, setLocalUserData] = useState({
         name: user.name || "Họ và Tên",
         email: user.email || "",
         phone: user.phone || "",
         avatar: user.avatar || "https://i.pravatar.cc/150?img=12",
     });
 
-    const [resumeData, setResumeData] = useState({
+    const [localResumeData, setLocalResumeData] = useState({
         address: resume.address || "",
         summary: resume.summary || "",
         degree: resume.degree || "",
@@ -24,11 +33,17 @@ export default function TemplateElegant({ user = {}, resume = {}, onSave }) {
         projects: resume.projects || [],
     });
 
+    const userData = isControlled ? controlledUserData : localUserData;
+    const resumeData = isControlled ? controlledResumeData : localResumeData;
+
+    const setUserData = isControlled ? onControlledChangeUser : setLocalUserData;
+    const setResumeData = isControlled ? onControlledChangeResume : setLocalResumeData;
+
     const [showSaveToast, setShowSaveToast] = useState(false);
 
     // Load saved data on mount
     useEffect(() => {
-        if (resume?.id) return;
+        if (isControlled || resume?.id) return;
         const savedUser = localStorage.getItem("pqjobs_cv_user");
         const savedResume = localStorage.getItem("pqjobs_cv_resume");
         if (savedUser) {
@@ -113,7 +128,7 @@ export default function TemplateElegant({ user = {}, resume = {}, onSave }) {
             </div>
 
             {/* Resume Sheet */}
-            <div className="max-w-4xl mx-auto bg-white shadow-xl border border-stone-200 min-h-[1100px] font-sans text-stone-850 p-12 print:shadow-none print:border-none print:my-0 print:p-0">
+            <div className="max-w-4xl mx-auto bg-white shadow-xl border border-stone-200 min-h-[1100px] font-sans text-stone-850 p-12 print:shadow-none print:border-none print:my-0 print:p-8">
                 
                 {/* ── Top Header Section ───────────────────────────────────── */}
                 <header className="border-b border-stone-300 pb-8 flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
