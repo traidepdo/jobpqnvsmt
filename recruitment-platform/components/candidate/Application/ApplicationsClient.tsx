@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import type { Application } from '@/lib/types/candidate/Application';
 import Header from './Header';
-import Nav from './Nav';
 import Statsrow from './Statsrow';
 import Filtertabs from './Filtertabs';
 import Cancel from './Cancel';
@@ -43,8 +42,6 @@ export default function ApplicationsClient({
   return (
     <div className="min-h-screen bg-[#f4f6f5] pt-20 pb-16">
       <div className="max-w-[900px] mx-auto px-4 md:px-8">
-        {/* Breadcrumb */}
-        <Nav />
         {/* Header */}
         <Header loading={false} applications={applications} />
         {/* Stats row */}
