@@ -1,9 +1,9 @@
 'use client';
-import { Blogs } from "@/lib/types/blogs/main";
+import { Blogs, CategoryBlogs } from "@/lib/types/blogs/main";
 import Image from "next/image";
 import Search from "./Search";
 import useBlogs from "@/lib/hooks/useBlogs";
-
+import Link from "next/link";
 interface ClientBlogsProps {
     blogs: Blogs[];
     metadata: {
@@ -13,12 +13,14 @@ interface ClientBlogsProps {
         totalPages: number;
         query?: string;
     };
+    categories: CategoryBlogs[];
+
 }
 
-export default function ClientBlogs({ blogs, metadata }: ClientBlogsProps) {
+export default function ClientBlogs({ blogs, metadata, categories }: ClientBlogsProps) {
 
 
-    const { handleSearch, searchValue, setSearchValue, handlePageChange } = useBlogs({ metadata, blogs });
+    const { handleSearch, searchValue, setSearchValue, handlePageChange, category } = useBlogs({ metadata, blogs, categories });
 
     const getPageNumbers = () => {
         const total = metadata.totalPages;
@@ -65,6 +67,20 @@ export default function ClientBlogs({ blogs, metadata }: ClientBlogsProps) {
                 </div>
                 <div className="w-full md:w-auto flex justify-start md:justify-end">
                     <Search handleSearch={handleSearch} searchValue={searchValue} setSearchValue={setSearchValue} />
+                </div>
+            </div>
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Danh mục bài viết</h2>
+                <div className="flex flex-wrap gap-2">
+                    {category.map((category) => (
+                        <Link
+                            key={category.id}
+                            href={`/blog-category/${category.slug}`}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium"
+                        >
+                            {category.name}
+                        </Link>
+                    ))}
                 </div>
             </div>
 

@@ -33,6 +33,12 @@ const CV_DROPDOWN = [
 
 const BLOG_DROPDOWN = [
     {
+        icon: "new_releases",
+        label: "Tin tức & Sự nghiệp",
+        desc: "Cập nhật các tin tức tuyển dụng mới nhất, cẩm nang nghề nghiệp và xu hướng thị trường lao động",
+        href: "/blogs",
+    },
+    {
         icon: "work",
         label: "Việc làm theo ngành nghề",
         desc: "Khám phá cơ hội việc làm theo từng lĩnh vực",

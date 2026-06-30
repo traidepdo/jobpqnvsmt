@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Blogs } from '@/lib/types/blogs/main'
+import { Blogs, CategoryBlogs } from '@/lib/types/blogs/main'
 
 
 export interface PaginatedBlogs {
@@ -13,7 +13,7 @@ export interface PaginatedBlogs {
     }
 }
 
-export async function getBlogs({ page = 1, limit = 10, query }: { page?: number; limit?: number; query?: string } = {}): Promise<PaginatedBlogs> {
+export async function getBlogs({ page = 1, limit = 12, query }: { page?: number; limit?: number; query?: string } = {}): Promise<PaginatedBlogs> {
     const skip = (page - 1) * limit;
 
     const where = {
@@ -84,4 +84,16 @@ export async function getBlogs({ page = 1, limit = 10, query }: { page?: number;
             query,
         }
     };
+}
+
+export async function getCategogyBlogs(): Promise<CategoryBlogs[]> {
+    const data = await prisma.blogCategory.findMany();
+    return data.map((category) => {
+        return {
+            id: category.id,
+            slug: category.slug,
+            name: category.name,
+        };
+    });
+
 }

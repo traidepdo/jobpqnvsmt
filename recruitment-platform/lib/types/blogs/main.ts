@@ -22,3 +22,9 @@ interface Category {
     slug: string;
     name: string;
 }
+
+export interface CategoryBlogs {
+    id: string;
+    slug: string;
+    name: string;
+}

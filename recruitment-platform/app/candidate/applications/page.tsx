@@ -16,6 +16,12 @@ export default async function AppliedJobsPage() {
     ...app,
     cvUrl: signCloudinaryCvUrl(app.cvUrl),
     createdAt: app.createdAt.toISOString(),
+    job: {
+      ...app.job,
+      deadline: (app.job?.deadline as any) instanceof Date
+        ? (app.job.deadline as any).toISOString()
+        : (app.job?.deadline ? String(app.job.deadline) : null),
+    }
   }));
 
   return <ApplicationsClient initialApplications={signedApplications as any} />;

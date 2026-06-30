@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { Notification } from "@/lib/types/candidate/Notification";
 import { useNotifications, getCategoryKey } from "@/lib/hooks/useNotifications";
@@ -71,15 +72,81 @@ export default function ClientNotification({ initialNotifications }: { initialNo
         unreadCount,
     } = useNotifications(initialNotifications);
 
+    // Common component function for detail block to prevent duplication
+    const renderDetailContent = (notification: Notification) => (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+            {/* Detail header */}
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: cfg(notification.type).bg }}
+                    >
+                        <span
+                            className="material-symbols-outlined text-[18px]"
+                            style={{ color: cfg(notification.type).color }}
+                        >
+                            {cfg(notification.type).icon}
+                        </span>
+                    </div>
+                    <span className="font-bold text-sm text-[#041b3c]">Chi tiết thông báo</span>
+                </div>
+                <button
+                    onClick={() => setSelected(null)}
+                    className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+
+            {/* Detail body */}
+            <div className="px-5 py-5">
+                <span
+                    className="inline-block mb-3 px-2.5 py-1 text-[11px] font-semibold rounded-full"
+                    style={{ color: cfg(notification.type).color, background: cfg(notification.type).bg }}
+                >
+                    {cfg(notification.type).label}
+                </span>
+                <h2 className="font-bold text-[#041b3c] text-base leading-snug mb-4">
+                    {notification.title}
+                </h2>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                    {notification.content}
+                </p>
+
+                {getNotificationLink(notification) && (
+                    <Link
+                        href={getNotificationLink(notification)!}
+                        className="mt-5 flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#00b14f] hover:bg-[#009f47] text-white text-sm font-semibold rounded-lg transition-all active:scale-[0.98]"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                        Xem chi tiết
+                    </Link>
+                )}
+            </div>
+
+            {/* Detail footer */}
+            <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/50 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px] text-gray-400">schedule</span>
+                <p className="text-[11px] text-gray-400">
+                    {new Date(notification.createdAt).toLocaleDateString("vi-VN", {
+                        weekday: "long", day: "2-digit", month: "2-digit",
+                        year: "numeric", hour: "2-digit", minute: "2-digit",
+                    })}
+                </p>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-[#f4f5f5]">
-            <div className="max-w-[1200px] mx-auto px-6 py-6">
+        <div className="min-h-screen bg-[#f4f5f5] pb-10">
+            <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-6">
                 {/* Page Header */}
                 <Header unreadCount={unreadCount} markAllAsRead={markAllAsRead} />
 
-                <div className="flex gap-6 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
                     {/* ── Left: List ── */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 w-full">
                         {/* Search bar */}
                         <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
@@ -101,74 +168,13 @@ export default function ClientNotification({ initialNotifications }: { initialNo
                         />
                     </div>
 
-                    {/* ── Right: Detail panel ── */}
-                    <div className="w-[380px] flex-shrink-0 sticky top-20">
+                    {/* ── Right: Detail panel (Desktop Only) ── */}
+                    <div className="hidden lg:block w-[380px] flex-shrink-0 sticky top-20">
                         {selected ? (
-                            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                                {/* Detail header */}
-                                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                            style={{ background: cfg(selected.type).bg }}
-                                        >
-                                            <span
-                                                className="material-symbols-outlined text-[18px]"
-                                                style={{ color: cfg(selected.type).color }}
-                                            >
-                                                {cfg(selected.type).icon}
-                                            </span>
-                                        </div>
-                                        <span className="font-bold text-sm text-[#041b3c]">Chi tiết thông báo</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setSelected(null)}
-                                        className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        <span className="material-symbols-outlined text-[18px]">close</span>
-                                    </button>
-                                </div>
-
-                                {/* Detail body */}
-                                <div className="px-5 py-5">
-                                    <span
-                                        className="inline-block mb-3 px-2.5 py-1 text-[11px] font-semibold rounded-full"
-                                        style={{ color: cfg(selected.type).color, background: cfg(selected.type).bg }}
-                                    >
-                                        {cfg(selected.type).label}
-                                    </span>
-                                    <h2 className="font-bold text-[#041b3c] text-base leading-snug mb-4">
-                                        {selected.title}
-                                    </h2>
-                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                                        {selected.content}
-                                    </p>
-
-                                    {getNotificationLink(selected) && (
-                                        <Link
-                                            href={getNotificationLink(selected)!}
-                                            className="mt-5 flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#00b14f] hover:bg-[#009f47] text-white text-sm font-semibold rounded-lg transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-                                            Xem chi tiết
-                                        </Link>
-                                    )}
-                                </div>
-
-                                {/* Detail footer */}
-                                <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/50 flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-[14px] text-gray-400">schedule</span>
-                                    <p className="text-[11px] text-gray-400">
-                                        {new Date(selected.createdAt).toLocaleDateString("vi-VN", {
-                                            weekday: "long", day: "2-digit", month: "2-digit",
-                                            year: "numeric", hour: "2-digit", minute: "2-digit",
-                                        })}
-                                    </p>
-                                </div>
-                            </div>
+                            renderDetailContent(selected)
                         ) : (
                             /* Empty state for detail panel */
-                            <div className="bg-white rounded-xl border border-gray-100 py-16 flex flex-col items-center text-center px-6">
+                            <div className="bg-white rounded-xl border border-gray-100 py-16 flex flex-col items-center text-center px-6 shadow-sm">
                                 <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
                                     <span className="material-symbols-outlined text-3xl text-gray-300">notifications</span>
                                 </div>
@@ -179,6 +185,22 @@ export default function ClientNotification({ initialNotifications }: { initialNo
                     </div>
                 </div>
             </div>
+
+            {/* Mobile/Tablet Drawer Modal for Notification Detail */}
+            {selected && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:hidden animate-fadeIn">
+                    {/* Backdrop Overlay */}
+                    <div 
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+                        onClick={() => setSelected(null)}
+                    />
+                    
+                    {/* Modal Box */}
+                    <div className="relative w-full max-w-lg z-10 animate-slideUp">
+                        {renderDetailContent(selected)}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

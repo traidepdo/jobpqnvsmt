@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Blogs } from "../types/blogs/main";
+import { Blogs, CategoryBlogs } from "../types/blogs/main";
 import { useRouter } from "next/navigation";
 interface ClientBlogsProps {
     blogs: Blogs[];
@@ -10,12 +10,15 @@ interface ClientBlogsProps {
         totalPages: number;
         query?: string;
     };
+    categories: CategoryBlogs[];
 }
-export default function useBlogs({ blogs, metadata }: ClientBlogsProps) {
+export default function useBlogs({ blogs, metadata, categories }: ClientBlogsProps) {
     const router = useRouter();
     const [blogData, setBlogData] = useState(blogs);
     const [searchValue, setSearchValue] = useState(metadata.query || '');
+    const [category, setCategory] = useState<CategoryBlogs[]>(categories);
     const queryParams = new URLSearchParams();
+
     const handleSearch = (query: string) => {
         queryParams.set('page', '1');
         if (query.trim()) {
@@ -32,5 +35,5 @@ export default function useBlogs({ blogs, metadata }: ClientBlogsProps) {
         }
         router.push(`/blogs?${queryParams.toString()}`);
     };
-    return { blogData, searchValue, setSearchValue, handleSearch, handlePageChange };
+    return { blogData, searchValue, setSearchValue, handleSearch, handlePageChange, category };
 }
