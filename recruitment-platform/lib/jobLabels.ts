@@ -74,3 +74,51 @@ export const ALL_STATUSES = [
   { label: 'Đã nhận', value: 'ACCEPTED' },
   { label: 'Không phù hợp', value: 'REJECTED' },
 ];
+
+
+
+export const SALARY_OPTIONS = [
+  { label: 'Tất cả mức lương', value: '' },
+  { label: 'Dưới 10 triệu', value: 'lt10' },
+  { label: '10 - 15 triệu', value: '10to15' },
+  { label: '15 - 20 triệu', value: '15to20' },
+  { label: '20 - 25 triệu', value: '20to25' },
+  { label: '25 - 30 triệu', value: '25to30' },
+  { label: '30 - 50 triệu', value: '30to50' },
+  { label: 'Trên 50 triệu', value: 'gt50' },
+  { label: 'Thỏa thuận', value: 'negotiable' },
+];
+
+export const EXPERIENCE_OPTIONS = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Chưa có kinh nghiệm', value: 'NO_EXPERIENCE' },
+  { label: 'Dưới 1 năm', value: 'UNDER_1_YEAR' },
+  { label: '1 – 3 năm', value: 'ONE_TO_THREE_YEARS' },
+  { label: '3 – 5 năm', value: 'THREE_TO_FIVE_YEARS' },
+  { label: 'Trên 5 năm', value: 'OVER_FIVE_YEARS' },
+];
+
+export const TYPE_OPTIONS = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Toàn thời gian', value: 'FULL_TIME' },
+  { label: 'Bán thời gian', value: 'PART_TIME' },
+  { label: 'Hợp đồng', value: 'CONTRACT' },
+  { label: 'Thực tập', value: 'INTERNSHIP' },
+];
+
+export const LEVEL_OPTIONS = [
+  { label: 'Tất cả', value: '' },
+  { label: 'Intern / Thực tập sinh', value: 'INTERN' },
+  { label: 'Fresher', value: 'FRESHER' },
+  { label: 'Junior / Nhân viên', value: 'JUNIOR' },
+  { label: 'Senior / Chuyên viên', value: 'SENIOR' },
+  { label: 'Leader / Trưởng nhóm', value: 'LEADER' },
+  { label: 'Manager / Quản lý', value: 'MANAGER' },
+  { label: 'Director / Giám đốc', value: 'DIRECTOR' },
+];
+
+export const SORT_OPTIONS = [
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Lương từ thấp đến Cao', value: 'minsalary' },
+  { label: 'Lương từ Cao đến Thấp', value: 'maxsalary' },
+];

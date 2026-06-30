@@ -41,7 +41,7 @@ export default function ApplicationsClient({
 
   return (
     <div className="min-h-screen bg-[#f4f6f5] pt-20 pb-16">
-      <div className="max-w-[900px] mx-auto px-4 md:px-8">
+      <div className="max-w-[1300px] mx-auto px-4 md:px-8">
         {/* Header */}
         <Header loading={false} applications={applications} />
         {/* Stats row */}
