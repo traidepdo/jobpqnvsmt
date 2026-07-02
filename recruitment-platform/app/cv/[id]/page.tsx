@@ -3,12 +3,29 @@ import { notFound } from "next/navigation";
 import { TEMPLATE_MAP } from "@/template/index";
 import React from "react";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const resume = await prisma.resume.findUnique({
+    where: { id },
+    select: { cvData: true, user: { select: { name: true } } }
+  });
+  if (!resume) return {};
+  const name = (resume.cvData as any)?.name || resume.user.name || 'Hồ sơ';
+  return {
+    title: `CV - ${name}`,
+  };
+}
+
 export default async function CvPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ readOnly?: string }>;
 }) {
   const { id } = await params;
+  const resolvedParams = await searchParams;
+  const isReadOnly = resolvedParams.readOnly === 'true';
 
   const resume = await prisma.resume.findUnique({
     where: { id },
@@ -57,7 +74,6 @@ export default async function CvPage({
 
   return (
     <div className="bg-gray-100 min-h-screen pt-15 print:pt-0">
-      <title>{`CV - ${user.name || 'Hồ sơ'}`}</title>
       <script src="https://cdn.tailwindcss.com" async></script>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -75,12 +91,12 @@ export default async function CvPage({
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-        }
-        .print\\:hidden,
-        button[class*="print:hidden"],
-        label[class*="print:hidden"],
-        span[class*="print:hidden"] {
-          display: none !important;
+          .print\\:hidden,
+          button[class*="print:hidden"],
+          label[class*="print:hidden"],
+          span[class*="print:hidden"] {
+            display: none !important;
+          }
         }
         input, textarea {
           pointer-events: none !important;
@@ -91,19 +107,26 @@ export default async function CvPage({
           box-shadow: none !important;
           resize: none !important;
         }
+        .cv-viewer-container > div > div.print\\:hidden {
+          display: none !important;
+        }
       `}} />
-      <TemplateComponent user={user} resume={resumeData} />
-
-      {/* Floating Print Button (Hidden when printing) */}
-      <div className="fixed bottom-6 right-6 flex items-center gap-2 print:hidden z-50">
-        <button
-          id="print-btn"
-          className="flex items-center gap-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold px-5 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 text-sm cursor-pointer border-none"
-        >
-          <span className="material-symbols-outlined text-lg">print</span>
-          Tải xuống / In PDF
-        </button>
+      <div className="cv-viewer-container">
+        <TemplateComponent user={user} resume={resumeData} />
       </div>
+
+      {/* Floating Print Button (Hidden when printing or in readOnly mode) */}
+      {!isReadOnly && (
+        <div className="fixed bottom-6 right-6 flex items-center gap-2 print:hidden z-50">
+          <button
+            id="print-btn"
+            className="flex items-center gap-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold px-5 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 text-sm cursor-pointer border-none"
+          >
+            <span className="material-symbols-outlined text-lg">print</span>
+            Tải xuống / In PDF
+          </button>
+        </div>
+      )}
 
       <script dangerouslySetInnerHTML={{
         __html: `

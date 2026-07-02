@@ -70,19 +70,16 @@ function AvatarEditor({
   const [hover, setHover] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Reset error state when logo changes
   useEffect(() => { setImgError(false); }, [logo]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate type
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file hình ảnh (JPG, PNG, GIF, WebP...)');
       return;
     }
-    // Validate size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.');
       return;
@@ -101,7 +98,6 @@ function AvatarEditor({
     };
     reader.readAsDataURL(file);
 
-    // Reset input so same file can be re-selected
     e.target.value = '';
   };
 
@@ -114,7 +110,6 @@ function AvatarEditor({
 
   return (
     <div className="relative flex-shrink-0">
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -124,7 +119,6 @@ function AvatarEditor({
         disabled={!editing || uploading}
       />
 
-      {/* Avatar circle */}
       <div
         className={`w-20 h-20 rounded-xl overflow-hidden relative ${editing ? 'cursor-pointer' : ''}`}
         onClick={() => editing && fileInputRef.current?.click()}
@@ -136,20 +130,18 @@ function AvatarEditor({
           <img
             src={logo}
             alt="Logo"
-            className="w-full h-full object-contain border border-gray-100 bg-gray-50 p-1"
+            className="w-full h-full object-contain bg-slate-55 p-1"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full bg-[#0052CC]/10 flex items-center justify-center text-[#0052CC] font-bold text-3xl">
+          <div className="w-full h-full bg-[#0052CC]/10 flex items-center justify-center text-[#0052CC] font-black text-3xl">
             {name[0]?.toUpperCase() || 'C'}
           </div>
         )}
 
-        {/* Hover overlay (edit mode only) */}
         {editing && (
           <div
-            className={`absolute inset-0 bg-black/50 flex flex-col items-center justify-center transition-opacity duration-200 rounded-xl ${hover || uploading ? 'opacity-100' : 'opacity-0'
-              }`}
+            className={`absolute inset-0 bg-black/50 flex flex-col items-center justify-center transition-opacity duration-200 rounded-xl ${hover || uploading ? 'opacity-100' : 'opacity-0'}`}
           >
             {uploading ? (
               <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -163,19 +155,17 @@ function AvatarEditor({
         )}
       </div>
 
-      {/* Remove button (edit mode + has logo) */}
       {editing && showImage && !uploading && (
         <button
           type="button"
           onClick={handleRemove}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm transition-colors"
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm transition-colors cursor-pointer"
           title="Xoá ảnh"
         >
           <span className="material-symbols-outlined text-[12px]">close</span>
         </button>
       )}
 
-      {/* Edit badge (edit mode, no hover state — subtle indicator) */}
       {editing && !hover && !uploading && (
         <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#0052CC] rounded-full flex items-center justify-center shadow">
           <span className="material-symbols-outlined text-white text-[11px]">edit</span>
@@ -223,7 +213,7 @@ export default function EmployerCompanyPage() {
 
   const set = (k: keyof CompanyForm, v: string) => setForm(f => ({ ...f, [k]: v }));
   const inputCls =
-    'w-full h-10 px-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10';
+    'w-full h-12 px-4 text-sm bg-slate-50 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 transition-all duration-200';
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,18 +251,26 @@ export default function EmployerCompanyPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-10 h-10 border-[3px] border-gray-200 border-t-[#0052CC] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-[3px] border-slate-200 border-t-[#0052CC] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header card */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+    <div className="w-full mx-auto p-4 md:p-6 bg-slate-50/20 min-h-screen space-y-6">
+      {/* Header card - borderless design with themed gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0052CC] to-[#0040a2] rounded-3xl p-8 shadow-md text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_120%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
+        <div className="relative z-10 space-y-1">
+          <h1 className="text-2xl md:text-3xl font-black">Hồ sơ công ty</h1>
+          <p className="text-sm text-white/80">Quản lý thông tin chi tiết, logo và website của doanh nghiệp.</p>
+        </div>
+      </div>
+
+      {/* Main Info Header - borderless */}
+      <div className="bg-white rounded-3xl p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
           <div className="flex items-center gap-4">
-            {/* Avatar — editable in edit mode */}
             <AvatarEditor
               logo={editing ? form.logo : saved.logo}
               name={editing ? form.name : saved.name}
@@ -280,15 +278,20 @@ export default function EmployerCompanyPage() {
               onLogoChange={(url) => set('logo', url)}
             />
 
-            <div>
-              <h2 className="text-xl font-bold text-[#041b3c]">{saved.name}</h2>
-              <p className={`text-sm font-semibold mt-1 ${approved ? 'text-green-600' : 'text-amber-600'}`}>
-                {approved ? '✓ Đã xác minh' : '⏳ Chờ admin duyệt'}
+            <div className="space-y-1">
+              <h2 className="text-xl font-extrabold text-slate-800">{saved.name}</h2>
+              <p className={`text-xs font-bold inline-flex items-center gap-1 px-3 py-1 rounded-full ${approved ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                <span className="material-symbols-outlined text-[14px]">
+                  {approved ? 'check_circle' : 'pending'}
+                </span>
+                {approved ? 'Đã xác minh' : 'Chờ admin duyệt'}
               </p>
-              <p className="text-xs text-gray-400 mt-1">{jobCount} tin tuyển dụng</p>
+              <p className="text-xs text-slate-400 font-semibold flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-[14px]">description</span> {jobCount} tin tuyển dụng
+              </p>
               {editing && (
-                <p className="text-xs text-[#0052CC] mt-1.5 font-medium">
-                  ← Nhấn vào logo để thay ảnh
+                <p className="text-[10px] text-[#0052CC] font-bold">
+                  ← Nhấn vào logo để thay đổi ảnh
                 </p>
               )}
             </div>
@@ -297,111 +300,114 @@ export default function EmployerCompanyPage() {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#0052CC] hover:bg-[#0040a2] text-white text-sm font-bold rounded-lg cursor-pointer flex-shrink-0"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#0052CC] hover:bg-[#0040a2] text-white text-sm font-bold rounded-2xl cursor-pointer flex-shrink-0 transition-all shadow-sm active:scale-98"
             >
               <span className="material-symbols-outlined text-[18px]">edit</span>
-              Chỉnh sửa
+              Chỉnh sửa hồ sơ
             </button>
           )}
         </div>
       </div>
 
       {msg && (
-        <p
-          className={`text-sm px-4 py-2.5 rounded-lg ${msg.includes('Đã') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-            }`}
+        <div
+          className={`text-sm px-4 py-3 rounded-2xl font-bold shadow-sm ${msg.includes('Đã') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
         >
           {msg}
-        </p>
+        </div>
       )}
 
       {!editing ? (
-        /* ── View mode ── */
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-          <InfoRow label="Website" value={saved.website} isLink />
-          <InfoRow label="Ngành nghề" value={saved.industry} />
-          <InfoRow label="Quy mô" value={displaySize} />
-          <InfoRow label="Khu vực" value={displayWard} />
-          <InfoRow label="Địa chỉ" value={saved.addressDetail} />
-          <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Mô tả công ty</p>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {saved.description || <span className="text-gray-400 italic">Chưa có mô tả</span>}
+        /* ── View mode - borderless card ── */
+        <div className="bg-white rounded-3xl shadow-sm p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InfoBlock icon="link" label="Website" value={saved.website} isLink />
+            <InfoBlock icon="folder" label="Ngành nghề" value={saved.industry} />
+            <InfoBlock icon="group" label="Quy mô" value={displaySize} />
+            <InfoBlock icon="location_on" label="Khu vực" value={displayWard} />
+          </div>
+          <div className="pt-2">
+            <InfoBlock icon="home" label="Địa chỉ chi tiết" value={saved.addressDetail} />
+          </div>
+          <div className="pt-4 border-t border-slate-50">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px] text-[#0052CC]">article</span> Giới thiệu công ty
+            </h4>
+            <p className="text-sm text-slate-650 leading-relaxed whitespace-pre-line bg-slate-50/50 p-4 rounded-2xl">
+              {saved.description || <span className="text-slate-400 italic">Chưa có mô tả chi tiết giới thiệu công ty</span>}
             </p>
           </div>
         </div>
       ) : (
-        /* ── Edit mode ── */
-        <form onSubmit={handleSave} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-4">
-          <p className="text-sm text-gray-500 pb-2 border-b border-gray-100">Đang chỉnh sửa hồ sơ công ty</p>
+        /* ── Edit mode - borderless card ── */
+        <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 shadow-sm space-y-4">
+          <p className="text-sm text-slate-450 font-bold border-b border-slate-50 pb-3">Đang chỉnh sửa thông tin doanh nghiệp</p>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Tên công ty *</label>
+            <label className="block text-xs font-bold text-slate-400 mb-1">Tên công ty *</label>
             <input className={inputCls} value={form.name} onChange={e => set('name', e.target.value)} required />
           </div>
 
-          {/* Logo field: URL input + upload button side-by-side */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Logo</label>
+            <label className="block text-xs font-bold text-slate-400 mb-1">Đường dẫn Logo</label>
             <div className="flex gap-2 items-center">
               <input
                 className={`${inputCls} flex-1`}
                 value={form.logo.startsWith('data:') ? '' : form.logo}
                 onChange={e => set('logo', e.target.value)}
-                placeholder="https://... hoặc tải ảnh lên ↑"
+                placeholder="https://... hoặc tải ảnh lên bên trên"
                 disabled={form.logo.startsWith('data:')}
               />
               {form.logo.startsWith('data:') && (
-                <span className="text-xs text-gray-400 italic whitespace-nowrap">Đã tải ảnh lên</span>
+                <span className="text-xs text-slate-400 italic whitespace-nowrap bg-slate-50 px-3 py-2 rounded-xl">Đã tải ảnh lên</span>
               )}
               {form.logo && (
                 <button
                   type="button"
                   onClick={() => set('logo', '')}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap"
+                  className="text-xs text-red-500 hover:text-red-700 font-bold whitespace-nowrap cursor-pointer px-2"
                 >
                   Xoá
                 </button>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Nhấn vào ảnh đại diện ở trên để tải file lên (tối đa 2MB)</p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Website</label>
+            <label className="block text-xs font-bold text-slate-400 mb-1">Website</label>
             <input className={inputCls} value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://..." />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Ngành nghề</label>
-            <select className={inputCls} value={form.industry} onChange={e => set('industry', e.target.value)}>
-              <option value="">Chọn ngành</option>
+            <label className="block text-xs font-bold text-slate-400 mb-1">Ngành nghề</label>
+            <select className={`${inputCls} font-bold text-slate-700 appearance-none`} value={form.industry} onChange={e => set('industry', e.target.value)}>
+              <option value="">Chọn ngành nghề kinh doanh chính</option>
               {INDUSTRIES.map(i => (
                 <option key={i} value={i}>{i}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Mô tả công ty</label>
+            <label className="block text-xs font-bold text-slate-400 mb-1">Giới thiệu ngắn / Mô tả công ty</label>
             <textarea
-              className={`${inputCls} h-28 py-2 resize-none`}
+              className={`${inputCls} h-32 py-3 resize-none`}
               value={form.description}
               onChange={e => set('description', e.target.value)}
-              placeholder="Giới thiệu về công ty, văn hóa, phúc lợi..."
+              placeholder="Giới thiệu về công ty, văn hóa, môi trường làm việc, phúc lợi..."
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Khu vực</label>
-              <select className={inputCls} value={form.wardId} onChange={e => set('wardId', e.target.value)}>
-                <option value="">Chọn khu vực</option>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Khu vực</label>
+              <select className={`${inputCls} font-bold text-slate-700 appearance-none`} value={form.wardId} onChange={e => set('wardId', e.target.value)}>
+                <option value="">Chọn khu vực quận/huyện/phường</option>
                 {wards.map(w => (
                   <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Quy mô</label>
-              <select className={inputCls} value={form.size} onChange={e => set('size', e.target.value)}>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Quy mô nhân sự</label>
+              <select className={`${inputCls} font-bold text-slate-700 appearance-none`} value={form.size} onChange={e => set('size', e.target.value)}>
                 {SIZES.map(s => (
                   <option key={s.value || 'empty'} value={s.value}>{s.label}</option>
                 ))}
@@ -409,15 +415,15 @@ export default function EmployerCompanyPage() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Địa chỉ chi tiết</label>
-            <input className={inputCls} value={form.addressDetail} onChange={e => set('addressDetail', e.target.value)} placeholder="Số nhà, đường..." />
+            <label className="block text-xs font-bold text-slate-400 mb-1">Địa chỉ chi tiết</label>
+            <input className={inputCls} value={form.addressDetail} onChange={e => set('addressDetail', e.target.value)} placeholder="Số nhà, tên đường..." />
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-3">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-[#0052CC] hover:bg-[#0040a2] text-white font-bold rounded-lg cursor-pointer disabled:opacity-60"
+              className="px-6 py-2.5 bg-[#0052CC] hover:bg-[#0040a2] text-white font-bold rounded-2xl cursor-pointer disabled:opacity-60 transition-all shadow-md active:scale-98"
             >
               {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
@@ -425,7 +431,7 @@ export default function EmployerCompanyPage() {
               type="button"
               onClick={handleCancel}
               disabled={saving}
-              className="px-6 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-lg hover:bg-gray-50 cursor-pointer disabled:opacity-60"
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-650 font-bold rounded-2xl cursor-pointer disabled:opacity-60 transition-all"
             >
               Hủy
             </button>
@@ -436,11 +442,13 @@ export default function EmployerCompanyPage() {
   );
 }
 
-function InfoRow({
+function InfoBlock({
+  icon,
   label,
   value,
   isLink,
 }: {
+  icon: string;
   label: string;
   value: string;
   isLink?: boolean;
@@ -448,18 +456,19 @@ function InfoRow({
   const empty = !value?.trim();
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-5 py-3.5">
-      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider sm:w-28 flex-shrink-0">
+    <div className="bg-slate-50/50 p-4 rounded-2xl space-y-1">
+      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <span className="material-symbols-outlined text-[15px] text-[#0052CC]">{icon}</span>
         {label}
       </span>
       {empty ? (
-        <span className="text-sm text-gray-400 italic">Chưa cập nhật</span>
+        <p className="text-sm text-slate-400 italic font-semibold">Chưa cập nhật</p>
       ) : isLink ? (
-        <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noreferrer" className="text-sm font-medium text-[#0052CC] hover:underline break-all">
+        <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noreferrer" className="text-sm font-bold text-[#0052CC] hover:underline break-all block">
           {value}
         </a>
       ) : (
-        <span className="text-sm text-gray-800">{value}</span>
+        <p className="text-sm font-bold text-slate-700 break-all">{value}</p>
       )}
     </div>
   );

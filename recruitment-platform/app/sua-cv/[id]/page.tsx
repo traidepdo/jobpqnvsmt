@@ -19,7 +19,7 @@ interface SectionItem {
 const DEFAULT_SECTIONS: SectionItem[] = [
   { id: 'summary', name: 'Tóm tắt / Về tôi' },
   { id: 'experience', name: 'Kinh nghiệm làm việc' },
-  { id: 'education', name: 'Học vấn' },
+  { id: 'education', name: 'Học văn' },
   { id: 'projects', name: 'Dự án nổi bật' },
   { id: 'languages', name: 'Ngôn ngữ & kỹ năng' },
 ];
@@ -31,10 +31,12 @@ export default function SuaCvPage() {
 
   const [template, setTemplate] = useState<ResumeTemplate | null>(null);
   const [templates, setTemplates] = useState<ResumeTemplate[]>([]);
+  const [slug, setSlug] = useState<string>('classic');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState<'split' | 'inline'>('split');
   const [activeTab, setActiveTab] = useState<'info' | 'sections' | 'details'>('info');
+  const [cvTitle, setCvTitle] = useState('Hồ sơ của tôi');
+  const [isDefault, setIsDefault] = useState(false);
 
   // Unified builder states
   const [userData, setUserData] = useState<any>({
@@ -70,11 +72,14 @@ export default function SuaCvPage() {
           setTemplates(tempData.templates);
         }
 
-        // Fetch resume or user profile
+        // Fetch resume
         if (resumeId) {
           const resRes = await fetch(`/api/candidate/resumes/${resumeId}`);
           const resData = await resRes.json();
           if (active && resData.resume) {
+            setCvTitle(resData.resume.title || 'Hồ sơ của tôi');
+            setIsDefault(resData.resume.isDefault || false);
+
             const cvName = resData.resume.cvData?.name || resData.resume.user?.name || '';
             const cvEmail = resData.resume.cvData?.email || resData.resume.user?.email || '';
             const cvPhone = resData.resume.cvData?.phone || resData.resume.user?.phone || '';
@@ -101,6 +106,10 @@ export default function SuaCvPage() {
 
             if (resData.resume.template) {
               setTemplate(resData.resume.template);
+              setSlug(resData.resume.template.slug);
+            } else if (tempData.templates && tempData.templates.length > 0) {
+              setTemplate(tempData.templates[0]);
+              setSlug(tempData.templates[0].slug);
             }
 
             // Load saved section order if exists
@@ -143,11 +152,11 @@ export default function SuaCvPage() {
   };
 
   const handleTemplateChange = (newSlug: string) => {
-    if (!template || newSlug === template.slug) return;
+    if (newSlug === slug) return;
     const found = templates.find(t => t.slug === newSlug);
     if (found && confirm('Chuyển đổi mẫu CV sẽ không lưu các chỉnh sửa hiện tại. Bạn có muốn tiếp tục?')) {
+      setSlug(newSlug);
       setTemplate(found);
-      router.push(`/sua-cv/${resumeId}?template=${newSlug}`);
     }
   };
 
@@ -174,7 +183,8 @@ export default function SuaCvPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: uData.name ? `CV ${uData.name}` : 'Hồ sơ của tôi',
+          title: cvTitle.trim() || (uData.name ? `CV ${uData.name}` : 'Hồ sơ của tôi'),
+          isDefault,
           templateId: template?.id || null,
           avatarUrl,
           address: rData.address || null,
@@ -239,7 +249,6 @@ export default function SuaCvPage() {
     );
   }
 
-  const slug = template?.slug || 'classic';
   const TemplateComponent = (TEMPLATE_MAP as any)[slug];
 
   if (!TemplateComponent) {
@@ -257,90 +266,91 @@ export default function SuaCvPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Editor Header Toolbar */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm print:hidden">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              if (confirm('Quay lại danh sách? Các chỉnh sửa chưa lưu sẽ bị mất.')) {
-                router.push('/candidate/resumes');
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition border-none cursor-pointer"
-          >
-            ← Quay lại
-          </button>
-          <div className="h-4 w-px bg-gray-250" />
-          <h1 className="text-sm font-bold text-gray-800">
-            Chỉnh sửa CV
-          </h1>
-        </div>
-
-        {/* View Switcher and Actions */}
-        <div className="flex items-center gap-4">
-          <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden print:bg-white print:min-h-0 print:h-auto print:overflow-visible">
+      {/* Interactive Editor - Hidden during Print */}
+      <div className="flex-grow flex flex-col overflow-hidden print:hidden">
+        {/* Editor Header Toolbar */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm print:hidden">
+          <div className="flex items-center gap-4 shrink-0">
             <button
-              onClick={() => setViewMode('split')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                viewMode === 'split' ? 'bg-white text-gray-850 shadow-xs' : 'text-gray-500 hover:text-gray-850'
-              }`}
+              onClick={() => {
+                if (confirm('Quay lại danh sách? Các chỉnh sửa chưa lưu sẽ bị mất.')) {
+                  router.push('/candidate/resumes');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition border-none cursor-pointer"
             >
-              Sidebar + Xem trước
+              ← Quay lại
             </button>
-            <button
-              onClick={() => setViewMode('inline')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                viewMode === 'inline' ? 'bg-white text-gray-850 shadow-xs' : 'text-gray-500 hover:text-gray-850'
-              }`}
-            >
-              Chỉnh trực tiếp (Full)
-            </button>
+            <div className="h-4 w-px bg-gray-250" />
+            <h1 className="text-sm font-bold text-gray-855">
+              Chỉnh sửa CV
+            </h1>
           </div>
 
-          {templates.length > 0 && template && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500">Mẫu CV:</span>
-              <select
-                value={template.slug}
-                onChange={(e) => handleTemplateChange(e.target.value)}
-                className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#00b14f] cursor-pointer"
-              >
-                {templates.map(t => (
-                  <option key={t.slug} value={t.slug}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Nhập tên CV & Mặc định */}
+          <div className="flex items-center gap-4 flex-grow max-w-sm mx-4">
+            <input
+              type="text"
+              value={cvTitle}
+              onChange={(e) => setCvTitle(e.target.value)}
+              className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none placeholder-gray-400 bg-gray-50/50"
+              placeholder="Đặt tên cho CV này..."
+              title="Tên CV / Hồ sơ"
+            />
+            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+                className="rounded border-gray-300 text-[#00b14f] focus:ring-[#00b14f] h-3.5 w-3.5 cursor-pointer"
+              />
+              <span className="text-xs font-bold text-gray-650">Đặt mặc định</span>
+            </label>
+          </div>
 
-          {viewMode === 'split' && (
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            {templates.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-500">Mẫu CV:</span>
+                <select
+                  value={slug}
+                  onChange={(e) => handleTemplateChange(e.target.value)}
+                  className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#00b14f] cursor-pointer"
+                >
+                  {templates.map(t => (
+                    <option key={t.slug} value={t.slug}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <button
               onClick={() => handleSave()}
-              className="flex items-center gap-1.5 px-4 py-1.8 bg-[#00b14f] text-white text-xs font-bold rounded-lg hover:bg-[#009640] transition shadow-xs cursor-pointer animate-pulse"
+              className="flex items-center gap-1.5 px-4 py-1.8 bg-[#00b14f] text-white text-xs font-bold rounded-lg hover:bg-[#009640] transition shadow-xs cursor-pointer"
             >
-              <FaSave size={12} /> Cập nhật CV
+              <FaSave size={12} /> Lưu CV
             </button>
-          )}
-        </div>
-      </header>
-
-      {/* Editor Layout */}
-      <div className="flex-grow flex overflow-hidden relative">
-        {saving && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl flex items-center gap-3 shadow-xl">
-              <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
-              <span className="text-sm font-medium text-gray-700">Đang lưu CV...</span>
-            </div>
           </div>
-        )}
+        </header>
 
-        {viewMode === 'split' ? (
+        {/* Editor Layout */}
+        <div className="flex-grow flex overflow-hidden relative print:block print:overflow-visible">
+          {saving && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-xl flex items-center gap-3 shadow-xl">
+                <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
+                <span className="text-sm font-medium text-gray-700">Đang lưu CV...</span>
+              </div>
+            </div>
+          )}
+
           <>
             {/* Left Column: Editor Sidebar */}
-            <div className="w-[450px] shrink-0 border-r border-gray-200 bg-white flex flex-col h-[calc(100vh-62px)]">
+            <div className="w-[450px] shrink-0 border-r border-gray-200 bg-white flex flex-col h-full print:hidden">
               {/* Tab Navigation */}
               <div className="flex border-b border-gray-150 text-center text-xs font-bold text-gray-500 shrink-0">
                 <button
@@ -696,10 +706,10 @@ export default function SuaCvPage() {
               </div>
             </div>
 
-            {/* Right Column: Live Preview Area */}
-            <div className="flex-grow bg-gray-100 overflow-y-auto flex items-start justify-center p-8 select-none">
-              <div className="transform origin-top scale-[0.9] lg:scale-100 transition-transform">
-                <div className="w-[820px] min-h-[1160px] bg-white shadow-xl rounded-sm border border-gray-200 overflow-hidden pointer-events-none">
+            {/* Right Column: Live Interactive Sheet Editor */}
+            <div className="flex-grow bg-gray-100 overflow-y-auto flex items-start justify-center p-8 print:p-0 print:bg-white print:overflow-visible h-full">
+              <div className="transform origin-top scale-[0.9] lg:scale-100 transition-transform print:transform-none print:w-full print:h-auto">
+                <div className="w-[820px] min-h-[1160px] bg-white shadow-xl rounded-sm border border-gray-200 overflow-hidden print:w-full print:min-h-0 print:shadow-none print:border-none print:rounded-none">
                   <TemplateComponent
                     isControlled={true}
                     controlledUserData={userData}
@@ -707,22 +717,47 @@ export default function SuaCvPage() {
                     onControlledChangeUser={setUserData}
                     onControlledChangeResume={setResumeData}
                     sectionOrder={sections.map(s => s.id)}
+                    onSave={(u: any, r: any) => handleSave(u, r)}
                   />
                 </div>
               </div>
             </div>
           </>
-        ) : (
-          /* Inline Mode (Original inline editing) */
-          <div className="flex-grow overflow-y-auto">
-            <TemplateComponent
-              user={userData}
-              resume={resumeData}
-              onSave={(u: any, r: any) => handleSave(u, r)}
-            />
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Clean CV Layout - Only visible during Print */}
+      <div className="hidden print:block print:w-full print:p-0">
+        <TemplateComponent
+          isControlled={true}
+          controlledUserData={userData}
+          controlledResumeData={resumeData}
+          onControlledChangeUser={setUserData}
+          onControlledChangeResume={setResumeData}
+          sectionOrder={sections.map(s => s.id)}
+        />
+      </div>
+
+      <style>{`
+        @media print {
+          body {
+            background-color: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          @page {
+            margin: 12mm 15mm;
+          }
+          .print\\:hidden,
+          button[class*="print:hidden"],
+          label[class*="print:hidden"],
+          span[class*="print:hidden"] {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

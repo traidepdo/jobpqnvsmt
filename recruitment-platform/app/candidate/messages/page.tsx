@@ -601,7 +601,7 @@ function CandidateMessagesPageContent() {
                                                             <span className="material-symbols-outlined text-[16px]">delete</span>
                                                         </button>
                                                     )}
-                                                    <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
+                                                    <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm whitespace-pre-line ${
                                                         isMine
                                                             ? 'bg-[#00b14f] text-white rounded-tr-sm shadow-green-600/5'
                                                             : 'bg-white text-gray-800 border border-gray-100 rounded-tl-sm'

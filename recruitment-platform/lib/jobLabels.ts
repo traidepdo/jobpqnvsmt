@@ -1,3 +1,4 @@
+import type { FilterTab } from "./types/employer/job";
 export function getJobTypeLabel(type?: string | null): string {
   if (!type) return '';
   const map: Record<string, string> = {
@@ -121,4 +122,13 @@ export const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'newest' },
   { label: 'Lương từ thấp đến Cao', value: 'minsalary' },
   { label: 'Lương từ Cao đến Thấp', value: 'maxsalary' },
+];
+export const TABS: FilterTab[] = [
+  { label: 'Tất cả' },
+  { label: 'Đang hiển thị', status: 'ACTIVE' },
+  { label: 'Chờ duyệt', status: 'PENDING' },
+  { label: 'Bị từ chối', status: 'REJECTED' },
+  { label: 'Nháp', status: 'DRAFT' },
+  { label: 'Đã đóng', status: 'CLOSED' },
+  { label: 'Bị admin ẩn', isVisible: 'false' },
 ];

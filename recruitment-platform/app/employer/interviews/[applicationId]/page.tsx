@@ -41,23 +41,25 @@ type FormState = {
     notes: string;
 };
 
-const STATUS_CFG: Record<InterviewStatus, { label: string; color: string; bg: string; border: string; icon: string }> = {
-    SCHEDULED: { label: 'Đã lên lịch', color: '#0052CC', bg: '#EFF4FF', border: '#C7D9FF', icon: 'event' },
-    COMPLETED: { label: 'Hoàn thành', color: '#00875A', bg: '#E3FCEF', border: '#ABF5D1', icon: 'check_circle' },
-    CANCELLED: { label: 'Đã hủy', color: '#DE350B', bg: '#FFEBE6', border: '#FFBDAD', icon: 'cancel' },
+const STATUS_CFG: Record<InterviewStatus, { label: string; bg: string; text: string; icon: string }> = {
+    SCHEDULED: { label: 'Đã lên lịch', bg: 'bg-blue-50/70 text-blue-700 border-blue-100', text: '', icon: 'calendar_today' },
+    COMPLETED: { label: 'Hoàn thành', bg: 'bg-emerald-50/70 text-emerald-700 border-emerald-100', text: '', icon: 'check_circle' },
+    CANCELLED: { label: 'Đã hủy', bg: 'bg-rose-50/70 text-rose-700 border-rose-100', text: '', icon: 'cancel' },
 };
 
-const CANDIDATE_CFG: Record<CandidateInterviewStatus, { label: string; color: string; bg: string; icon: string }> = {
-    PENDING: { label: 'Chờ xác nhận', color: '#FF8B00', bg: '#FFFAE6', icon: 'hourglass_empty' },
-    CONFIRMED: { label: 'Đã xác nhận', color: '#00875A', bg: '#E3FCEF', icon: 'thumb_up' },
-    DECLINED: { label: 'Từ chối', color: '#DE350B', bg: '#FFEBE6', icon: 'thumb_down' },
+const CANDIDATE_CFG: Record<CandidateInterviewStatus, { label: string; bg: string; text: string; icon: string }> = {
+    PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-50/70 text-amber-700 border-amber-100', text: '', icon: 'hourglass_empty' },
+    CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-emerald-50/70 text-emerald-700 border-emerald-100', text: '', icon: 'thumb_up' },
+    DECLINED: { label: 'Từ chối', bg: 'bg-rose-50/70 text-rose-700 border-rose-100', text: '', icon: 'thumb_down' },
 };
 
-const formatDateTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleString('vi-VN', {
-        weekday: 'long', day: '2-digit', month: '2-digit',
-        year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
+const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const day = d.toLocaleDateString('vi-VN', { weekday: 'long' });
+    const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    return `${day}, ${date} lúc ${time}`;
+};
 
 const toDatetimeLocal = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -93,7 +95,7 @@ export default function InterviewDetailPage() {
             setCandidate(data.candidate);
             setApplication(data.application);
 
-            // Pre-fill form nếu đã có lịch
+            // Pre-fill form if scheduled
             if (data.application?.interview) {
                 const iv: InterviewDetail = data.application.interview;
                 setForm({
@@ -104,7 +106,6 @@ export default function InterviewDetailPage() {
                 });
             } else {
                 setForm(defaultForm());
-                // Tự mở form nếu chưa có lịch
                 setFormOpen(true);
             }
         } finally {
@@ -158,8 +159,9 @@ export default function InterviewDetailPage() {
     };
 
     if (loading) return (
-        <div className="flex justify-center items-center py-32">
-            <div className="w-10 h-10 border-[3px] border-gray-200 border-t-[#0052CC] rounded-full animate-spin" />
+        <div className="flex flex-col justify-center items-center py-40 space-y-4">
+            <div className="w-12 h-12 border-4 border-slate-100 border-t-[#0052CC] rounded-full animate-spin" />
+            <p className="text-xs text-slate-400 font-bold tracking-wider">Đang tải lịch phỏng vấn...</p>
         </div>
     );
 
@@ -169,36 +171,43 @@ export default function InterviewDetailPage() {
     const hasScheduled = iv?.status === 'SCHEDULED';
 
     return (
-        <div className="max-w-2xl mx-auto space-y-5">
-            {/* Back */}
-            <button
-                onClick={() => router.push('/employer/interviews')}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-[#0052CC] transition-colors"
-            >
-                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                Quay lại danh sách
-            </button>
+        <div className="max-w-3xl mx-auto space-y-6 px-4 py-6 text-slate-800 animate-fadeIn">
+            {/* Elegant Header with Back Button */}
+            <div className="flex items-center justify-between">
+                <button
+                    onClick={() => router.push('/employer/interviews')}
+                    className="group inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm text-xs font-bold text-slate-500 hover:text-[#0052CC] transition-all duration-200 cursor-pointer"
+                >
+                    <span className="material-symbols-outlined text-[16px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+                    Quay lại danh sách
+                </button>
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-450">
+                    Chi tiết phỏng vấn
+                </div>
+            </div>
 
-            {/* Candidate card */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0052CC] to-[#6554C0] flex items-center justify-center text-white font-bold text-xl flex-shrink-0 overflow-hidden">
+            {/* Candidate & Job Premium Card */}
+            <div className="relative overflow-hidden bg-white rounded-3xl p-6 shadow-sm border border-slate-100/60 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#0052CC]/5 to-[#6554C0]/5 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white font-black text-2xl flex-shrink-0 overflow-hidden shadow-md shadow-[#0052CC]/10">
                         {candidate.avatar
-                            ? <img src={candidate.avatar} className="w-full h-full object-cover" alt={candidate.name} />
+                            ? <img src={candidate.avatar} className="w-full h-full object-cover animate-scaleIn" alt={candidate.name} />
                             : candidate.name[0]?.toUpperCase()}
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-bold text-[#041b3c]">{candidate.name}</h1>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                    <div className="space-y-1">
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight">{candidate.name}</h1>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
                             <a href={`mailto:${candidate.email}`}
-                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#0052CC] transition-colors">
-                                <span className="material-symbols-outlined text-[14px]">mail</span>
+                                className="flex items-center gap-1 text-xs text-slate-450 hover:text-[#0052CC] font-semibold transition-colors">
+                                <span className="material-symbols-outlined text-[13px]">mail</span>
                                 {candidate.email}
                             </a>
                             {candidate.phone && (
                                 <a href={`tel:${candidate.phone}`}
-                                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#0052CC] transition-colors">
-                                    <span className="material-symbols-outlined text-[14px]">call</span>
+                                    className="flex items-center gap-1 text-xs text-slate-450 hover:text-[#0052CC] font-semibold transition-colors">
+                                    <span className="material-symbols-outlined text-[13px]">call</span>
                                     {candidate.phone}
                                 </a>
                             )}
@@ -206,228 +215,255 @@ export default function InterviewDetailPage() {
                     </div>
                 </div>
 
-                {/* Job info */}
-                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#0052CC]">work</span>
-                    <p className="font-semibold text-[#041b3c] text-sm">{application.jobTitle}</p>
-                    <span className="ml-auto text-xs text-gray-400">
-                        Ứng tuyển {new Date(application.appliedAt).toLocaleDateString('vi-VN')}
-                    </span>
+                {/* Job / Application Details Box */}
+                <div className="bg-slate-50/60 rounded-2xl p-4 md:text-right flex flex-col gap-1 min-w-[200px] border border-slate-100">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Vị trí ứng tuyển</span>
+                    <p className="font-extrabold text-slate-800 text-sm">{application.jobTitle}</p>
+                    <div className="text-[10px] text-slate-450 font-bold mt-1">
+                        Nộp hồ sơ: {new Date(application.appliedAt).toLocaleDateString('vi-VN')}
+                    </div>
                 </div>
             </div>
 
-            {/* Notifications */}
+            {/* Micro-animated Alerts */}
             {error && (
-                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px]">error</span>
-                    {error}
-                    <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600">
-                        <span className="material-symbols-outlined text-[16px]">close</span>
+                <div className="px-5 py-4 bg-rose-50 border border-rose-100 rounded-2xl text-xs font-bold text-rose-700 flex items-center gap-3 animate-slideUp">
+                    <span className="material-symbols-outlined text-[18px]">error</span>
+                    <span className="flex-1">{error}</span>
+                    <button onClick={() => setError('')} className="w-6 h-6 rounded-lg hover:bg-rose-100 text-rose-400 hover:text-rose-700 flex items-center justify-center transition-colors">
+                        <span className="material-symbols-outlined text-[14px]">close</span>
                     </button>
                 </div>
             )}
+            
             {successMsg && (
-                <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                    {successMsg}
-                    <button onClick={() => setSuccessMsg('')} className="ml-auto text-green-400 hover:text-green-600">
-                        <span className="material-symbols-outlined text-[16px]">close</span>
+                <div className="px-5 py-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs font-bold text-emerald-700 flex items-center gap-3 animate-slideUp">
+                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    <span className="flex-1">{successMsg}</span>
+                    <button onClick={() => setSuccessMsg('')} className="w-6 h-6 rounded-lg hover:bg-emerald-100 text-emerald-400 hover:text-emerald-700 flex items-center justify-center transition-colors">
+                        <span className="material-symbols-outlined text-[14px]">close</span>
                     </button>
                 </div>
             )}
 
-            {/* Interview section */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                {/* Header */}
-                <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#0052CC]/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[15px] text-[#0052CC]">event</span>
+            {/* Main Schedule Container */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                {/* Section Header */}
+                <div className="px-6 py-5 flex flex-wrap items-center justify-between border-b border-slate-50 gap-4 bg-gradient-to-r from-slate-50/50 to-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-[#0052CC]/10 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[16px] text-[#0052CC] font-bold">event</span>
                         </div>
-                        <h2 className="font-bold text-[#041b3c] text-sm">Lịch phỏng vấn</h2>
+                        <h2 className="font-black text-slate-800 text-sm">Lịch Hẹn Phỏng Vấn</h2>
                     </div>
 
                     {iv && (
                         <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1"
-                                style={{ color: STATUS_CFG[iv.status].color, background: STATUS_CFG[iv.status].bg, borderColor: STATUS_CFG[iv.status].border }}>
-                                <span className="material-symbols-outlined text-[13px]">{STATUS_CFG[iv.status].icon}</span>
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${STATUS_CFG[iv.status].bg} ${STATUS_CFG[iv.status].text}`}>
+                                <span className="material-symbols-outlined text-[12px]">{STATUS_CFG[iv.status].icon}</span>
                                 {STATUS_CFG[iv.status].label}
                             </span>
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
-                                style={{ color: CANDIDATE_CFG[iv.candidateStatus].color, background: CANDIDATE_CFG[iv.candidateStatus].bg }}>
-                                <span className="material-symbols-outlined text-[13px]">{CANDIDATE_CFG[iv.candidateStatus].icon}</span>
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${CANDIDATE_CFG[iv.candidateStatus].bg} ${CANDIDATE_CFG[iv.candidateStatus].text}`}>
+                                <span className="material-symbols-outlined text-[12px]">{CANDIDATE_CFG[iv.candidateStatus].icon}</span>
                                 {CANDIDATE_CFG[iv.candidateStatus].label}
                             </span>
                         </div>
                     )}
                 </div>
 
-                {/* Existing interview info */}
+                {/* Display Mode (Lịch hiện tại) */}
                 {iv && !formOpen && (
-                    <div className="px-5 py-4 space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex items-start gap-2.5">
-                                <span className="material-symbols-outlined text-[16px] text-gray-400 mt-0.5">schedule</span>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Thời gian</p>
-                                    <p className="text-sm font-semibold text-[#041b3c]">{formatDateTime(iv.scheduledAt)}</p>
+                    <div className="p-6 space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Date Card */}
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50 flex items-start gap-3.5 hover:shadow-sm transition-all duration-200">
+                                <span className="material-symbols-outlined text-[20px] text-slate-400 bg-white p-2 rounded-xl shadow-sm">schedule</span>
+                                <div className="space-y-0.5">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Thời gian phỏng vấn</p>
+                                    <p className="text-sm font-extrabold text-slate-800">{formatDateTime(iv.scheduledAt)}</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-2.5">
-                                <span className="material-symbols-outlined text-[16px] text-gray-400 mt-0.5">
+
+                            {/* Format Card */}
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50 flex items-start gap-3.5 hover:shadow-sm transition-all duration-200">
+                                <span className="material-symbols-outlined text-[20px] text-slate-400 bg-white p-2 rounded-xl shadow-sm">
                                     {iv.type === 'ONLINE' ? 'videocam' : 'location_on'}
                                 </span>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Hình thức</p>
-                                    <p className="text-sm font-semibold text-[#041b3c]">{iv.type === 'ONLINE' ? 'Online' : 'Trực tiếp'}</p>
+                                <div className="space-y-0.5">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Hình thức</p>
+                                    <p className="text-sm font-extrabold text-slate-800">{iv.type === 'ONLINE' ? 'Online qua Google Meet / Zoom' : 'Trực tiếp tại văn phòng'}</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-2.5 sm:col-span-2">
-                                <span className="material-symbols-outlined text-[16px] text-gray-400 mt-0.5">pin_drop</span>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-                                        {iv.type === 'ONLINE' ? 'Link' : 'Địa chỉ'}
+
+                            {/* Location Link Card */}
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50 flex items-start gap-3.5 hover:shadow-sm transition-all duration-200 sm:col-span-2">
+                                <span className="material-symbols-outlined text-[20px] text-slate-400 bg-white p-2 rounded-xl shadow-sm">pin_drop</span>
+                                <div className="space-y-0.5 min-w-0 flex-1">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                        {iv.type === 'ONLINE' ? 'Đường dẫn phòng họp trực tuyến' : 'Địa điểm tổ chức'}
                                     </p>
-                                    <p className="text-sm text-[#041b3c] break-all">{iv.location}</p>
+                                    {iv.type === 'ONLINE' ? (
+                                        <a href={iv.location} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-[#0052CC] hover:underline break-all block">
+                                            {iv.location}
+                                        </a>
+                                    ) : (
+                                        <p className="text-sm font-extrabold text-slate-800 break-all">{iv.location}</p>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Notes Card */}
                             {iv.notes && (
-                                <div className="flex items-start gap-2.5 sm:col-span-2">
-                                    <span className="material-symbols-outlined text-[16px] text-gray-400 mt-0.5">notes</span>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Ghi chú</p>
-                                        <p className="text-sm text-gray-600">{iv.notes}</p>
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50 flex items-start gap-3.5 hover:shadow-sm transition-all duration-200 sm:col-span-2">
+                                    <span className="material-symbols-outlined text-[20px] text-slate-400 bg-white p-2 rounded-xl shadow-sm">notes</span>
+                                    <div className="space-y-0.5 flex-1">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Ghi chú bổ sung</p>
+                                        <p className="text-xs text-slate-600 leading-relaxed font-medium whitespace-pre-line">{iv.notes}</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
+                        {/* Candidate Declined Section */}
                         {iv.candidateStatus === 'DECLINED' && iv.declineReason && (
-                            <div className="px-3 py-2 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600">
-                                <span className="font-semibold">Lý do từ chối:</span> {iv.declineReason}
+                            <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+                                <span className="material-symbols-outlined text-rose-500 mt-0.5 text-[18px]">sentiment_very_dissatisfied</span>
+                                <div className="space-y-0.5">
+                                    <p className="text-[9px] font-black text-rose-600 uppercase tracking-wider">Lý do ứng viên từ chối phỏng vấn</p>
+                                    <p className="text-xs text-rose-800 font-bold leading-normal">{iv.declineReason}</p>
+                                </div>
                             </div>
                         )}
 
-                        {/* Actions */}
+                        {/* Top-level Action Buttons */}
                         {hasScheduled && (
-                            <div className="flex flex-wrap gap-2 pt-1">
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
                                 <button
                                     onClick={() => setFormOpen(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0052CC] border border-[#0052CC]/30 hover:bg-[#0052CC]/5 rounded-xl transition-colors"
+                                    className="h-10 px-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#0052CC] hover:text-[#0040a2] border border-[#0052CC]/20 hover:border-[#0052CC]/40 hover:bg-[#0052CC]/5 rounded-xl cursor-pointer transition-all duration-200 shadow-sm"
                                 >
-                                    <span className="material-symbols-outlined text-[14px]">edit</span>
-                                    Sửa lịch
+                                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                                    Sửa lịch phỏng vấn
                                 </button>
                                 <button
                                     onClick={() => handleUpdateStatus('COMPLETED')}
                                     disabled={updatingStatus}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-700 border border-green-200 hover:bg-green-50 rounded-xl transition-colors disabled:opacity-50"
+                                    className="h-10 px-4 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-xl cursor-pointer transition-all duration-200 shadow-sm disabled:opacity-50"
                                 >
-                                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
                                     Hoàn thành
                                 </button>
                                 <button
                                     onClick={() => handleUpdateStatus('CANCELLED')}
                                     disabled={updatingStatus}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                                    className="h-10 px-4 inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 border border-rose-200 hover:bg-rose-50 rounded-xl cursor-pointer transition-all duration-200 shadow-sm disabled:opacity-50"
                                 >
-                                    <span className="material-symbols-outlined text-[14px]">cancel</span>
-                                    Hủy lịch
+                                    <span className="material-symbols-outlined text-[16px]">cancel</span>
+                                    Hủy lịch hẹn
                                 </button>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Form đặt / sửa lịch */}
+                {/* Edit/Create Form Mode */}
                 {(!iv || formOpen) && (
-                    <div className="px-5 py-4 space-y-4 bg-gray-50/40">
+                    <div className="p-6 space-y-5 bg-slate-50/20">
                         {iv && (
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cập nhật lịch phỏng vấn</p>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#0052CC] animate-ping" />
+                                <p className="text-xs font-black text-[#0052CC] uppercase tracking-wider">Hiệu chỉnh thông tin lịch hẹn</p>
+                            </div>
                         )}
 
-                        {/* Ngày giờ */}
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1.5 block">
-                                Ngày & giờ <span className="text-red-500">*</span>
+                        {/* Date Picker Input */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-550 block">
+                                Ngày & Giờ Gặp <span className="text-rose-500">*</span>
                             </label>
-                            <input
-                                type="datetime-local"
-                                value={form.scheduledAt}
-                                onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))}
-                                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="datetime-local"
+                                    value={form.scheduledAt}
+                                    onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))}
+                                    className="w-full h-11 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white transition-all"
+                                />
+                            </div>
                         </div>
 
-                        {/* Hình thức */}
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1.5 block">Hình thức</label>
+                        {/* Format Switcher */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-550 block">Hình thức phỏng vấn</label>
                             <div className="flex gap-3">
                                 {(['ONLINE', 'OFFLINE'] as InterviewType[]).map(t => (
                                     <button
                                         key={t}
+                                        type="button"
                                         onClick={() => setForm(p => ({ ...p, type: t }))}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-all
+                                        className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer shadow-sm
                                             ${form.type === t
-                                                ? 'bg-[#0052CC] text-white border-[#0052CC]'
-                                                : 'border-gray-200 text-gray-500 hover:border-[#0052CC] hover:text-[#0052CC] bg-white'}`}
+                                                ? 'bg-[#0052CC] text-white border-[#0052CC] shadow-md shadow-[#0052CC]/10'
+                                                : 'border-slate-250 text-slate-600 hover:border-[#0052CC] hover:text-[#0052CC] bg-white'}`}
                                     >
                                         <span className="material-symbols-outlined text-[16px]">
                                             {t === 'ONLINE' ? 'videocam' : 'location_on'}
                                         </span>
-                                        {t === 'ONLINE' ? 'Online' : 'Trực tiếp'}
+                                        {t === 'ONLINE' ? 'Trực tuyến (Meet/Zoom)' : 'Trực tiếp (Tại VP)'}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Location */}
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1.5 block">
-                                {form.type === 'ONLINE' ? 'Link Google Meet / Zoom' : 'Địa chỉ văn phòng'}
-                                <span className="text-red-500"> *</span>
+                        {/* Location Text Input */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-550 block">
+                                {form.type === 'ONLINE' ? 'Đường dẫn liên kết cuộc họp (Google Meet/Zoom/Teams...)' : 'Địa chỉ chi tiết văn phòng'}
+                                <span className="text-rose-500"> *</span>
                             </label>
                             <input
                                 type="text"
                                 value={form.location}
                                 onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
-                                placeholder={form.type === 'ONLINE' ? 'https://meet.google.com/...' : 'Số nhà, đường, quận...'}
-                                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white"
+                                placeholder={form.type === 'ONLINE' ? 'https://meet.google.com/abc-defg-hij' : 'Ví dụ: Tầng 5, Tòa nhà A, Số 123 Đường B, Quận C'}
+                                className="w-full h-11 px-4 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white transition-all placeholder-slate-400 font-medium"
                             />
                         </div>
 
-                        {/* Notes */}
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 mb-1.5 block">Ghi chú (tuỳ chọn)</label>
+                        {/* Notes Area Input */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-550 block">Lời nhắn/Ghi chú cho ứng viên (không bắt buộc)</label>
                             <textarea
                                 value={form.notes}
                                 onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                                placeholder="Hướng dẫn thêm cho ứng viên..."
-                                rows={3}
-                                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white resize-none"
+                                placeholder="Ví dụ: Bạn vui lòng mang theo laptop và chuẩn bị sẵn CV bản in. Liên hệ lễ tân khi đến..."
+                                rows={4}
+                                className="w-full p-4 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/10 bg-white resize-none transition-all placeholder-slate-400 font-medium leading-relaxed"
                             />
                         </div>
 
-                        {/* Footer buttons */}
-                        <div className="flex items-center justify-end gap-3 pt-1">
+                        {/* Action buttons footer */}
+                        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                             {iv && (
                                 <button
+                                    type="button"
                                     onClick={() => { setFormOpen(false); setError(''); }}
-                                    className="px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+                                    className="h-10 px-5 text-xs font-bold text-slate-500 hover:text-slate-750 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                                 >
-                                    Hủy
+                                    Hủy bỏ
                                 </button>
                             )}
                             <button
+                                type="button"
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 px-5 py-2 bg-[#0052CC] hover:bg-[#0040a2] text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50"
+                                className="h-10 px-6 inline-flex items-center justify-center gap-1.5 bg-[#0052CC] hover:bg-[#0040a2] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-[16px]">
-                                    {saving ? 'hourglass_empty' : 'check'}
-                                </span>
-                                {saving ? 'Đang lưu...' : iv ? 'Cập nhật' : 'Đặt lịch'}
+                                {saving ? (
+                                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-[16px]">check</span>
+                                )}
+                                {saving ? 'Đang lưu...' : iv ? 'Cập nhật lịch hẹn' : 'Thiết lập lịch phỏng vấn'}
                             </button>
                         </div>
                     </div>

@@ -30,12 +30,25 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [company, setCompany] = useState<CompanyInfo | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  // Thêm state
   const [unreadSupport, setUnreadSupport] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Auto handle sidebar state based on screen size on mount and resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const loadUnreadSupport = () => {
     fetch('/api/employer/admin-conversations/unread')
@@ -52,6 +65,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     );
     return () => clearInterval(interval);
   }, [pathname]);
+
   const loadUnread = () => {
     fetch('/api/employer/conversations')
       .then(r => r.json())
@@ -69,7 +83,6 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     loadUnread();
     const interval = setInterval(loadUnread, 10000);
 
-    // Cập nhật badge ngay khi employer đọc tin nhắn
     const onRead = () => loadUnread();
     window.addEventListener('messages:read', onRead);
 
@@ -123,15 +136,29 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     );
   }
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-[#f0f4ff]">
+  // Close sidebar on navigation change on mobile devices
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
 
-      {/* ── Sidebar ── */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-[68px]'} flex-shrink-0 flex flex-col transition-all duration-300 bg-white border-r border-gray-100 shadow-sm`}>
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#f0f4ff] relative">
+      {/* Mobile Drawer Backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-200"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar (Responsive Drawer) ── */}
+      <aside className={`${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:w-[68px] md:translate-x-0'} fixed md:static inset-y-0 left-0 z-50 flex-shrink-0 flex flex-col transition-all duration-300 bg-white shadow-md overflow-hidden`}>
 
         {/* Logo */}
-        <div className={`h-16 flex items-center border-b border-gray-100 flex-shrink-0 ${sidebarOpen ? 'px-5 gap-3' : 'justify-center'}`}>
-          <Link href="/" className="flex items-center gap-1.5 group">
+        <div className={`h-16 flex items-center border-b border-slate-50 flex-shrink-0 ${sidebarOpen ? 'px-5 gap-3' : 'justify-center'}`}>
+          <Link href="/" className="flex items-center gap-1.5 group" onClick={handleNavClick}>
             <div className="w-8 h-8 rounded-lg bg-[#0052CC] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-extrabold text-sm">PQ</span>
             </div>
@@ -145,10 +172,10 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
 
         {/* Company card */}
         {sidebarOpen ? (
-          <div className="mx-3 mt-4 p-3 rounded-xl bg-[#f0f4ff] border border-[#0052CC]/10">
+          <div className="mx-3 mt-4 p-3 rounded-xl bg-[#f0f4ff]">
             <div className="flex items-center gap-3">
               {company?.logo ? (
-                <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 border border-gray-100 flex-shrink-0" />
+                <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 flex-shrink-0" />
               ) : (
                 <div className="w-10 h-10 rounded-xl bg-[#0052CC] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                   {company?.name?.[0] ?? 'C'}
@@ -168,7 +195,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
         ) : (
           <div className="flex justify-center mt-4">
             {company?.logo ? (
-              <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 border border-gray-100" />
+              <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5" />
             ) : (
               <div className="w-10 h-10 rounded-xl bg-[#0052CC] flex items-center justify-center text-white font-bold">
                 {company?.name?.[0] ?? 'C'}
@@ -199,8 +226,9 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleNavClick}
                 title={!sidebarOpen ? item.label : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-155 group
                   ${active
                     ? 'bg-[#0052CC] text-white shadow-sm shadow-[#0052CC]/30'
                     : 'text-gray-500 hover:bg-[#f0f4ff] hover:text-[#0052CC]'
@@ -237,7 +265,6 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
                   <span className="absolute right-2 w-1.5 h-1.5 rounded-full bg-[#0052CC]" />
                 )}
 
-
                 {sidebarOpen && isSupport && unreadSupport > 0 && (
                   <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center
                     ${active ? 'bg-white text-[#0052CC]' : 'bg-red-500 text-white'}`}>
@@ -256,7 +283,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
         </nav>
 
         {/* Bottom */}
-        <div className="p-3 space-y-2 border-t border-gray-100">
+        <div className="p-3 space-y-2 border-t border-slate-50">
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer
@@ -269,9 +296,9 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
       </aside>
 
       {/* ── Main ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 shadow-sm flex-shrink-0">
+        <header className="h-16 bg-white flex items-center justify-between px-6 shadow-sm flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(o => !o)}
@@ -344,7 +371,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
       </div>

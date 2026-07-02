@@ -55,7 +55,7 @@ export async function GET(
 
   return NextResponse.json({
     hasResume: true,
-    cvUrl: `/cv/${resume.id}`,
+    cvUrl: `/cv/${resume.id}?readOnly=true`,
     resumeTitle: resume.title,
     templateName: resume.template?.name ?? null,
     candidateName: application.user.name,

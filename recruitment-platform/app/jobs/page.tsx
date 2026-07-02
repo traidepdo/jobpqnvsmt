@@ -195,7 +195,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
       <JobSearchForm initialQuery={query} initialLocation={location} wards={wards} />
 
       {/* Main Layout Grid */}
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-5">
+      <div className="max-w-[1300px] mx-auto px-4 md:px-8 mt-5">
         {/* Breadcrumbs */}
         <Breadcrumbs query={query} category={category} getCategoryName={getCategoryName} />
 

@@ -563,7 +563,7 @@ function EmployerMessagesPageContent() {
                                                         <span className="material-symbols-outlined text-[16px]">delete</span>
                                                     </button>
                                                 )}
-                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-line
                                                     ${isMe
                                                         ? "bg-[#0052CC] text-white rounded-br-sm"
                                                         : "bg-white text-[#041b3c] rounded-bl-sm border border-gray-100 shadow-sm"

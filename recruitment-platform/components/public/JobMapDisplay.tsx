@@ -44,13 +44,13 @@ export default function JobMapDisplay({
     const map = L.map(mapRef.current, {
       zoomControl: true,
       scrollWheelZoom: false, // Prevent zoom on scroll for better page navigation
-    }).setView([latitude, longitude], 15);
+    }).setView([latitude, longitude], 17);
     leafletMapRef.current = map;
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 20,
+    // Sử dụng server ảnh của OpenStreetMap để có màu sắc chuẩn và chi tiết hẻm tốt
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
     }).addTo(map);
 
     const marker = L.marker([latitude, longitude], {
@@ -230,7 +230,7 @@ export default function JobMapDisplay({
 
           // Draw a beautiful glowing solid route path (like Google Maps)
           const coords = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
-          
+
           const routeBg = L.polyline(coords, {
             color: '#0052CC',
             weight: 8,
@@ -261,9 +261,9 @@ export default function JobMapDisplay({
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos((fromLat * Math.PI) / 180) *
-          Math.cos((latitude * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
+        Math.cos((latitude * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distance = (R * c).toFixed(1);
 
@@ -307,7 +307,7 @@ export default function JobMapDisplay({
           className="apply-btn flex items-center gap-1.5 px-4 py-2 bg-green-50 border border-green-200 hover:bg-green-100 text-[#00b14f] text-xs font-semibold rounded-xl cursor-pointer transition-all"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" strokeWidth={2}/>
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" strokeWidth={2} />
           </svg>
           Tính quãng đường đi làm 🛵
         </button>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface JobRecommendation {
   id: string;
@@ -43,6 +44,24 @@ const SAMPLE_CVS = [
 ];
 
 export default function ChatbotWidget() {
+  const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const shouldHide = [
+    '/cv',
+    '/sua-cv',
+    '/tao-cv',
+    '/admin',
+    '/employer',
+    '/candidate',
+    '/login',
+    '/register'
+  ].some(prefix => pathname?.startsWith(prefix));
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -289,6 +308,8 @@ export default function ChatbotWidget() {
     if (min) return `Từ ${(min / 1000000).toFixed(0)}tr`;
     return `Đến ${((max as number) / 1000000).toFixed(0)}tr`;
   };
+
+  if (!mounted || shouldHide) return null;
 
   return (
     <>

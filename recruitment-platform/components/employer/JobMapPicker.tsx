@@ -325,7 +325,7 @@ export default function JobMapPicker({
       <div
         ref={mapRef}
         className="w-full h-64 rounded-xl border border-gray-150 overflow-hidden relative z-10"
-        style={{ minHeight: '250px' }}
+        style={{ minHeight: '500px' }}
       />
 
       <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-150">
