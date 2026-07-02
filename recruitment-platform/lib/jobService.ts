@@ -16,6 +16,14 @@ interface JobSearchParams {
   page?: string;
   company?: string;
 }
+interface MatchedCompany {
+  id: string;
+  name: string;
+  logo: string;
+  slug: string;
+  industry: string;
+  _count: { jobs: number };
+}
 
 function getSalaryMinCondition(operator: 'lte' | 'gte', value: number) {
   return {

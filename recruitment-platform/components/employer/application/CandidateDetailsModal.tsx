@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import type { Application } from '@/lib/types/employer/application';
+import { TEMPLATE_MAP } from '@/template/index';
+import React from 'react';
 
 export default function CandidateDetailsModal({
     app,
@@ -18,10 +20,14 @@ export default function CandidateDetailsModal({
     const [cvError, setCvError] = useState('');
     const [previewDocument, setPreviewDocument] = useState('');
     const [cvUrl, setCvUrl] = useState<string | null>(null);
+    const [nativeResume, setNativeResume] = useState<any>(null);
 
     useEffect(() => {
         setLoadingCv(true);
         setCvError('');
+        setNativeResume(null);
+        setPreviewDocument('');
+        setCvUrl(null);
 
         fetch(`/api/employer/applications/${app.id}/cv`)
             .then(async r => {
@@ -35,6 +41,9 @@ export default function CandidateDetailsModal({
                 }
                 if (d.cvUrl) {
                     setCvUrl(d.cvUrl);
+                }
+                if (d.resumeData) {
+                    setNativeResume(d.resumeData);
                 }
             })
             .catch(() => setCvError('Lỗi kết nối máy chủ'))
@@ -190,37 +199,93 @@ export default function CandidateDetailsModal({
                                     </a>
                                 )}
                             </div>
-                        ) : previewDocument || cvUrl ? (
+                        ) : previewDocument ? (
                             <div className="w-full h-full overflow-hidden relative">
                                 <iframe
                                     id="cv-preview-iframe"
-                                    src={cvUrl || undefined}
-                                    srcDoc={previewDocument || undefined}
-                                    className="border-none bg-white absolute top-0 left-0"
-                                    style={{
-                                        width: '125%',
-                                        height: '125%',
-                                        transform: 'scale(0.8)',
-                                        transformOrigin: 'top left',
-                                    }}
+                                    srcDoc={previewDocument}
+                                    className="border-none bg-white absolute top-0 left-0 w-full h-full"
                                     title="CV Preview"
-                                    sandbox="allow-scripts"
+                                    sandbox="allow-scripts allow-same-origin"
                                 />
-                                {/* Floating Print/Download Button (Overlaid on bottom right) */}
-                                <div className="absolute bottom-6 right-6 z-20">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (cvUrl) {
-                                                window.open(cvUrl + '&print=true', '_blank');
-                                            }
-                                        }}
-                                        className="flex items-center gap-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold px-5 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 text-xs cursor-pointer border-none"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">print</span>
-                                        Tải xuống / In PDF
-                                    </button>
+                                {/* Download button - mở trang employer-cv để tải */}
+                                {cvUrl && (
+                                    <div className="absolute bottom-6 right-6 z-20">
+                                        <a
+                                            href={cvUrl.replace('/cv/', '/employer-cv/')}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold px-5 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 text-xs cursor-pointer border-none no-underline"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">download</span>
+                                            Tải CV (PDF)
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        ) : nativeResume ? (
+                            <div className="absolute top-0 left-0 w-full h-full bg-slate-50 flex flex-col">
+                                <div className="flex-1 w-full overflow-y-auto p-6 flex justify-center employer-cv-readonly-mode">
+                                    <style dangerouslySetInnerHTML={{
+                                        __html: `
+                                        .employer-cv-readonly-mode input,
+                                        .employer-cv-readonly-mode textarea {
+                                            pointer-events: none !important;
+                                            cursor: default !important;
+                                            background: transparent !important;
+                                            border: none !important;
+                                            outline: none !important;
+                                            box-shadow: none !important;
+                                            resize: none !important;
+                                            color: inherit !important;
+                                            font-family: inherit !important;
+                                            font-weight: inherit !important;
+                                            padding: 0 !important;
+                                        }
+                                        .employer-cv-readonly-mode button,
+                                        .employer-cv-readonly-mode label.cursor-pointer,
+                                        .employer-cv-readonly-mode .print\\:hidden,
+                                        .employer-cv-readonly-mode [class*="print:hidden"],
+                                        .employer-cv-readonly-mode [class*="bg-stone-800"]:first-child:not([class*="px-10"]),
+                                        .employer-cv-readonly-mode div[class*="border-stone-200"]:first-child {
+                                            display: none !important;
+                                        }
+                                        .employer-cv-readonly-mode .min-h-screen {
+                                            padding: 0 !important;
+                                            background-color: transparent !important;
+                                        }
+                                        `
+                                    }} />
+                                    <div className="w-[656px] overflow-visible flex-shrink-0 self-start">
+                                        <div 
+                                            className="employer-cv-download-target w-[820px] origin-top-left bg-white shadow-md rounded-sm overflow-hidden p-6"
+                                            style={{
+                                                transform: 'scale(0.8)',
+                                            }}
+                                        >
+                                            {React.createElement((TEMPLATE_MAP as any)[nativeResume.slug], {
+                                                user: nativeResume.user,
+                                                resume: nativeResume.resumeDetails,
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
+                                {/* Download Button cho native resume */}
+                                <div className="absolute bottom-6 right-6 z-25">
+                                    <DownloadNativeResumeButton
+                                        fileName={`CV-${nativeResume?.user?.name || 'candidate'}`}
+                                    />
+                                </div>
+                            </div>
+                        ) : cvUrl ? (
+                            <div className="w-full h-full overflow-hidden relative">
+                                <iframe
+                                    id="cv-preview-iframe"
+                                    src={cvUrl}
+                                    className="border-none bg-white absolute top-0 left-0 w-full h-full"
+                                    title="CV Preview"
+                                    sandbox="allow-scripts allow-same-origin"
+                                />
                             </div>
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white">
@@ -232,5 +297,154 @@ export default function CandidateDetailsModal({
                 </div>
             </div>
         </div>
+    );
+}
+
+/* ── Download button dùng html2pdf.js cho native resume trong modal ── */
+function DownloadNativeResumeButton({ fileName }: { fileName: string }) {
+    const [loading, setLoading] = useState(false);
+
+    const handleDownload = async () => {
+        setLoading(true);
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const element = document.querySelector('.employer-cv-download-target');
+            if (!element) {
+                alert('Không tìm thấy nội dung CV để tải.');
+                return;
+            }
+
+            // Tạo wrapper để clone thừa kế được toàn bộ CSS (bao gồm cả font và style Tailwind)
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.top = '-9999px';
+            wrapper.style.left = '-9999px';
+            wrapper.style.width = '820px'; // Kích thước hiển thị chuẩn
+            
+            const clone = element.cloneNode(true) as HTMLElement;
+            clone.style.transform = 'none';
+            clone.style.width = '100%';
+            clone.style.boxShadow = 'none';
+            clone.style.margin = '0';
+            clone.style.padding = '24px';
+            
+            wrapper.appendChild(clone);
+            document.body.appendChild(wrapper);
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `${fileName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    logging: false,
+                    scrollY: 0,
+                    scrollX: 0
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            };
+
+            // Tạo một style tag tạm thời chứa toàn bộ CSS đã được dọn sạch oklch/oklab
+            const tempStyle = document.createElement('style');
+            tempStyle.setAttribute('id', 'html2pdf-temp-clean-css');
+            
+            const originalSheets = Array.from(document.styleSheets);
+            const disabledElements: (HTMLStyleElement | HTMLLinkElement)[] = [];
+            let combinedCss = "";
+
+            const cleanColorFn = (cssText: string) => {
+                return cssText.replace(/(oklch|oklab)\([\s\S]*?\)/g, 'rgb(80, 80, 80)');
+            };
+
+            try {
+                originalSheets.forEach((sheet) => {
+                    try {
+                        const ownerNode = sheet.ownerNode as HTMLStyleElement | HTMLLinkElement;
+                        if (!ownerNode) return;
+
+                        let sheetCss = "";
+                        for (let i = 0; i < sheet.cssRules.length; i++) {
+                            sheetCss += sheet.cssRules[i].cssText + "\n";
+                        }
+
+                        if (sheetCss.includes("oklch") || sheetCss.includes("oklab")) {
+                            const cleanCss = cleanColorFn(sheetCss);
+                            combinedCss += cleanCss + "\n";
+                            
+                            ownerNode.disabled = true;
+                            disabledElements.push(ownerNode);
+                        }
+                    } catch (e) {
+                        const ownerNode = sheet.ownerNode as HTMLStyleElement | HTMLLinkElement;
+                        if (ownerNode) {
+                            ownerNode.disabled = true;
+                            disabledElements.push(ownerNode);
+                        }
+                    }
+                });
+
+                if (combinedCss) {
+                    tempStyle.textContent = combinedCss;
+                    document.head.appendChild(tempStyle);
+                }
+            } catch (e) {
+                console.warn("Could not patch stylesheets:", e);
+            }
+
+            // Clone element để clean inline styles có chứa oklch/oklab
+            const cleanElement = clone.cloneNode(true) as HTMLElement;
+            const cleanInlineStyles = (el: HTMLElement) => {
+                const styleAttr = el.getAttribute('style');
+                if (styleAttr && (styleAttr.includes('oklch') || styleAttr.includes('oklab'))) {
+                    el.setAttribute('style', cleanColorFn(styleAttr));
+                }
+                Array.from(el.children).forEach((child) => {
+                    cleanInlineStyles(child as HTMLElement);
+                });
+            };
+            cleanInlineStyles(cleanElement);
+
+            await html2pdf().set(opt).from(cleanElement).save();
+            document.body.removeChild(wrapper);
+
+            // Khôi phục lại trạng thái ban đầu
+            if (tempStyle.parentNode) {
+                tempStyle.parentNode.removeChild(tempStyle);
+            }
+            disabledElements.forEach((el) => {
+                el.disabled = false;
+            });
+        } catch (err) {
+            console.error('Lỗi khi tải CV:', err);
+            alert('Có lỗi xảy ra khi tải CV. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleDownload}
+            disabled={loading}
+            className="flex items-center gap-2 bg-[#00b14f] hover:bg-[#009940] disabled:bg-[#00b14f]/60 text-white font-bold px-5 py-3 rounded-full shadow-lg transition transform hover:scale-105 active:scale-95 disabled:scale-100 text-xs cursor-pointer border-none"
+        >
+            {loading ? (
+                <>
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Đang tải...
+                </>
+            ) : (
+                <>
+                    <span className="material-symbols-outlined text-sm">download</span>
+                    Tải CV (PDF)
+                </>
+            )}
+        </button>
     );
 }

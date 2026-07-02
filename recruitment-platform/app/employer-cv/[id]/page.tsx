@@ -4,6 +4,7 @@ import { TEMPLATE_MAP } from "@/template/index";
 import React from "react";
 import DownloadCvButton from "@/components/cv/DownloadCvButton";
 
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const resume = await prisma.resume.findUnique({
@@ -13,20 +14,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!resume) return {};
   const name = (resume.cvData as any)?.name || resume.user.name || 'Hồ sơ';
   return {
-    title: `CV - ${name}`,
+    title: `CV - ${name} (Employer View)`,
   };
 }
 
-export default async function CvPage({
+export default async function EmployerCvPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ readOnly?: string }>;
 }) {
   const { id } = await params;
-  const resolvedParams = await searchParams;
-  const isReadOnly = resolvedParams.readOnly === 'true';
 
   const resume = await prisma.resume.findUnique({
     where: { id },
@@ -100,11 +97,10 @@ export default async function CvPage({
         <TemplateComponent user={user} resume={resumeData} />
       </div>
 
-      {!isReadOnly && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <DownloadCvButton fileName={`CV-${user.name || 'cv'}`} />
-        </div>
-      )}
+      {/* Floating Download Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <DownloadCvButton fileName={`CV-${user.name || 'candidate'}`} />
+      </div>
     </div>
   );
 }

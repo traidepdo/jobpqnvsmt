@@ -59,6 +59,26 @@ export async function GET(
     resumeTitle: resume.title,
     templateName: resume.template?.name ?? null,
     candidateName: application.user.name,
+    resumeData: {
+      id: resume.id,
+      slug: resume.template?.slug || "classic",
+      user: {
+        name: application.user.name || '',
+        email: application.user.email || '',
+        phone: application.user.phone || '',
+        avatar: resume.avatarUrl || 'https://i.pravatar.cc/150?img=12',
+      },
+      resumeDetails: {
+        address: resume.address || '',
+        summary: resume.summary || '',
+        degree: resume.degree || '',
+        languages: resume.languages || '',
+        socicallink: (resume.socialLinks as any) || [],
+        education: resume.education || [],
+        experience: resume.experience || [],
+        projects: resume.projects || [],
+      }
+    }
   });
 }
 
