@@ -697,7 +697,7 @@ export default function SuaCvPage() {
             {/* Right Column: Live Interactive Sheet Editor */}
             <div className="flex-grow bg-gray-100 overflow-y-auto flex items-start justify-center p-8 print:p-0 print:bg-white print:overflow-visible h-full">
               <div className="transform origin-top scale-[0.9] lg:scale-100 transition-transform print:transform-none print:w-full print:h-auto">
-                <div className="w-[820px] min-h-[1160px] bg-white shadow-xl rounded-sm border border-gray-200 overflow-hidden print:w-full print:min-h-0 print:shadow-none print:border-none print:rounded-none">
+                <div className="sua-cv-preview-container w-[820px] min-h-[1160px] bg-white shadow-xl rounded-sm border border-gray-200 overflow-hidden print:w-full print:min-h-0 print:shadow-none print:border-none print:rounded-none">
                   <TemplateComponent
                     isControlled={true}
                     controlledUserData={userData}
@@ -727,6 +727,24 @@ export default function SuaCvPage() {
       </div>
 
       <style>{`
+        /* Hide redundant template toolbar inside the live preview pane */
+        .sua-cv-preview-container > div {
+          padding: 0 !important;
+          min-height: auto !important;
+          background: transparent !important;
+          background-color: transparent !important;
+        }
+        .sua-cv-preview-container > div > div:first-child {
+          display: none !important;
+        }
+        .sua-cv-preview-container > div > div:nth-child(2) {
+          margin: 0 !important;
+          max-width: 100% !important;
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+        }
+
         @media print {
           body {
             background-color: white !important;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireEmployer } from '@/lib/requireEmployer';
+import { signCloudinaryCvUrl } from '@/lib/cloudinarySign';
 
 export async function POST(
   req: Request,
@@ -24,6 +25,9 @@ export async function POST(
   }
 
   try {
+    // Sign the CV URL if it exists
+    const signedCvUrl = application.cvUrl ? signCloudinaryCvUrl(application.cvUrl) : null;
+
     // 2. Call Django AI Server to evaluate
     const response = await fetch('http://127.0.0.1:8000/api/evaluate-cv/', {
       method: 'POST',
@@ -33,6 +37,7 @@ export async function POST(
       },
       body: JSON.stringify({
         application_id: id,
+        cv_url: signedCvUrl,
       }),
     });
 

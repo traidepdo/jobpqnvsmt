@@ -87,6 +87,7 @@ body {
   html,
   body {
     background-color: #ffffff !important;
+    background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -94,6 +95,13 @@ body {
     min-height: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Reset outer background wrappers only */
+  .cv-viewer-container,
+  .min-h-screen {
+    background-color: transparent !important;
+    background: transparent !important;
   }
 
   /* Reset min-h-screen/height attributes that trigger blank pages */
@@ -106,6 +114,19 @@ body {
     background: transparent !important;
   }
 
+  /* Make CV containers stretch to full page width with proper padding */
+  .max-w-4xl,
+  .max-w-5xl,
+  [class*="max-w-"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 15mm 20mm !important; /* Standard corporate CV margins */
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
   /* Hide print-hidden classes and components */
   .print\:hidden,
   [class*="print:hidden"],
@@ -116,7 +137,7 @@ body {
     display: none !important;
   }
 
-  /* Force A4 print style with zero margins */
+  /* Force A4 print style with standard paper margins */
   @page {
     size: A4;
     margin: 0mm;

@@ -15,7 +15,7 @@ export default function JobCompany({ matchedCompanies }: { matchedCompanies: Mat
                         {matchedCompanies.map((c) => (
                             <Link
                                 key={c.id}
-                                href={`/jobs?company=${c.slug}`}
+                                href={`/companies/${c.slug}`}
                                 className="p-5 bg-white border border-slate-100/80 hover:border-[#00b14f]/30 hover:shadow-md active:scale-[0.99] rounded-2xl flex flex-col items-center text-center transition-all duration-300 group relative"
                             >
                                 {/* Logo hình tròn */}

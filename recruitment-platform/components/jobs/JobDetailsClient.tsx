@@ -26,6 +26,7 @@ export interface JobDetails {
   company: {
     id: string;
     name: string;
+    slug: string;
     logo: string | null;
     website: string | null;
     description: string | null;

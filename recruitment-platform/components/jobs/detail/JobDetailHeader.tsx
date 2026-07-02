@@ -125,7 +125,7 @@ export default function JobDetailHeader({
               <h1 className="text-lg md:text-xl font-bold text-gray-900 leading-snug mb-0.5">{job.title}</h1>
 
               {/* Company */}
-              <Link href={`/companies/${job.company.id}`} className="text-sm font-semibold text-[#00b14f] hover:underline">
+              <Link href={`/companies/${job.company.slug}`} className="text-sm font-semibold text-[#00b14f] hover:underline">
                 {job.company.name}
               </Link>
 

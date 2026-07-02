@@ -97,7 +97,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
         'itemListElement': companies.map((company, index) => ({
             '@type': 'ListItem',
             'position': skip + index + 1,
-            'url': `${baseUrl}/companies/${company.id}`,
+            'url': `${baseUrl}/companies/${company.slug}`,
             'name': company.name,
         }))
     };
@@ -141,7 +141,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
                                 />
                                 <div className="flex-1 min-w-0">
                                     <Link
-                                        href={`/companies/${company.id}`}
+                                        href={`/companies/${company.slug}`}
                                         className="font-bold text-[#041b3c] group-hover:text-[#00b14f] text-base block mb-1 transition-colors truncate"
                                     >
                                         {company.name}

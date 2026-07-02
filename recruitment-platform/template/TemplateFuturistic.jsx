@@ -104,7 +104,7 @@ export default function TemplateFuturistic({
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 py-8 px-4 print:p-0">
+        <div className="min-h-screen bg-white py-8 px-4 print:p-0">
             {/* Control Panel (Hidden when printing) */}
             <div className="max-w-4xl mx-auto mb-6 bg-slate-900/80 p-4 rounded-xl border border-cyan-500/20 backdrop-blur-md flex justify-between items-center print:hidden">
                 <span className="text-sm font-semibold text-cyan-400 flex items-center gap-1.5">

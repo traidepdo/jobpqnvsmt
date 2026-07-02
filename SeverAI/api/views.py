@@ -129,6 +129,7 @@ def evaluate_cv_api(request):
         application_id = data.get('application_id')
         cv_text = data.get('cv_text', '')
         job_text = data.get('job_text', '')
+        cv_url = data.get('cv_url', '')
     except ValueError:
         return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
         
@@ -151,16 +152,21 @@ def evaluate_cv_api(request):
             if app.resumeid:
                 cv_text = parse_db_resume(app.resumeid)
             
-            if app.cvurl:
+            download_url = cv_url or app.cvurl
+            if download_url:
                 try:
                     headers = {'User-Agent': 'Mozilla/5.0'}
-                    resp = requests.get(app.cvurl, headers=headers, timeout=15)
+                    resp = requests.get(download_url, headers=headers, timeout=15)
                     if resp.ok:
-                        pdf_text = extract_text_from_pdf(resp.content)
+                        # Strip leading whitespaces/newlines to fix "invalid pdf header: b'\n%PDF'"
+                        pdf_content = resp.content.lstrip(b'\r\n ')
+                        pdf_text = extract_text_from_pdf(pdf_content)
                         if pdf_text:
                             cv_text = (cv_text + "\n" + pdf_text).strip()
+                    else:
+                        print(f"Failed to download CV PDF from url {download_url}. Status: {resp.status_code}")
                 except Exception as e:
-                    print(f"Error downloading or parsing CV PDF from url {app.cvurl}: {e}")
+                    print(f"Error downloading or parsing CV PDF from url {download_url}: {e}")
                     
         except Application.DoesNotExist:
             return JsonResponse({'error': 'Không tìm thấy đơn ứng tuyển.'}, status=404)

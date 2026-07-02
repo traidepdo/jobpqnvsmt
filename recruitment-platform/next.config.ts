@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["react-icons"],
+  },
   serverExternalPackages: [
     "@prisma/client",
     "@prisma/adapter-neon",

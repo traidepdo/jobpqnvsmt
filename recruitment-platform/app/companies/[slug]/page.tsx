@@ -9,14 +9,14 @@ import FollowButton from '@/components/companies/FollowButton';
 import CompanyJobsList from '@/components/companies/CompanyJobsList';
 
 interface RouteParams {
-    params: Promise<{ id: string }>;
+    params: Promise<{ slug: string }>;
 }
 
 // ─── GENERATE METADATA FOR SEO ─────────────────────────────────────────────
 export async function generateMetadata({ params }: RouteParams) {
-    const { id } = await params;
+    const { slug } = await params;
     const company = await prisma.company.findUnique({
-        where: { id, isApproved: true, isActive: true },
+        where: { slug: slug, isApproved: true, isActive: true },
         select: { name: true, description: true, industry: true, addressDetail: true }
     });
 
@@ -43,11 +43,11 @@ export async function generateMetadata({ params }: RouteParams) {
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 export default async function CompanyDetailPage({ params }: RouteParams) {
-    const { id: companyId } = await params;
+    const { slug } = await params;
 
     // Fetch company detail directly from Database
     const company = await prisma.company.findUnique({
-        where: { id: companyId, isApproved: true, isActive: true },
+        where: { slug: slug, isApproved: true, isActive: true },
         include: {
             ward: {
                 include: {
@@ -86,7 +86,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
             if (payload) {
                 isLoggedIn = true;
                 const existing = await prisma.savedCompany.findUnique({
-                    where: { userId_companyId: { userId: payload.id as string, companyId } }
+                    where: { userId_companyId: { userId: payload.id as string, companyId: company.id } }
                 });
                 initialFollowed = !!existing;
             }
@@ -102,7 +102,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
         '@context': 'https://schema.org',
         '@type': 'Organization',
         'name': company.name,
-        'url': `${baseUrl}/companies/${company.id}`,
+        'url': `${baseUrl}/companies/${company.slug}`,
         'logo': company.logo || undefined,
         'sameAs': company.website || undefined,
         'description': company.description || undefined,
@@ -135,7 +135,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                 '@type': 'ListItem',
                 'position': 3,
                 'name': company.name,
-                'item': `${baseUrl}/companies/${company.id}`,
+                'item': `${baseUrl}/companies/${company.slug}`,
             }
         ]
     };
@@ -197,7 +197,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                         </div>
 
                         <div className="flex-1 min-w-0 md:mb-2">
-                            <h1 id="company-title" className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
+                            <h1 id="company-title" className="text-xl md:text-2xl font-black text-slate-800 mb-2">
                                 {company.name}
                             </h1>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 font-medium">

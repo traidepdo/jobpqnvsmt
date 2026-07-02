@@ -43,6 +43,7 @@ export async function GET(
                 recommendedIds = recommendations.map((r: any) => r.id);
             }
         } catch (fetchError) {
+            console.error("Django Recommender API error:", fetchError);
             console.warn("Django Recommender API is offline or timed out. Falling back to DB-based recommendation.");
         }
 

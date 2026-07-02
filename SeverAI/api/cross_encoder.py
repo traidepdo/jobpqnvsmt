@@ -7,34 +7,38 @@ _model = None
 def get_model():
     global _model
     if _model is None:
-        print("Loading Cross-Encoder model (ms-marco-MiniLM-L-6-v2)...")
-        # ms-marco-MiniLM-L-6-v2 is a standard and fast model for passage ranking/matching
-        _model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', max_length=512)
+        print("Loading Cross-Encoder model (itdainb/PhoRanker)...")
+        # PhoRanker has a max sequence limit of 258. Setting max_length=256 avoids out of bounds errors.
+        _model = CrossEncoder('itdainb/PhoRanker', max_length=256)
         print("Cross-Encoder model loaded successfully.")
     return _model
 
 def calculate_match_score(cv_text: str, job_text: str) -> int:
     """
-    Calculate the similarity score (0 to 100) between candidate CV text and Job description text.
-    Uses Cross-Encoder model. Raw logits are mapped using sigmoid function.
+    Calculate the similarity score (0 to 100) between candidate CV text and Job description text
+    using the local itdainb/PhoRanker CrossEncoder model trained for Vietnamese.
     """
     if not cv_text or not cv_text.strip() or not job_text or not job_text.strip():
         return 0
 
+    # Truncate texts for local CPU speed and model limits
+    cv_truncated = cv_text[:1200]
+    job_truncated = job_text[:1000]
+    
     try:
         model = get_model()
-        # Predict returns logit. ms-marco outputs raw matching scores (higher is better).
-        # We pass it as a pair: (query, passage) -> (job_text, cv_text)
-        raw_score = float(model.predict([(job_text, cv_text)])[0])
+        # Predict returns logit or probability score.
+        raw_score = float(model.predict([(job_truncated, cv_truncated)])[0])
         
-        # Calibrated Sigmoid for ms-marco-MiniLM-L-6-v2:
-        # Since this model outputs raw logits that are shifted negative (approx -11.0 for unrelated to -2.0 for highly related),
-        # we shift by +6.5 and scale by 1.5 to normalize the probability distribution.
-        probability = 1 / (1 + math.exp(-((raw_score + 6.5) / 1.5)))
-        
-        # Convert to percentage
+        # If model outputs probability directly in [0, 1] range:
+        if 0.0 <= raw_score <= 1.0:
+            probability = raw_score
+        else:
+            # Map raw logits using standard sigmoid function
+            probability = 1 / (1 + math.exp(-raw_score))
+            
         score = int(round(probability * 100))
         return max(0, min(100, score))
     except Exception as e:
-        print(f"Error computing cross-encoder score: {e}")
+        print(f"Error computing PhoRanker match score: {e}")
         return 0

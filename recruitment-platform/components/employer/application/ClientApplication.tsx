@@ -626,6 +626,14 @@ export default function EmployerApplicationsPage({
                     onClose={() => setSelectedApp(null)}
                     onBookmark={() => handleBookmark(selectedApp.id)}
                     isBookmarked={apps.find(a => a.id === selectedApp.id)?.isBookmarked ?? selectedApp.isBookmarked}
+                    onEvaluate={(score) => {
+                        setApps(prev =>
+                            prev.map(app =>
+                                app.id === selectedApp.id ? { ...app, matchScore: score } : app
+                            )
+                        );
+                        setSelectedApp(prev => prev ? { ...prev, matchScore: score } : null);
+                    }}
                 />
             )}
 

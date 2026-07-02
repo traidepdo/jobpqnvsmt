@@ -16,6 +16,7 @@ export interface JobDetail {
     company: {
         id: string,
         name: string,
+        slug: string,
         logo: string,
         website: string,
         description: string,

@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { TEMPLATE_MAP } from "@/template/index";
 import React from "react";
-import DownloadCvButton from "@/components/cv/DownloadCvButton";
 
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -70,7 +69,7 @@ export default async function EmployerCvPage({
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen pt-15 print:pt-0">
+    <div className="bg-white min-h-screen pt-15 print:pt-0">
 
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -89,6 +88,10 @@ export default async function EmployerCvPage({
           box-shadow: none !important;
           resize: none !important;
         }
+        button,
+        label.cursor-pointer,
+        .print\\:hidden,
+        [class*="print:hidden"],
         .cv-viewer-container > div > div.print\\:hidden {
           display: none !important;
         }
@@ -97,10 +100,7 @@ export default async function EmployerCvPage({
         <TemplateComponent user={user} resume={resumeData} />
       </div>
 
-      {/* Floating Download Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <DownloadCvButton fileName={`CV-${user.name || 'candidate'}`} />
-      </div>
+
     </div>
   );
 }
