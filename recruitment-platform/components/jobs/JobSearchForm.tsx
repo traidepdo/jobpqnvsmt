@@ -6,6 +6,12 @@ import { useState, useEffect, useRef } from 'react';
 interface Suggestion {
   id: string;
   title: string;
+  type?: 'job' | 'company';
+  slug?: string;
+  logo?: string | null;
+  size?: string | null;
+  industry?: string | null;
+  jobCount?: number;
 }
 
 const HOT_KEYWORDS: Record<string, Suggestion[]> = {
@@ -89,10 +95,8 @@ export default function JobSearchForm({
       return;
     }
 
-    // Only show suggestions if the input is actively focused
-    const isFocused = document.activeElement === inputRef.current;
-    if (!isFocused) {
-      setIsOpen(false);
+    // Only fetch suggestions if dropdown is open
+    if (!isOpen) {
       return;
     }
 
@@ -129,7 +133,7 @@ export default function JobSearchForm({
         clientCacheRef.current[trimmed] = results;
         setSuggestions(results);
         
-        // Double check focus before opening dropdown
+        // Double check focus/open state before showing dropdown
         if (document.activeElement === inputRef.current) {
           setIsOpen(true);
         }
@@ -148,7 +152,7 @@ export default function JobSearchForm({
         abortControllerRef.current.abort();
       }
     };
-  }, [queryInput]);
+  }, [queryInput, isOpen]);
 
   return (
     <div className="bg-white border-b border-gray-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] sticky top-[60px] z-40">
@@ -162,8 +166,11 @@ export default function JobSearchForm({
               <input
                 ref={inputRef}
                 value={queryInput}
-                onChange={e => setQueryInput(e.target.value)}
-                onFocus={() => queryInput && setIsOpen(true)}
+                onChange={e => {
+                  setQueryInput(e.target.value);
+                  setIsOpen(true);
+                }}
+                onFocus={() => setIsOpen(true)}
                 placeholder="Tên công việc, vị trí, kỹ năng..."
                 className="w-full h-11 pl-10 pr-10 border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/10 transition bg-white"
               />
@@ -174,28 +181,85 @@ export default function JobSearchForm({
               {/* Autocomplete Suggestions Overlay */}
               {isOpen && suggestions.length > 0 && (
                 <ul
-                  className="absolute left-0 z-50 w-full mt-1.5 rounded-xl border border-gray-200 py-1.5 overflow-y-auto max-h-60 shadow-xl"
+                  className="absolute left-0 z-50 w-full mt-1.5 rounded-xl border border-gray-200 py-1.5 overflow-y-auto max-h-64 shadow-xl"
                   style={{
                     background: '#ffffff',
                     border: '1px solid #e5e7eb',
                   }}
                 >
-                  {suggestions.map((item) => (
-                    <li
-                      key={item.id}
-                      onClick={() => {
-                        setQueryInput(item.title);
-                        performSearch(item.title, locationInput);
-                      }}
-                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-[13px] text-gray-700 hover:text-[#00b14f] transition-colors flex items-center gap-2.5"
-                    >
-                      <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.35-4.35" />
-                      </svg>
-                      <span className="line-clamp-1">{item.title}</span>
-                    </li>
-                  ))}
+                  {suggestions.map((item) => {
+                    const isCompany = item.type === 'company';
+                    return (
+                      <li
+                        key={item.id}
+                        onClick={() => {
+                          if (isCompany && item.slug) {
+                            const params = new URLSearchParams(searchParams.toString());
+                            params.set('company', item.slug);
+                            params.delete('query');
+                            if (locationInput) params.set('location', locationInput);
+                            else params.delete('location');
+                            params.set('page', '1');
+                            setIsOpen(false);
+                            router.push(`/jobs?${params.toString()}`);
+                          } else {
+                            setQueryInput(item.title);
+                            performSearch(item.title, locationInput);
+                          }
+                        }}
+                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer text-[13px] text-gray-700 hover:text-[#00b14f] transition-colors flex items-center justify-between gap-3 ${isCompany ? 'bg-slate-50/40 border-b border-slate-100/60' : ''}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {isCompany ? (
+                            <div className="w-10 h-10 rounded-full bg-white border border-slate-100 p-1 flex-shrink-0 flex items-center justify-center shadow-sm">
+                              {item.logo ? (
+                                <img
+                                  src={item.logo}
+                                  alt={item.title}
+                                  className="w-full h-full object-contain rounded-full"
+                                />
+                              ) : (
+                                <span className="material-symbols-outlined text-[18px] text-[#00b14f]">corporate_fare</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                              <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                              </svg>
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={`line-clamp-1 ${isCompany ? 'font-bold text-slate-800 text-[14px]' : 'text-slate-700'}`}>
+                                {item.title}
+                              </span>
+                              {isCompany && (
+                                <span className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md font-bold uppercase shrink-0">
+                                  Công ty
+                                </span>
+                              )}
+                            </div>
+                            
+                            {isCompany && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium truncate">
+                                {item.industry && <span>{item.industry}</span>}
+                                {item.industry && item.size && <span>•</span>}
+                                {item.size && <span>Quy mô: {item.size}</span>}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {isCompany && typeof item.jobCount === 'number' && (
+                          <span className="text-[11px] font-bold text-[#00b14f] bg-[#00b14f]/8 px-3 py-1 rounded-full shrink-0 border border-[#00b14f]/10 shadow-sm">
+                            {item.jobCount} việc làm
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

@@ -15,6 +15,5 @@ export default async function CandidateResumesPage() {
 
   return (
     <ClientResumes initialResumes={resume || []} />
-
   );
 }

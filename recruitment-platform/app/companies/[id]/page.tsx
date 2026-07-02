@@ -6,6 +6,7 @@ import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatSalary } from '@/lib/jobLabels';
 import FollowButton from '@/components/companies/FollowButton';
+import CompanyJobsList from '@/components/companies/CompanyJobsList';
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -152,7 +153,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
     } : null;
 
     return (
-        <main className="bg-gray-100/60 min-h-screen pb-12">
+        <main className="bg-slate-50/50 min-h-screen py-8 px-4">
             {/* JSON-LD for Search Engines */}
             <script
                 type="application/ld+json"
@@ -169,29 +170,39 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                 />
             )}
 
-            {/* BANNER HEADER */}
-            <header className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="max-w-6xl mx-auto relative">
-                    <div className="h-48 md:h-64 bg-gradient-to-r from-[#041b3c] to-[#0a3366] relative rounded-b-2xl overflow-hidden">
-                        <div className="absolute inset-0 bg-black/10" />
-                    </div>
+            {/* PANEL THỐNG NHẤT TOÀN BỘ TRANG */}
+            <div className="max-w-[1300px] w-full mx-auto bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden mt-15">
 
-                    <div className="px-6 pb-6 pt-2 flex flex-col md:flex-row gap-5 items-start md:items-end -mt-16 relative z-10">
-                        <div className="w-32 h-32 bg-white rounded-2xl p-2 shadow-md border border-gray-100 flex-shrink-0">
+                {/* 1. BANNER / COVER IMAGE */}
+                <div
+                    className="h-48 md:h-72 bg-gradient-to-r from-[#041b3c] to-[#0a3366] relative"
+                    style={company.coverImage ? {
+                        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url(${company.coverImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    } : undefined}
+                >
+                    <div className="absolute inset-0 bg-black/10" />
+                </div>
+
+                {/* 2. LOGO, CÁC THÔNG TIN CHÍNH VÀ NÚT TƯƠNG TÁC */}
+                <div className="px-8 pt-2 pb-6 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-5 items-start md:items-end -mt-16 pb-8 border-b border-slate-100">
+                        <div className="w-32 h-32 bg-white rounded-3xl p-2 shadow-lg border border-slate-100 flex-shrink-0">
                             <img
                                 src={company.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150'}
                                 alt={company.name}
-                                className="w-full h-full object-contain rounded-xl"
+                                className="w-full h-full object-contain rounded-2xl"
                             />
                         </div>
 
                         <div className="flex-1 min-w-0 md:mb-2">
-                            <h1 id="company-title" className="text-xl md:text-2xl font-bold text-white md:text-[#041b3c] drop-shadow md:drop-shadow-none mb-2">
+                            <h1 id="company-title" className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
                                 {company.name}
                             </h1>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 font-medium">
                                 {company.website && (
-                                    <a href={company.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-[#00b14f]">
+                                    <a href={company.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-[#00b14f] transition-colors">
                                         <span className="material-symbols-outlined text-[18px]">language</span> {company.website}
                                     </a>
                                 )}
@@ -201,7 +212,7 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                             </div>
                         </div>
 
-                        {/* NÚT THEO DÕI (CLIENT SIDE INTERACTIVE) */}
+                        {/* NÚT THEO DÕI */}
                         <div className="flex-shrink-0 w-full md:w-auto md:mb-2">
                             <FollowButton
                                 companyId={company.id}
@@ -210,90 +221,87 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                             />
                         </div>
                     </div>
-                </div>
-            </header>
 
-            {/* CHI TIẾT NỘI DUNG CHIA 2 CỘT */}
-            <div className="max-w-6xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 3. CHI TIẾT NỘI DUNG CHIA 2 CỘT */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 items-start">
 
-                {/* CỘT TRÁI: GIỚI THIỆU & VIỆC LÀM ĐANG TUYỂN */}
-                <div className="lg:col-span-2 space-y-6">
-                    <section className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm" aria-labelledby="company-intro-heading">
-                        <h2 id="company-intro-heading" className="text-lg font-bold text-[#041b3c] border-l-4 border-[#00b14f] pl-3 mb-4">
-                            Giới thiệu công ty
-                        </h2>
-                        <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-                            {company.description || "Chưa có bài viết mô tả chi tiết cho công ty này."}
-                        </p>
-                    </section>
+                        {/* CỘT TRÁI (2/3): GIỚI THIỆU & VIỆC LÀM & ẢNH */}
+                        <div className="lg:col-span-2 space-y-8">
+                            <section aria-labelledby="company-intro-heading">
+                                <h2 id="company-intro-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
+                                    Giới thiệu công ty
+                                </h2>
+                                <p className="text-sm text-slate-655 leading-relaxed">
+                                    {company.description || "Chưa có bài viết mô tả chi tiết cho công ty này."}
+                                </p>
+                            </section>
 
-                    <section className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm" aria-labelledby="company-jobs-heading">
-                        <h2 id="company-jobs-heading" className="text-lg font-bold text-[#041b3c] border-l-4 border-[#00b14f] pl-3 mb-4">
-                            Tuyển dụng ({company.jobs?.length || 0})
-                        </h2>
-
-                        {!company.jobs || company.jobs.length === 0 ? (
-                            <div className="text-center py-12 text-gray-400 text-sm">
-                                Hiện tại doanh nghiệp chưa đăng tin tuyển dụng mới nào.
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {company.jobs.map((job) => (
-                                    <article key={job.id} className="p-4 border border-gray-100 rounded-lg bg-gray-50/50 hover:border-[#00b14f]/50 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                        <div className="min-w-0">
-                                            <Link href={`/jobs/${job.slug}`} className="font-semibold text-gray-800 hover:text-[#00b14f] text-sm block truncate mb-1">
-                                                {job.title}
-                                            </Link>
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                                                <span className="font-bold text-[#00b14f]">
-                                                    {formatSalary(job.salaryMin, job.salaryMax)}
-                                                </span>
-                                                <span>• {job.category?.name}</span>
-                                                {job.experience && <span>• Knghiệm: {job.experience}</span>}
+                            {/* HÌNH ẢNH HOẠT ĐỘNG CỦA CÔNG TY */}
+                            {company.images && Array.isArray(company.images) && (company.images as string[]).length > 0 && (
+                                <section className="pt-8 border-t border-slate-100 animate-fadeIn" aria-labelledby="company-photos-heading">
+                                    <h2 id="company-photos-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
+                                        Hình ảnh hoạt động
+                                    </h2>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {(company.images as string[]).map((img, idx) => (
+                                            <div key={idx} className="aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 group relative shadow-sm">
+                                                <img
+                                                    src={img}
+                                                    alt={`${company.name} photo ${idx + 1}`}
+                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                />
                                             </div>
-                                        </div>
-                                        <div className="text-xs text-gray-400 flex-shrink-0 self-end sm:self-center">
-                                            Hạn nộp: {job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
-                                        </div>
-                                    </article>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
-                {/* CỘT PHẢI: THÔNG TIN BỔ TRỢ */}
-                <aside className="space-y-6">
-                    <section className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm" aria-labelledby="company-contact-heading">
-                        <h2 id="company-contact-heading" className="text-base font-bold text-[#041b3c] border-b pb-3 mb-4">
-                            Thông tin liên hệ
-                        </h2>
-
-                        <div className="space-y-4 text-sm">
-                            <div className="flex gap-3 items-start">
-                                <span className="material-symbols-outlined text-gray-400 text-[20px] mt-0.5">location_on</span>
-                                <div>
-                                    <p className="font-medium text-gray-700 mb-0.5">Địa chỉ công ty</p>
-                                    <address className="text-gray-500 text-xs leading-relaxed not-italic">
-                                        {company.addressDetail ? `${company.addressDetail}, ` : ''}
-                                        {company.ward?.district?.province
-                                            ? `${company.ward.name}, ${company.ward.district.name}, ${company.ward.district.province.name}`
-                                            : 'Toàn quốc'
-                                        }
-                                    </address>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 items-start">
-                                <span className="material-symbols-outlined text-gray-400 text-[20px] mt-0.5">business_center</span>
-                                <div>
-                                    <p className="font-medium text-gray-700 mb-0.5">Lĩnh vực hoạt động</p>
-                                    <p className="text-gray-500 text-xs">{company.industry || 'Chưa cập nhật'}</p>
-                                </div>
-                            </div>
+                            <section className="pt-8 border-t border-slate-100 animate-fadeIn" aria-labelledby="company-jobs-heading">
+                                <h2 id="company-jobs-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
+                                    Tuyển dụng ({company.jobs?.length || 0})
+                                </h2>
+                                <CompanyJobsList jobs={company.jobs} />
+                            </section>
                         </div>
-                    </section>
-                </aside>
+
+                        {/* CỘT PHẢI (1/3): THÔNG TIN BỔ TRỢ */}
+                        <aside className="lg:col-span-1 lg:border-l lg:border-slate-100 lg:pl-8 space-y-6 self-stretch">
+                            <section aria-labelledby="company-contact-heading">
+                                <h2 id="company-contact-heading" className="text-base font-bold text-slate-850 border-b border-slate-100 pb-3 mb-4">
+                                    Thông tin liên hệ
+                                </h2>
+
+                                <div className="space-y-5 text-sm">
+                                    <div className="flex gap-3.5 items-start">
+                                        <span className="w-9 h-9 rounded-xl bg-[#00b14f]/8 flex items-center justify-center text-[#00b14f] flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[20px]">location_on</span>
+                                        </span>
+                                        <div>
+                                            <p className="font-bold text-slate-700 mb-0.5">Địa chỉ công ty</p>
+                                            <address className="text-slate-550 text-xs leading-relaxed not-italic">
+                                                {company.addressDetail ? `${company.addressDetail}, ` : ''}
+                                                {company.ward?.district?.province
+                                                    ? `${company.ward.name}, ${company.ward.district.name}, ${company.ward.district.province.name}`
+                                                    : 'Toàn quốc'
+                                                }
+                                            </address>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3.5 items-start">
+                                        <span className="w-9 h-9 rounded-xl bg-[#00b14f]/8 flex items-center justify-center text-[#00b14f] flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[20px]">business_center</span>
+                                        </span>
+                                        <div>
+                                            <p className="font-bold text-slate-700 mb-0.5">Lĩnh vực hoạt động</p>
+                                            <p className="text-slate-550 text-xs">{company.industry || 'Chưa cập nhật'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
             </div>
         </main>
     );

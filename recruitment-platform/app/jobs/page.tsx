@@ -11,6 +11,7 @@ import JobList from '@/components/jobs/JobList';
 import ActiveFilter from '@/components/jobs/ActiveFilter';
 import JobResultHeader from '@/components/jobs/JobResultHeader';
 import Breadcrumbs from '@/components/jobs/Breadcrumbs';
+import JobCompany from '@/components/jobs/JobCompany';
 
 interface RouteParams {
   searchParams: Promise<{
@@ -73,6 +74,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     savedJobs,
     appliedJobs,
     activeCompanyName,
+    matchedCompanies,
     query,
     category,
     salary,
@@ -178,7 +180,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f6f5] pt-[60px] pb-16">
+    <main className="min-h-screen bg-slate-50 pt-[60px] pb-16">
       {/* SEO Structured Data */}
       <script
         type="application/ld+json"
@@ -223,6 +225,9 @@ export default async function JobsPage({ searchParams }: RouteParams) {
 
             {/* Active filter tags */}
             <ActiveFilter category={category} companySlug={companySlug} salary={salary} experience={experience} type={type} level={level} activeFilterCount={activeFilterCount} getCategoryName={getCategoryName} getFilterRemoveLink={getFilterRemoveLink} activeCompanyName={activeCompanyName} SALARY_OPTIONS={SALARY_OPTIONS} EXPERIENCE_OPTIONS={EXPERIENCE_OPTIONS} TYPE_OPTIONS={TYPE_OPTIONS} LEVEL_OPTIONS={LEVEL_OPTIONS} />
+
+            {/* MATCHED COMPANIES AT THE TOP */}
+            <JobCompany matchedCompanies={matchedCompanies} />
 
             {/* Jobs List Grid */}
             <JobList

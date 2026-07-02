@@ -34,98 +34,94 @@ export default function JobList({ jobs, savedJobs, appliedJobs, isLoggedIn, acti
                     )}
                 </div>
             ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3.5">
                     {jobs.map(job => {
                         const saved = savedJobs.has(job.id);
                         return (
                             <article key={job.id}
-                                className="bg-white rounded-xl border border-gray-100 hover:border-[#00b14f]/40 hover:shadow-md transition-all group relative">
-                                <Link href={`/jobs/${job.slug}`} className="block p-4">
-                                    <div className="flex gap-3.5">
-                                        {/* Logo */}
-                                        <div className="w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                            {job.company.logo ? (
-                                                <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-contain p-1" />
-                                            ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-[#00b14f]/10 to-[#00b14f]/20 flex items-center justify-center">
-                                                    <span className="text-[#00b14f] font-bold text-lg">{job.company.name.charAt(0)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0 pr-8">
-                                            <div className="flex items-start gap-2 mb-0.5">
-                                                <h2 className="text-[14px] font-bold text-gray-900 group-hover:text-[#00b14f] transition-colors line-clamp-1">
-                                                    {job.title}
-                                                </h2>
-                                                {appliedJobs.has(job.id) && (
-                                                    <span className="flex-shrink-0 text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded mt-0.5">
-                                                        Đã ứng tuyển
-                                                    </span>
-                                                )}
+                                className="bg-white rounded-2xl border border-slate-100 hover:border-[#00b14f]/35 hover:shadow-md transition-all duration-300 group relative active:scale-[0.99]">
+                                <div className="p-5 flex gap-4">
+                                    {/* Logo */}
+                                    <div className="w-25 h-25 border border-slate-100 bg-slate-50 flex items-center justify-center flex-shrink-0 overflow-hidden m-5 outline outline-[#00b14f]/90 outline-[1px] p-[3px] rounded-lg">
+                                        {job.company.logo ? (
+                                            <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover rounded-lg" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-[#00b14f]/10 to-[#00b14f]/20 flex items-center justify-center">
+                                                <span className="text-[#00b14f] font-black text-xl">{job.company.name.charAt(0)}</span>
                                             </div>
-
-                                            <p className="text-[12px] font-medium text-[#00b14f] mb-2 line-clamp-1">
-                                                {job.company.name}
-                                            </p>
-
-                                            <div className="flex flex-wrap items-center gap-1.5">
-                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-md">
-                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    {formatSalary(job.salaryMin, job.salaryMax)}
-                                                </span>
-
-                                                {job.salaryStatus && (
-                                                    <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${job.salaryStatus === 'good'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                        : job.salaryStatus === 'bad'
-                                                            ? 'bg-amber-50 text-amber-700 border-amber-100'
-                                                            : 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                                                        }`}>
-                                                        <span>{job.salaryStatus === 'good' ? '✨' : job.salaryStatus === 'bad' ? '⚠️' : 'ℹ️'}</span>
-                                                        <span>
-                                                            {job.salaryStatus === 'good'
-                                                                ? `Lương tốt (+${Math.abs(job.salaryDiff || 0)}%)`
-                                                                : job.salaryStatus === 'bad'
-                                                                    ? `Lương thấp (-${Math.abs(job.salaryDiff || 0)}%)`
-                                                                    : 'Lương cạnh tranh'}
-                                                        </span>
-                                                    </span>
-                                                )}
-
-                                                <span className="inline-flex items-center gap-1 text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md">
-                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
-                                                    {job.ward?.name || 'Phú Quốc'}
-                                                </span>
-
-                                                <span className="inline-flex text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md">
-                                                    {getJobTypeLabel(job.type)}
-                                                </span>
-
-                                                {job.experience && (
-                                                    <span className="inline-flex text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md">
-                                                        {getExperienceLabel(job.experience)}
-                                                    </span>
-                                                )}
-
-                                                <span className="inline-flex text-[10px] font-semibold text-gray-400 uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded-md">
-                                                    {job.category.name}
-                                                </span>
-                                            </div>
-
-                                            {job.deadline && (
-                                                <p className="text-[11px] text-gray-400 mt-1.5">
-                                                    Hạn nộp: {new Date(job.deadline).toLocaleDateString('vi-VN')}
-                                                </p>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
-                                </Link>
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0 pr-8">
+                                        <div className="flex items-start gap-2 mb-1">
+                                            <Link href={`/jobs/${job.slug}`} className="text-sm md:text-base font-bold text-slate-800 group-hover:text-[#00b14f] transition-colors line-clamp-1">
+                                                {job.title}
+                                            </Link>
+                                            {appliedJobs.has(job.id) && (
+                                                <span className="flex-shrink-0 text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-lg mt-0.5">
+                                                    Đã ứng tuyển
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <p className="text-xs font-semibold text-[#00b14f] mb-3 hover:underline">
+                                            <Link href={`/jobs?company=${job.company.slug}`}>{job.company.name}</Link>
+                                        </p>
+
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00b14f] bg-[#00b14f]/8 px-2.5 py-1 rounded-lg">
+                                                {formatSalary(job.salaryMin, job.salaryMax)}
+                                            </span>
+
+                                            {job.salaryStatus && (
+                                                <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg border ${job.salaryStatus === 'good'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100/50'
+                                                    : job.salaryStatus === 'bad'
+                                                        ? 'bg-amber-50 text-amber-700 border-amber-100/50'
+                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-100/50'
+                                                    }`}>
+                                                    <span className="material-symbols-outlined text-[13px] font-bold">
+                                                        {job.salaryStatus === 'good' ? 'trending_up' : job.salaryStatus === 'bad' ? 'trending_down' : 'info'}
+                                                    </span>
+                                                    <span>
+                                                        {job.salaryStatus === 'good'
+                                                            ? `Lương tốt (+${Math.abs(job.salaryDiff || 0)}%)`
+                                                            : job.salaryStatus === 'bad'
+                                                                ? `Lương thấp (-${Math.abs(job.salaryDiff || 0)}%)`
+                                                                : 'Lương cạnh tranh'}
+                                                    </span>
+                                                </span>
+                                            )}
+
+                                            <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">
+                                                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                                                {job.ward?.name || 'Phú Quốc'}
+                                            </span>
+
+                                            <span className="inline-flex text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">
+                                                {getJobTypeLabel(job.type)}
+                                            </span>
+
+                                            {job.experience && (
+                                                <span className="inline-flex text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">
+                                                    {getExperienceLabel(job.experience)}
+                                                </span>
+                                            )}
+
+                                            <span className="inline-flex text-[9px] font-bold text-slate-450 uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-lg">
+                                                {job.category.name}
+                                            </span>
+                                        </div>
+
+                                        {job.deadline && (
+                                            <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[13px]">calendar_today</span>
+                                                Hạn nộp: {new Date(job.deadline).toLocaleDateString('vi-VN')}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
 
                                 {/* Save button (client interaction) */}
                                 <JobSaveButton

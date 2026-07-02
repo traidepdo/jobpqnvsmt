@@ -18,6 +18,8 @@ const INDUSTRIES = [
 type CompanyForm = {
   name: string;
   logo: string;
+  coverImage: string;
+  images: string[];
   website: string;
   description: string;
   industry: string;
@@ -27,13 +29,15 @@ type CompanyForm = {
 };
 
 const emptyForm: CompanyForm = {
-  name: '', logo: '', website: '', description: '', industry: '',
+  name: '', logo: '', coverImage: '', images: [], website: '', description: '', industry: '',
   addressDetail: '', wardId: '', size: '',
 };
 
 function companyToForm(company: {
   name: string;
   logo?: string | null;
+  coverImage?: string | null;
+  images?: any;
   website?: string | null;
   description?: string | null;
   industry?: string | null;
@@ -44,6 +48,8 @@ function companyToForm(company: {
   return {
     name: company.name || '',
     logo: company.logo || '',
+    coverImage: company.coverImage || '',
+    images: Array.isArray(company.images) ? (company.images as string[]) : [],
     website: company.website || '',
     description: company.description || '',
     industry: company.industry || '',
@@ -189,6 +195,9 @@ export default function EmployerCompanyPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const load = () => {
     return Promise.all([
       fetch('/api/employer/company').then(r => r.json()),
@@ -211,7 +220,57 @@ export default function EmployerCompanyPage() {
     load().finally(() => setLoading(false));
   }, []);
 
-  const set = (k: keyof CompanyForm, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh (JPG, PNG, GIF, WebP...)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setForm(f => ({ ...f, coverImage: ev.target?.result as string }));
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh (JPG, PNG, GIF, WebP...)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setForm(f => ({ ...f, images: [...f.images, result] }));
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handlePhotoRemove = (idx: number) => {
+    setForm(f => ({
+      ...f,
+      images: f.images.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const set = (k: keyof CompanyForm, v: any) => setForm(f => ({ ...f, [k]: v }));
   const inputCls =
     'w-full h-12 px-4 text-sm bg-slate-50 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 transition-all duration-200';
 
@@ -258,12 +317,59 @@ export default function EmployerCompanyPage() {
 
   return (
     <div className="w-full mx-auto p-4 md:p-6 bg-slate-50/20 min-h-screen space-y-6">
-      {/* Header card - borderless design with themed gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0052CC] to-[#0040a2] rounded-3xl p-8 shadow-md text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_120%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
-        <div className="relative z-10 space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black">Hồ sơ công ty</h1>
-          <p className="text-sm text-white/80">Quản lý thông tin chi tiết, logo và website của doanh nghiệp.</p>
+      {/* Header card - borderless design with themed gradient or cover image */}
+      <div 
+        className="relative overflow-hidden bg-gradient-to-r from-[#0052CC] to-[#0040a2] rounded-3xl p-8 shadow-md text-white min-h-[220px] flex items-end"
+        style={{
+          backgroundImage: (editing ? form.coverImage : saved.coverImage) 
+            ? `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.75)), url(${editing ? form.coverImage : saved.coverImage})`
+            : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_120%,rgba(255,255,255,0.08),transparent)] pointer-events-none" />
+        
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleCoverChange}
+          disabled={!editing}
+        />
+
+        <div className="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
+              Hồ sơ doanh nghiệp
+            </span>
+            <h1 className="text-2xl md:text-3xl font-black mt-2">Hồ sơ công ty</h1>
+            <p className="text-sm text-white/80">Quản lý thông tin chi tiết, logo, ảnh bìa và ảnh hoạt động.</p>
+          </div>
+          
+          {editing && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                className="px-4 py-2 text-xs font-bold bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-md flex items-center gap-1.5 transition-all shadow cursor-pointer active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                {(editing ? form.coverImage : saved.coverImage) ? 'Thay đổi ảnh bìa' : 'Thêm ảnh bìa'}
+              </button>
+              {(editing ? form.coverImage : saved.coverImage) && (
+                <button
+                  type="button"
+                  onClick={() => set('coverImage', '')}
+                  className="px-4 py-2 text-xs font-bold bg-red-500/30 hover:bg-red-500/50 text-red-100 rounded-xl border border-red-500/40 backdrop-blur-md flex items-center gap-1 transition-all shadow cursor-pointer active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  Xóa
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -336,6 +442,30 @@ export default function EmployerCompanyPage() {
             <p className="text-sm text-slate-650 leading-relaxed whitespace-pre-line bg-slate-50/50 p-4 rounded-2xl">
               {saved.description || <span className="text-slate-400 italic">Chưa có mô tả chi tiết giới thiệu công ty</span>}
             </p>
+          </div>
+
+          {/* Company Photos Gallery in View mode */}
+          <div className="pt-4 border-t border-slate-50">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px] text-[#0052CC]">collections</span> Ảnh hoạt động của công ty
+            </h4>
+            {saved.images && saved.images.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {saved.images.map((img, idx) => (
+                  <div key={idx} className="aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-105 group relative shadow-sm">
+                    <img 
+                      src={img} 
+                      alt={`Company photo ${idx + 1}`} 
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 italic bg-slate-50/50 p-4 rounded-2xl">
+                Chưa cập nhật ảnh hoạt động của công ty
+              </p>
+            )}
           </div>
         </div>
       ) : (
@@ -417,6 +547,54 @@ export default function EmployerCompanyPage() {
           <div>
             <label className="block text-xs font-bold text-slate-400 mb-1">Địa chỉ chi tiết</label>
             <input className={inputCls} value={form.addressDetail} onChange={e => set('addressDetail', e.target.value)} placeholder="Số nhà, tên đường..." />
+          </div>
+
+          {/* Company Photos Gallery in Edit mode */}
+          <div className="pt-4 border-t border-slate-50 space-y-3">
+            <div className="flex justify-between items-center">
+              <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Ảnh hoạt động của công ty</label>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0052CC]/10 hover:bg-[#0052CC] hover:text-white text-[#0052CC] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span> Tải ảnh lên
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoAdd}
+              />
+            </div>
+            
+            {form.images && form.images.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {form.images.map((img, idx) => (
+                  <div key={idx} className="aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-105 relative group shadow-sm">
+                    <img 
+                      src={img} 
+                      alt={`New photo ${idx + 1}`} 
+                      className="w-full h-full object-cover" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handlePhotoRemove(idx)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-650 text-white rounded-full flex items-center justify-center shadow-md transition-colors cursor-pointer border-none"
+                      title="Xóa ảnh này"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <span className="material-symbols-outlined text-3xl text-slate-350">collections</span>
+                <p className="text-xs font-bold text-slate-400 mt-2">Chưa có ảnh hoạt động nào</p>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3 pt-3">

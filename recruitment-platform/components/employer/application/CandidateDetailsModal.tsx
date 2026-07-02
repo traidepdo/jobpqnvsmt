@@ -22,7 +22,7 @@ export default function CandidateDetailsModal({
     useEffect(() => {
         setLoadingCv(true);
         setCvError('');
-        
+
         fetch(`/api/employer/applications/${app.id}/cv`)
             .then(async r => {
                 const d = await r.json();

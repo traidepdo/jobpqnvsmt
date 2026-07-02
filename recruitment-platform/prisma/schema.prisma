@@ -223,6 +223,8 @@ model Company {
   addressDetail String?
   size          CompanySize?
   industry      String?
+  coverImage    String?
+  images        Json?
   ownerId       String       @unique
   isApproved    Boolean      @default(false)
   isActive      Boolean      @default(true)
@@ -375,6 +377,8 @@ model Resume {
   languages   String?
   cvData      Json?
   avatarUrl   String?
+  profileSummary    String?         @db.Text
+  profileExperience Json?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

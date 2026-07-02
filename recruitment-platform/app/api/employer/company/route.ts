@@ -44,6 +44,50 @@ async function saveLogoToCloudinary(base64DataUrl: string, companyId: string): P
   return result.secure_url;
 }
 
+async function saveCoverImageToCloudinary(base64DataUrl: string, companyId: string): Promise<string> {
+  const matches = base64DataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!matches) throw new Error('Định dạng ảnh bìa không hợp lệ');
+
+  const base64Data = matches[2];
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 5MB');
+  }
+
+  const result = await cloudinary.uploader.upload(base64DataUrl, {
+    folder: 'company-covers',
+    transformation: [
+      { width: 1200, height: 400, crop: 'limit' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+  });
+
+  return result.secure_url;
+}
+
+async function savePhotoToCloudinary(base64DataUrl: string, companyId: string): Promise<string> {
+  const matches = base64DataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!matches) throw new Error('Định dạng ảnh không hợp lệ');
+
+  const base64Data = matches[2];
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  if (buffer.length > 5 * 1024 * 1024) {
+    throw new Error('Ảnh quá lớn, vui lòng chọn ảnh dưới 5MB');
+  }
+
+  const result = await cloudinary.uploader.upload(base64DataUrl, {
+    folder: 'company-photos',
+    transformation: [
+      { width: 1000, height: 1000, crop: 'limit' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+  });
+
+  return result.secure_url;
+}
+
 function isBase64DataUrl(value: string): boolean {
   return value.startsWith('data:image/');
 }
@@ -54,6 +98,33 @@ function isValidHttpUrl(value: string): boolean {
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch {
     return false;
+  }
+}
+
+function extractPublicId(url: string): string | null {
+  const parts = url.split('/image/upload/');
+  if (parts.length < 2) return null;
+
+  const pathParts = parts[1].split('/');
+  if (pathParts[0].match(/^v\d+$/)) {
+    pathParts.shift();
+  }
+
+  const pathWithExtension = pathParts.join('/');
+  const lastDotIdx = pathWithExtension.lastIndexOf('.');
+  if (lastDotIdx === -1) return pathWithExtension;
+  return pathWithExtension.substring(0, lastDotIdx);
+}
+
+async function deleteFromCloudinary(url: string) {
+  try {
+    if (!url || !url.includes('res.cloudinary.com')) return;
+    const publicId = extractPublicId(url);
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId);
+    }
+  } catch (err) {
+    console.error('Failed to delete image from Cloudinary:', err);
   }
 }
 
@@ -69,6 +140,8 @@ export async function GET() {
       name: true,
       slug: true,
       logo: true,
+      coverImage: true,
+      images: true,
       website: true,
       description: true,
       industry: true,
@@ -96,31 +169,79 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, logo, website, description, industry, addressDetail, wardId, size } = body;
+    const { name, logo, coverImage, images, website, description, industry, addressDetail, wardId, size } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Tên công ty là bắt buộc' }, { status: 400 });
     }
+
+    // Fetch old company data to check for deleted/replaced images
+    const oldCompany = await prisma.company.findUnique({
+      where: { id: auth.company.id },
+      select: { logo: true, coverImage: true, images: true }
+    });
 
     // ── Resolve logo ──────────────────────────────────────────────────────────
     let resolvedLogo: string | null = null;
 
     if (logo) {
       if (isBase64DataUrl(logo)) {
-        // Ảnh tải lên từ máy → lưu vào public/uploads/logos/
         try {
           resolvedLogo = await saveLogoToCloudinary(logo, auth.company.id);
         } catch (err: any) {
-          return NextResponse.json({ error: err.message || 'Không thể lưu ảnh' }, { status: 400 });
+          return NextResponse.json({ error: err.message || 'Không thể lưu logo' }, { status: 400 });
         }
       } else if (isValidHttpUrl(logo)) {
-        // URL bình thường → lưu thẳng
         resolvedLogo = logo;
       } else {
         return NextResponse.json(
           { error: 'Logo không hợp lệ (phải là URL hoặc ảnh tải lên)' },
           { status: 400 },
         );
+      }
+    }
+
+    // ── Resolve coverImage ────────────────────────────────────────────────────
+    let resolvedCoverImage: string | null = null;
+
+    if (coverImage) {
+      if (isBase64DataUrl(coverImage)) {
+        try {
+          resolvedCoverImage = await saveCoverImageToCloudinary(coverImage, auth.company.id);
+        } catch (err: any) {
+          return NextResponse.json({ error: err.message || 'Không thể lưu ảnh bìa' }, { status: 400 });
+        }
+      } else if (isValidHttpUrl(coverImage)) {
+        resolvedCoverImage = coverImage;
+      } else {
+        return NextResponse.json(
+          { error: 'Ảnh bìa không hợp lệ (phải là URL hoặc ảnh tải lên)' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // ── Resolve images ────────────────────────────────────────────────────────
+    let resolvedImages: string[] = [];
+
+    if (images && Array.isArray(images)) {
+      for (const img of images) {
+        if (!img) continue;
+        if (isBase64DataUrl(img)) {
+          try {
+            const uploadedUrl = await savePhotoToCloudinary(img, auth.company.id);
+            resolvedImages.push(uploadedUrl);
+          } catch (err: any) {
+            return NextResponse.json({ error: err.message || 'Không thể lưu ảnh công ty' }, { status: 400 });
+          }
+        } else if (isValidHttpUrl(img)) {
+          resolvedImages.push(img);
+        } else {
+          return NextResponse.json(
+            { error: 'Ảnh công ty không hợp lệ' },
+            { status: 400 },
+          );
+        }
       }
     }
 
@@ -136,6 +257,8 @@ export async function PUT(req: Request) {
       data: {
         name: name.trim(),
         logo: resolvedLogo,
+        coverImage: resolvedCoverImage,
+        images: resolvedImages,
         website: website || null,
         description: description || null,
         industry: industry || null,
@@ -148,6 +271,8 @@ export async function PUT(req: Request) {
         name: true,
         slug: true,
         logo: true,
+        coverImage: true,
+        images: true,
         website: true,
         description: true,
         industry: true,
@@ -157,6 +282,22 @@ export async function PUT(req: Request) {
         ward: { select: { id: true, name: true } },
       },
     });
+
+    // ── Cleanup old images from Cloudinary ────────────────────────────────────
+    if (oldCompany) {
+      if (oldCompany.logo && oldCompany.logo !== resolvedLogo) {
+        await deleteFromCloudinary(oldCompany.logo);
+      }
+      if (oldCompany.coverImage && oldCompany.coverImage !== resolvedCoverImage) {
+        await deleteFromCloudinary(oldCompany.coverImage);
+      }
+      const oldPhotos = Array.isArray(oldCompany.images) ? (oldCompany.images as string[]) : [];
+      for (const oldPhoto of oldPhotos) {
+        if (!resolvedImages.includes(oldPhoto)) {
+          await deleteFromCloudinary(oldPhoto);
+        }
+      }
+    }
 
     return NextResponse.json({ company });
   } catch (error) {

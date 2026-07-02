@@ -53,12 +53,11 @@ export default async function CvPage({
     );
   }
 
-  const cvData = resume.cvData as any;
   const user = {
-    name: cvData?.name || resume.user.name || '',
-    email: cvData?.email || resume.user.email || '',
-    phone: cvData?.phone || resume.user.phone || '',
-    avatar: resume.avatarUrl || resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
+    name: resume.user.name || '',
+    email: resume.user.email || '',
+    phone: resume.user.phone || '',
+    avatar: resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
   };
 
   const resumeData = {

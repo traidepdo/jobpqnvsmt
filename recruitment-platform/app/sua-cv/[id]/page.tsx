@@ -80,15 +80,15 @@ export default function SuaCvPage() {
             setCvTitle(resData.resume.title || 'Hồ sơ của tôi');
             setIsDefault(resData.resume.isDefault || false);
 
-            const cvName = resData.resume.cvData?.name || resData.resume.user?.name || '';
-            const cvEmail = resData.resume.cvData?.email || resData.resume.user?.email || '';
-            const cvPhone = resData.resume.cvData?.phone || resData.resume.user?.phone || '';
+            const cvName = resData.resume.user?.name || resData.resume.cvData?.name || '';
+            const cvEmail = resData.resume.user?.email || resData.resume.cvData?.email || '';
+            const cvPhone = resData.resume.user?.phone || resData.resume.cvData?.phone || '';
 
             const loadedUser = {
               name: cvName,
               email: cvEmail,
               phone: cvPhone,
-              avatar: resData.resume.avatarUrl || resData.resume.user?.avatar || 'https://i.pravatar.cc/150?img=12',
+              avatar: resData.resume.user?.avatar || resData.resume.avatarUrl || 'https://i.pravatar.cc/150?img=12',
             };
             setUserData(loadedUser);
 
@@ -384,6 +384,9 @@ export default function SuaCvPage() {
                 {activeTab === 'info' && (
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-gray-850">Thông tin liên hệ</h3>
+                    <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-250 p-2.5 rounded-lg font-medium leading-relaxed">
+                      💡 Ảnh đại diện, họ tên, email và số điện thoại được đồng bộ trực tiếp từ trang <strong>Thông tin cá nhân</strong> tài khoản của bạn để đảm bảo tính nhất quán.
+                    </p>
                     
                     <div className="flex items-center gap-4">
                       <div className="relative group shrink-0">
@@ -392,29 +395,14 @@ export default function SuaCvPage() {
                           alt="Avatar"
                           className="h-16 w-16 rounded-full border-2 border-gray-200 object-cover"
                         />
-                        <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-full text-white text-[9px] font-semibold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                          📷 Ảnh
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const url = URL.createObjectURL(file);
-                                setUserData((prev: any) => ({ ...prev, avatar: url }));
-                              }
-                            }}
-                            className="hidden"
-                          />
-                        </label>
                       </div>
                       <div className="flex-grow">
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Họ và Tên</label>
                         <input
                           type="text"
                           value={userData.name}
-                          onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none"
+                          disabled
+                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
                           placeholder="Họ và Tên"
                         />
                       </div>
@@ -437,8 +425,8 @@ export default function SuaCvPage() {
                         <input
                           type="email"
                           value={userData.email}
-                          onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none"
+                          disabled
+                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
                           placeholder="example@gmail.com"
                         />
                       </div>
@@ -447,8 +435,8 @@ export default function SuaCvPage() {
                         <input
                           type="text"
                           value={userData.phone}
-                          onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none"
+                          disabled
+                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
                           placeholder="0912 345 678"
                         />
                       </div>

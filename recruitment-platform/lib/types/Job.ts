@@ -27,3 +27,11 @@ export interface Job {
     salaryStatus?: 'good' | 'average' | 'bad' | null;
     salaryDiff?: number;
 }
+export interface MatchedCompany {
+    id: string;
+    name: string;
+    logo: string | null;
+    industry: string | null;
+    slug: string;
+    _count: { jobs: number };
+}

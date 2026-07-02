@@ -80,8 +80,45 @@ export async function GET(req: Request) {
       LIMIT 10
     `;
 
+    const matchedCompanies = await prisma.company.findMany({
+      where: {
+        name: { contains: query, mode: 'insensitive' },
+        isActive: true,
+        isApproved: true
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        size: true,
+        industry: true,
+        _count: {
+          select: {
+            jobs: {
+              where: { status: 'ACTIVE' }
+            }
+          }
+        }
+      },
+      take: 3
+    });
+
+    const companySuggestions = matchedCompanies.map(c => ({
+      id: `company-${c.id}`,
+      title: c.name,
+      type: 'company',
+      slug: c.slug,
+      logo: c.logo,
+      size: c.size,
+      industry: c.industry,
+      jobCount: c._count.jobs
+    }));
+
     const jobs: any[] = await prisma.$queryRawUnsafe(sqlQuery, ...queryParams);
-    const result = jobs.map(j => ({ id: j.id, title: j.title }));
+    const jobSuggestions = jobs.map(j => ({ id: j.id, title: j.title, type: 'job' }));
+
+    const result = [...companySuggestions, ...jobSuggestions];
 
     // 4. Lưu vào cache bộ nhớ đệm In-Memory (30 phút)
     setMemoryCache(cacheKey, result, 1800);
@@ -100,6 +137,41 @@ export async function GET(req: Request) {
       const q = searchParams.get('q') || '';
       const normalizedQuery = q.toLowerCase().trim().replace(/\s+/g, ' ');
 
+      const fallbackCompanies = await prisma.company.findMany({
+        where: {
+          name: { contains: normalizedQuery, mode: 'insensitive' },
+          isActive: true,
+          isApproved: true
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logo: true,
+          size: true,
+          industry: true,
+          _count: {
+            select: {
+              jobs: {
+                where: { status: 'ACTIVE' }
+              }
+            }
+          }
+        },
+        take: 3
+      });
+
+      const fallbackCompanySuggestions = fallbackCompanies.map(c => ({
+        id: `company-${c.id}`,
+        title: c.name,
+        type: 'company',
+        slug: c.slug,
+        logo: c.logo,
+        size: c.size,
+        industry: c.industry,
+        jobCount: c._count.jobs
+      }));
+
       const fallbackJobs = await prisma.job.groupBy({
         by: ['title'],
         where: {
@@ -115,7 +187,8 @@ export async function GET(req: Request) {
         }
       });
       
-      const result = fallbackJobs.map((j: any) => ({ id: j._min.id, title: j.title }));
+      const fallbackJobSuggestions = fallbackJobs.map((j: any) => ({ id: j._min.id, title: j.title, type: 'job' }));
+      const result = [...fallbackCompanySuggestions, ...fallbackJobSuggestions];
       
       return NextResponse.json({ 
         suggestions: result, 

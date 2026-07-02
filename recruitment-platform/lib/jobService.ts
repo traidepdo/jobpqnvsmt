@@ -320,6 +320,33 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     }
   }
 
+  let matchedCompanies: any[] = [];
+  if (query) {
+    matchedCompanies = await prisma.company.findMany({
+      where: {
+        name: { contains: query, mode: 'insensitive' },
+        isActive: true,
+        isApproved: true
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        size: true,
+        industry: true,
+        _count: {
+          select: {
+            jobs: {
+              where: { status: JobStatus.ACTIVE }
+            }
+          }
+        }
+      },
+      take: 4
+    });
+  }
+
   return {
     jobs,
     total,
@@ -330,6 +357,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     savedJobs,
     appliedJobs,
     activeCompanyName,
+    matchedCompanies,
     query,
     category,
     salary,
