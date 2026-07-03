@@ -250,7 +250,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jobs Job[]
+  jobs    Job[]
+  quizzes Quiz[]
 
   @@map("categories")
 }
@@ -602,10 +603,12 @@ model Quiz {
   description String?  @db.Text
   timeLimit   Int      @default(15) // giới hạn thời gian (phút)
   employerId  String
+  categoryId  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   employer  User       @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  category  Category?  @relation(fields: [categoryId], references: [id])
   questions Question[]
   jobs      Job[]
 

@@ -11,6 +11,10 @@ interface QuizItem {
   description: string | null;
   timeLimit: number;
   createdAt: string;
+  category?: {
+    id: string;
+    name: string;
+  } | null;
   _count: {
     questions: number;
     jobs: number;
@@ -121,6 +125,11 @@ export default function EmployerQuizzesPage() {
                     <FaHourglassHalf size={10} /> {quiz.timeLimit} phút
                   </div>
                 </div>
+                {quiz.category && (
+                  <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full mt-2 inline-block">
+                    {quiz.category.name}
+                  </span>
+                )}
                 <p className="text-xs text-gray-400 mt-2 line-clamp-2 min-h-[32px]">
                   {quiz.description || 'Không có mô tả.'}
                 </p>

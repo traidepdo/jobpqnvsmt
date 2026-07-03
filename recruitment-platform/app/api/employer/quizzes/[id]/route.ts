@@ -14,7 +14,10 @@ export async function GET(
   try {
     const quiz = await prisma.quiz.findUnique({
       where: { id },
-      include: { questions: true },
+      include: {
+        questions: true,
+        category: { select: { id: true, name: true } },
+      },
     });
 
     if (!quiz) {
@@ -55,7 +58,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { title, description, timeLimit, questions } = body;
+    const { title, description, timeLimit, questions, categoryId } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Vui lòng nhập tiêu đề bài thi' }, { status: 400 });
@@ -92,6 +95,7 @@ export async function PUT(
           title: title.trim(),
           description: description || null,
           timeLimit: typeof timeLimit === 'number' ? timeLimit : 15,
+          categoryId: categoryId || null,
           questions: {
             create: questions.map((q: any) => ({
               content: q.content.trim(),
@@ -102,6 +106,7 @@ export async function PUT(
         },
         include: {
           questions: true,
+          category: { select: { id: true, name: true } },
         },
       });
     });

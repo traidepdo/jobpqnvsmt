@@ -13,6 +13,7 @@ interface CompanyInfo {
 
 const NAV = [
   { href: '/employer/dashboard', label: 'Tổng quan', icon: 'dashboard' },
+  { href: '/employer/notifications', label: 'Thông báo', icon: 'notifications' },
   { href: '/employer/jobs', label: 'Tin tuyển dụng', icon: 'work' },
   { href: '/employer/jobs/new', label: 'Đăng tin mới', icon: 'add_circle' },
   { href: '/employer/quizzes', label: 'Quản lý bài test', icon: 'quiz' },
@@ -23,6 +24,7 @@ const NAV = [
   { href: '/employer/company', label: 'Hồ sơ công ty', icon: 'business' },
   { href: '/employer/support', label: 'Support', icon: 'support' },
   { href: '/employer/reset-password', label: 'Đổi mật khẩu', icon: 'password' }
+
 ];
 
 export default function EmployerShell({ children }: { children: React.ReactNode }) {
@@ -147,7 +149,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     <div className="flex h-screen overflow-hidden bg-[#f0f4ff] relative">
       {/* Mobile Drawer Backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-200"
           onClick={() => setSidebarOpen(false)}
         />

@@ -10,6 +10,7 @@ export async function GET() {
     const quizzes = await prisma.quiz.findMany({
       where: { employerId: auth.payload.id },
       include: {
+        category: { select: { id: true, name: true } },
         _count: { select: { questions: true, jobs: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { title, description, timeLimit, questions } = body;
+    const { title, description, timeLimit, questions, categoryId } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Vui lòng nhập tiêu đề bài thi' }, { status: 400 });
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
         description: description || null,
         timeLimit: typeof timeLimit === 'number' ? timeLimit : 15,
         employerId: auth.payload.id,
+        categoryId: categoryId || null,
         questions: {
           create: questions.map((q: any) => ({
             content: q.content.trim(),
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
       },
       include: {
         questions: true,
+        category: { select: { id: true, name: true } },
       },
     });
 
@@ -76,3 +79,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Không thể tạo bài thi' }, { status: 500 });
   }
 }
+

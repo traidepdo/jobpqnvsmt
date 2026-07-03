@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaPlus, FaTrash, FaCheck, FaSave, FaArrowLeft } from 'react-icons/fa';
 
@@ -17,6 +17,7 @@ interface QuizFormProps {
     title: string;
     description: string | null;
     timeLimit: number;
+    categoryId?: string | null;
     questions: QuestionItem[];
   };
   isEdit?: boolean;
@@ -27,12 +28,25 @@ export default function QuizForm({ initialData, isEdit = false }: QuizFormProps)
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [timeLimit, setTimeLimit] = useState(initialData?.timeLimit || 15);
+  const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>(
     initialData?.questions || [
       { content: '', options: ['', '', '', ''], correctOption: 0 }
     ]
   );
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/employer/meta')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.categories) {
+          setCategories(data.categories);
+        }
+      })
+      .catch((err) => console.error('Error fetching categories:', err));
+  }, []);
 
   const addQuestion = () => {
     setQuestions([...questions, { content: '', options: ['', '', '', ''], correctOption: 0 }]);
@@ -94,6 +108,7 @@ export default function QuizForm({ initialData, isEdit = false }: QuizFormProps)
           title,
           description,
           timeLimit: Number(timeLimit),
+          categoryId: categoryId || null,
           questions,
         }),
       });
@@ -148,6 +163,22 @@ export default function QuizForm({ initialData, isEdit = false }: QuizFormProps)
               placeholder="Ví dụ: Kiểm tra chuyên môn Frontend React"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Danh mục ngành nghề</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-1 focus:ring-[#0052CC] focus:outline-none cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục --</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
