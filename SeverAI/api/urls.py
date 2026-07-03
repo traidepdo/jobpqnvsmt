@@ -7,4 +7,5 @@ urlpatterns = [
     path('chatbot/recommend/', views.chatbot_recommend_api, name='chatbot_recommend_api'),
     path('chatbot/chat/', views.chatbot_chat_api, name='chatbot_chat_api'),
     path('evaluate-cv/', views.evaluate_cv_api, name='evaluate_cv_api'),
+    path('embeddings/generate/', views.generate_embeddings_api, name='generate_embeddings_api'),
 ]

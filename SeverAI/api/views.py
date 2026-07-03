@@ -214,6 +214,19 @@ def trigger_moderation_api(request):
         'task_id': task.id
     }, status=202)
 
-
-
-
+@csrf_exempt
+@internal_api_key_required
+def generate_embeddings_api(request):
+    """
+    API endpoint: POST /api/embeddings/generate/
+    Triggers bulk embedding generation for all jobs missing embeddings.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed.'}, status=405)
+    
+    from .embeddings import ensure_job_embeddings
+    try:
+        ensure_job_embeddings()
+        return JsonResponse({'message': 'Embedding generation completed successfully.'})
+    except Exception as e:
+        return JsonResponse({'error': f'Embedding generation failed: {str(e)}'}, status=500)

@@ -295,3 +295,16 @@ source ~/.bashrc
   celery -A job_recommender worker --loglevel=info
   ```
 
+
+
+* **Nếu embedding bị thiếu**, chạy lệnh sau để tạo bù:
+  ```bash
+  curl -X POST http://localhost:8000/api/embeddings/generate/ \
+    -H "Authorization: Bearer {INTERNAL_API_KEY}" trong .env django
+  ```
+  hoặc python :
+  python -c "
+import requests
+r = requests.post('http://localhost:8000/api/embeddings/generate/', headers={'Authorization': 'Bearer {INTERNAL_API_KEY}'})
+print(r.status_code, r.text)
+"

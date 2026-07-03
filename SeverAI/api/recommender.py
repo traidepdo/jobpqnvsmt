@@ -1,6 +1,6 @@
 from django.db import connection
 from .models import Job
-from .embeddings import get_embedding, ensure_job_embeddings
+from .embeddings import get_embedding
 
 def get_related_jobs(job_id, top_n=5):
     """

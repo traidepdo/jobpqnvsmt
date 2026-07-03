@@ -212,6 +212,25 @@ def moderate_job_task(job_id):
     job.updatedat = timezone.now()
     job.save()
 
+    # Generate embedding for the job whenever it is created/updated
+    try:
+        from .embeddings import get_embedding
+        from django.db import connection as db_conn
+        combined_text = f"Tiêu đề: {job.title}\nMô tả: {job.description or ''}\nYêu cầu: {job.requirements or ''}\nQuyền lợi: {job.benefits or ''}"
+        vector = get_embedding(combined_text)
+        if vector and len(vector) == 768:
+            vector_str = '[' + ','.join(map(str, vector)) + ']'
+            with db_conn.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO job_embeddings (job_id, embedding) VALUES (%s, %s::vector) ON CONFLICT (job_id) DO UPDATE SET embedding = EXCLUDED.embedding",
+                    [job_id, vector_str]
+                )
+            print(f"Successfully generated embedding for job {job_id}.")
+        else:
+            print(f"Warning: Embedding generation returned invalid vector for job {job_id} (length={len(vector) if vector else 0}).")
+    except Exception as e:
+        print(f"Error generating embedding for job {job_id}: {e}")
+
     print(f"Moderation finished for job {job_id}. Status: {status_result}, Score: {total_score}")
     return {
         "job_id": job_id,
@@ -219,3 +238,4 @@ def moderate_job_task(job_id):
         "score": total_score,
         "detected": detected_words
     }
+
