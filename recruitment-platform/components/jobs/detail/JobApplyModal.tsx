@@ -32,12 +32,15 @@ export default function JobApplyModal({
 
   useEffect(() => {
     if (userResumes && userResumes.length > 0) {
-      const defaultResume = userResumes.find((r: any) => r.isDefault);
+      const defaultResume = userResumes.find((r: any) => r.isDefault === true || r.isDefault === 'True');
       if (defaultResume) {
         setSelectedResumeId(defaultResume.id);
+      } else {
+        setSelectedResumeId(userResumes[0].id);
       }
     }
   }, [userResumes]);
+
 
   // Quiz states
   const [quizPhase, setQuizPhase] = useState<'none' | 'info' | 'quiz'>('none');
@@ -47,7 +50,9 @@ export default function JobApplyModal({
   const [selectedAnswers, setSelectedAnswers] = useState<{ [questionId: string]: number }>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
-
+  const cvisdefault = userResumes.find((r: any) => r.isDefault === 'True' || r.isDefault === "TRUE" || r.isDefault === true || r.isDefault === "true");
+  const cvnotdefault = userResumes.filter((r: any) => !r.isDefault || r.isDefault === 'false' || r.isDefault === 'False' || r.isDefault === "FALSE" || r.isDefault === false || r.isDefault === "false");
+  const listcv = cvisdefault ? [cvisdefault, ...cvnotdefault] : cvnotdefault;
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -349,18 +354,23 @@ export default function JobApplyModal({
             {/* CV selection */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-2">Chọn CV ứng tuyển</label>
-              {userResumes.length > 0 ? (
+              {listcv?.length > 0 ? (
                 <select
                   value={selectedResumeId}
                   onChange={e => setSelectedResumeId(e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-white outline-none focus:border-[#00b14f] transition-colors cursor-pointer"
                 >
-                  <option value="">-- Chọn CV đã tạo --</option>
-                  {userResumes.map((r: any) => (
-                    <option key={r.id} value={r.id}>
-                      {r.title} {r.isDefault ? ' (Mặc định)' : ''}
-                    </option>
-                  ))}
+                  {listcv[0].isDefault ? (
+                    <option value={listcv[0].id}>{listcv[0].title} (mặc định)</option >) : (
+                    <option value={listcv[0].id}>{listcv[0].title}</option>
+                  )}
+                  {listcv
+                    .slice(1)
+                    .map((r: any) => (
+                      <option key={r.id} value={r.id}>
+                        {r.title}
+                      </option>
+                    ))}
                 </select>
               ) : (
                 <div className="border border-dashed border-green-200 bg-green-50/50 rounded-xl p-4 text-center">

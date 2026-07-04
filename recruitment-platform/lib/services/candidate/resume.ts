@@ -2,12 +2,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function getResume(id: string) {
     const resumes = await prisma.resume.findMany({
-        where: { userId: id },
+        where: { userId: id, isProfile: false },
         orderBy: { updatedAt: 'desc' },
         select: {
             id: true,
             title: true,
             isDefault: true,
+            isProfile: true,
             address: true,
             summary: true,
             education: true,
@@ -27,6 +28,7 @@ export async function getResume(id: string) {
         id: r.id,
         title: r.title,
         isDefault: r.isDefault,
+        isProfile: r.isProfile,
         address: r.address,
         summary: r.summary,
         createdAt: r.createdAt.toISOString(),

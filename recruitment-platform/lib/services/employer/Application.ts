@@ -91,6 +91,7 @@ export async function getApplications(params: GetApplicationsParams) {
                         address: true,
                         education: true,
                         experience: true,
+                        isProfile: true,
                     }
                 },
                 conversation: {

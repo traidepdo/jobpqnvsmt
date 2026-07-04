@@ -22,11 +22,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const [resumes, savedJobRecord, candidateApps] = await Promise.all([
         prisma.resume.findMany({
-            where: { userId: useID },
+            where: { userId: useID, isProfile: false },
             orderBy: { updatedAt: 'desc' },
             select: {
                 id: true,
                 title: true,
+                isDefault: true,
             }
         }),
         prisma.savedJob.findUnique({

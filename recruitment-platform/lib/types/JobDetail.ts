@@ -33,4 +33,7 @@ export interface JobDetail {
     quizId: string,
     latitude: number,
     longitude: number,
+    _count?: {
+        applications: number;
+    };
 }

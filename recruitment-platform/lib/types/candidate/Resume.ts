@@ -2,6 +2,7 @@ export interface Resume {
     id: string;
     title: string;
     isDefault: boolean;
+    isProfile: boolean;
     address: string | null;
     summary: string | null;
     createdAt: string;

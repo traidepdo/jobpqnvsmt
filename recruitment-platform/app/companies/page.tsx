@@ -12,7 +12,7 @@ export async function generateMetadata({ searchParams }: RouteParams) {
     const params = await searchParams;
     const search = params.search || '';
     const industry = params.industry || '';
-    
+
     let title = 'Khám phá các công ty & nhà tuyển dụng nổi bật tại Phú Quốc';
     let description = 'Danh sách các doanh nghiệp, resort, nhà hàng hàng đầu đang tuyển dụng tại đảo ngọc Phú Quốc. Tìm kiếm thông tin liên hệ và cơ hội nghề nghiệp phù hợp ngay hôm nay!';
 
@@ -48,9 +48,13 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     };
 
     if (industry) {
-        whereClause.industry = {
-            contains: industry,
-            mode: 'insensitive',
+        whereClause.jobs = {
+            some: {
+                status: 'ACTIVE',
+                category: {
+                    slug: industry,
+                },
+            },
         };
     }
 
@@ -84,11 +88,12 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
         }),
         prisma.company.count({ where: whereClause })
     ]);
+    const categories = await prisma.category.findMany();
 
     const totalPages = Math.ceil(total / limit) || 1;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
-    
+
     // JSON-LD Schema list for companies
     const listSchema = {
         '@context': 'https://schema.org',
@@ -117,7 +122,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
             </header>
 
             {/* Bộ lọc Client-Side component nhận dữ liệu Server ban đầu */}
-            <CompanyFilter initialSearch={search} initialIndustry={industry} />
+            <CompanyFilter initialSearch={search} initialIndustry={industry} categories={categories} />
 
             {/* Vùng hiển thị danh sách */}
             {companies.length === 0 ? (

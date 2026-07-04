@@ -21,6 +21,15 @@ export default function CardCv({ r }: { r: Resume }) {
                             Mặc định
                         </span>
                     )}
+                    {r.isProfile ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0052cc] text-white shrink-0">
+                            Profile
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white shrink-0">
+                            CV
+                        </span>
+                    )}
                 </h3>
                 <div className="flex flex-wrap gap-2 mt-1.5 items-center">
                     {r.template && (

@@ -62,7 +62,7 @@ export default function JobDetailHeader({
     <>
       {/* ── Hero Banner ─────────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-4 pb-6">
+        <div className="w-[1300px] mx-auto px-4 md:px-6 pt-4 pb-6">
           {/* Visual Breadcrumbs */}
           <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-4 flex-wrap" aria-label="Breadcrumb">
             <Link href="/" className="hover:text-[#00b14f] transition-colors">Trang chủ</Link>
@@ -225,8 +225,8 @@ export default function JobDetailHeader({
 
       {/* ── Highlights Strip ────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="w-[1300px] mx-auto px-4 md:px-6 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               {
                 icon: (
@@ -255,6 +255,13 @@ export default function JobDetailHeader({
                 ),
                 label: 'Số lượng',
                 value: `${job.quantity} người`,
+              },
+              {
+                icon: (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                ),
+                label: 'Số lượng ứng tuyển',
+                value: job._count?.applications || 0,
               },
             ].map(item => (
               <div key={item.label} className="highlight-card bg-[#f8faf9] rounded-xl px-4 py-3 flex items-center gap-3">

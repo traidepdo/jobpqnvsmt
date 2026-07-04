@@ -16,8 +16,7 @@ type User = {
 // ── Dropdown data ──────────────────────────────────────────
 const JOB_DROPDOWN = [
     { icon: "search", label: "Tìm việc làm", desc: "Khám phá hàng nghìn cơ hội", href: "/jobs" },
-    { icon: "bookmark", label: "Việc đã lưu", desc: "Danh sách việc yêu thích", href: "/candidate/saved-jobs" },
-    { icon: "location_on", label: "Việc làm tại Phú Quốc", desc: "Cơ hội ngay tại địa phương", href: "/jobs?location=phu-quoc" },
+    { icon: "bookmark", label: "Việc đã lưu", desc: "Danh sách việc yêu thích", href: "/candidate/saved" },
     { icon: "trending_up", label: "Việc làm nổi bật", desc: "Hot jobs tuần này", href: "/jobs?featured=true" },
 ];
 const COMPANY_DROPDOWN = [

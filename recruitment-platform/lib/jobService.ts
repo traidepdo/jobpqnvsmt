@@ -15,6 +15,7 @@ interface JobSearchParams {
   sort?: string;
   page?: string;
   company?: string;
+  featured?: string;
 }
 interface MatchedCompany {
   id: string;
@@ -76,7 +77,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
   const experience = params.experience?.trim() || '';
   const level = params.level?.trim() || '';
   const sort = params.sort?.trim() || 'newest';
-
+  const featured = params.featured?.trim() || '';
   const andConditions: object[] = [];
 
   if (query) {
@@ -153,24 +154,28 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
   }
 
   let orderBy: any = {};
-  switch (sort) {
-    case 'newest':
-      orderBy = { createdAt: 'desc' };
-      break;
-    case 'minsalary':
-      orderBy = [
-        { salaryMin: { sort: 'asc', nulls: 'last' } },
-        { salaryMax: { sort: 'asc', nulls: 'last' } }
-      ];
-      break;
-    case 'maxsalary':
-      orderBy = [
-        { salaryMin: { sort: 'desc', nulls: 'last' } },
-        { salaryMax: { sort: 'desc', nulls: 'last' } }
-      ];
-      break;
-    default:
-      orderBy = { createdAt: 'desc' };
+  if (featured === 'true' && sort === 'newest') {
+    orderBy = { applications: { _count: 'desc' } };
+  } else {
+    switch (sort) {
+      case 'newest':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'minsalary':
+        orderBy = [
+          { salaryMin: { sort: 'asc', nulls: 'last' } },
+          { salaryMax: { sort: 'asc', nulls: 'last' } }
+        ];
+        break;
+      case 'maxsalary':
+        orderBy = [
+          { salaryMin: { sort: 'desc', nulls: 'last' } },
+          { salaryMax: { sort: 'desc', nulls: 'last' } }
+        ];
+        break;
+      default:
+        orderBy = { createdAt: 'desc' };
+    }
   }
 
   const companySlug = params.company?.trim() || '';
@@ -232,7 +237,12 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
         slug: true,
         jobs: {
           where: { status: JobStatus.ACTIVE },
-          select: { id: true, appliesCount: true }
+          select: {
+            id: true,
+            _count: {
+              select: { applications: true }
+            }
+          }
         }
       },
       take: 20
@@ -246,7 +256,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
   // Map & Sort featured companies
   const featuredCompanies = topCompanies
     .map(c => {
-      const totalApplies = c.jobs.reduce((sum, j) => sum + (j.appliesCount || 0), 0);
+      const totalApplies = c.jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0);
       return {
         name: c.name,
         logo: c.logo,
@@ -376,6 +386,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     sort,
     companySlug,
     page,
-    limit
+    limit,
+    featured
   };
 }

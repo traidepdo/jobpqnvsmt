@@ -23,6 +23,11 @@ export async function GET(
                     select: {
                         name: true, slug: true
                     }
+                },
+                _count: {
+                    select: {
+                        applications: true
+                    }
                 }
             }
         });

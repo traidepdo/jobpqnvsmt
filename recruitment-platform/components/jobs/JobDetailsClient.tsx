@@ -41,6 +41,9 @@ export interface JobDetails {
   quizId: string | null;
   latitude: number | null;
   longitude: number | null;
+  _count?: {
+    applications?: number;
+  };
 }
 
 interface JobDetailsClientProps {
@@ -190,7 +193,7 @@ export default function JobDetailsClient({
       />
 
       {/* ── Body ────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
+      <div className="w-[1300px] mx-auto px-4 md:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
           {/* Left Column: Tabs & Location map */}
           <div className="lg:col-span-2">

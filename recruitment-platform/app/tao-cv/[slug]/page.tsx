@@ -135,6 +135,20 @@ export default function TaoCvSlugPage() {
                 phone: userData.user.phone || '',
                 avatar: userData.user.avatar || 'https://i.pravatar.cc/150?img=12',
               });
+              
+              const mappedExperience = (userData.user.profileExperience || []).map((exp: any) => ({
+                company: exp.company || '',
+                position: exp.position || '',
+                startYear: exp.duration || '',
+                endYear: '',
+                description: exp.description || '',
+              }));
+
+              setResumeData((prev: any) => ({
+                ...prev,
+                summary: userData.user.profileSummary || '',
+                experience: mappedExperience,
+              }));
             }
           }
         }

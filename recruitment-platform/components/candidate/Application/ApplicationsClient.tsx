@@ -96,16 +96,14 @@ export default function ApplicationsClient({
                             <button
                                 key={s.value}
                                 onClick={() => setFilterStatus(s.value)}
-                                className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 border cursor-pointer ${
-                                    isActive
-                                        ? 'bg-[#00b14f] text-white border-[#00b14f] shadow-sm shadow-[#00b14f]/5'
-                                        : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:text-slate-700'
-                                }`}
+                                className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 border cursor-pointer ${isActive
+                                    ? 'bg-[#00b14f] text-white border-[#00b14f] shadow-sm shadow-[#00b14f]/5'
+                                    : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:text-slate-700'
+                                    }`}
                             >
                                 <span>{s.label}</span>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md transition-colors ${
-                                    isActive ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-400'
-                                }`}>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md transition-colors ${isActive ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-400'
+                                    }`}>
                                     {count}
                                 </span>
                             </button>
@@ -122,13 +120,13 @@ export default function ApplicationsClient({
                         {filterStatus ? 'Không có đơn ứng tuyển nào ở trạng thái này' : 'Chưa ứng tuyển việc làm nào'}
                     </h3>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto mb-5">
-                        {filterStatus 
-                            ? 'Vui lòng chọn trạng thái khác để kiểm tra đơn ứng tuyển của bạn.' 
+                        {filterStatus
+                            ? 'Vui lòng chọn trạng thái khác để kiểm tra đơn ứng tuyển của bạn.'
                             : 'Bắt đầu nộp hồ sơ ứng tuyển để có cơ hội việc làm tốt nhất.'}
                     </p>
                     {!filterStatus && (
-                        <Link 
-                            href="/jobs" 
+                        <Link
+                            href="/jobs"
                             className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold rounded-lg text-xs transition-all shadow-md shadow-[#00b14f]/5 active:scale-95"
                         >
                             Tìm việc làm ngay
@@ -142,8 +140,8 @@ export default function ApplicationsClient({
                         const status = STATUS_CONFIG[app.status] || STATUS_CONFIG.PENDING;
 
                         return (
-                            <div 
-                                key={app.id} 
+                            <div
+                                key={app.id}
                                 className="group bg-white rounded-xl border border-slate-100/80 p-4.5 flex flex-col gap-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:border-slate-200/50 transition-all duration-300"
                             >
                                 {/* Company info & status */}
@@ -161,8 +159,8 @@ export default function ApplicationsClient({
                                         </div>
 
                                         <div className="min-w-0">
-                                            <Link 
-                                                href={`/jobs/${app.job.slug}`} 
+                                            <Link
+                                                href={`/jobs/${app.job.slug}`}
                                                 className="font-bold text-slate-800 hover:text-[#00b14f] transition-colors text-sm sm:text-base line-clamp-1 block pr-2"
                                             >
                                                 {app.job.title}
@@ -179,7 +177,7 @@ export default function ApplicationsClient({
                                             <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                                             {status.label}
                                         </span>
-                                        
+
                                         {(app.status === 'PENDING' || app.status === 'REVIEWING') && (
                                             <button
                                                 onClick={() => handleCancelApplication(app.id)}
@@ -221,15 +219,15 @@ export default function ApplicationsClient({
                                     )}
 
                                     {app.resume && (
-                                        <a 
-                                            href={app.cvUrl} 
-                                            target="_blank" 
+                                        <Link
+                                            href={`/cv/${app.resume.id}`}
+                                            target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-1 text-blue-600 bg-blue-50/40 px-2 py-0.5 rounded-md hover:bg-blue-50 hover:underline transition-colors"
+                                            className="flex items-center gap-1 text-blue-600 bg-blue-50/40 px-2 py-0.5 rounded-md hover:bg-blue-50 transition-colors"
                                         >
-                                            <span className="material-symbols-outlined text-[14px]">download</span>
+                                            <span className="material-symbols-outlined text-[14px]">resume</span>
                                             CV: {app.resume.title}
-                                        </a>
+                                        </Link>
                                     )}
 
                                     <span className="flex items-center gap-1 text-slate-400 ml-auto self-center">
@@ -250,7 +248,7 @@ export default function ApplicationsClient({
                                             </span>
                                             {expanded ? 'Ẩn thư giới thiệu' : 'Xem thư giới thiệu đã nộp'}
                                         </button>
-                                        
+
                                         {expanded && (
                                             <div className="mt-2.5 bg-slate-50/70 rounded-lg p-3 border border-slate-100/40 animate-slideUp">
                                                 <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Thư giới thiệu</p>

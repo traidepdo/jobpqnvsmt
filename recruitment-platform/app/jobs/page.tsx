@@ -25,6 +25,7 @@ interface RouteParams {
     sort?: string;
     page?: string;
     company?: string;
+    featured?: string;
   }>;
 }
 
@@ -85,7 +86,8 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     sort,
     companySlug,
     page,
-    limit
+    limit,
+    featured,
   } = await getFilteredJobs(params, token);
 
   const activeFilterCount = [category, type, salary, experience, level, companySlug].filter(Boolean).length;
@@ -131,6 +133,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     }))
   } : null;
 
+
   // Render filter clearing link builder
   const getClearFilterLink = () => {
     const q = [];
@@ -149,6 +152,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     if (type) q.push(`type=${encodeURIComponent(type)}`);
     if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
     if (level) q.push(`level=${encodeURIComponent(level)}`);
+    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
     return `/jobs?${q.join('&')}`;
   };
 
@@ -163,6 +167,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
     if (level) q.push(`level=${encodeURIComponent(level)}`);
     if (sort) q.push(`sort=${encodeURIComponent(sort)}`);
+    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
     return `/jobs?${q.join('&')}`;
   };
 
@@ -176,6 +181,7 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     if (type && filterType !== 'type') q.push(`type=${encodeURIComponent(type)}`);
     if (experience && filterType !== 'experience') q.push(`experience=${encodeURIComponent(experience)}`);
     if (level && filterType !== 'level') q.push(`level=${encodeURIComponent(level)}`);
+    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
     return `/jobs?${q.join('&')}`;
   };
 

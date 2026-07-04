@@ -4,7 +4,7 @@ export async function getCandidateStats(userId: string) {
     const [applications, savedJobs, resumes, accepted] = await Promise.all([
         prisma.application.count({ where: { userId } }),
         prisma.savedJob.count({ where: { userId } }),
-        prisma.resume.count({ where: { userId } }),
+        prisma.resume.count({ where: { userId, isProfile: false } }),
         prisma.application.count({ where: { userId, status: 'ACCEPTED' } }),
     ]);
 
@@ -35,8 +35,10 @@ export async function getRecentApplications(userId: string) {
 }
 
 export async function getQuickAccess(userId: string) {
-    const resumes = await prisma.resume.count({ where: { userId } });
-    const savedJobs = await prisma.savedJob.count({ where: { userId } });
-    const applications = await prisma.application.count({ where: { userId } });
+    const [resumes, savedJobs, applications] = await Promise.all([
+        prisma.resume.count({ where: { userId, isProfile: false } }),
+        prisma.savedJob.count({ where: { userId } }),
+        prisma.application.count({ where: { userId } })
+    ]);
     return [resumes, savedJobs, applications];
 }

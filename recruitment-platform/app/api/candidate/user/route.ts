@@ -83,6 +83,7 @@ export async function PUT(req: Request) {
                 data: {
                     profileSummary: profileSummary !== undefined ? profileSummary : undefined,
                     profileExperience: profileExperience !== undefined ? profileExperience : undefined,
+                    isProfile: true,
                 }
             });
         } else {
@@ -93,6 +94,7 @@ export async function PUT(req: Request) {
                     isDefault: true,
                     profileSummary: profileSummary || null,
                     profileExperience: profileExperience || [],
+                    isProfile: true,
                 }
             });
         }

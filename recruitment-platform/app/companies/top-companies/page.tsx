@@ -48,9 +48,13 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     };
 
     if (industry) {
-        whereClause.industry = {
-            contains: industry,
-            mode: 'insensitive',
+        whereClause.jobs = {
+            some: {
+                status: 'ACTIVE',
+                category: {
+                    slug: industry,
+                },
+            },
         };
     }
 
@@ -94,6 +98,8 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
 
     // Tổ hợp toàn bộ danh sách ID đã sắp xếp theo thứ tự ưu tiên tuyển dụng
     const allSortedIds = [...sortedActiveCompanyIds, ...zeroActiveCompanyIds];
+
+    const categories = await prisma.category.findMany();
 
     const total = allSortedIds.length;
     const totalPages = Math.ceil(total / limit) || 1;
@@ -200,7 +206,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
             </header>
 
             {/* Bộ lọc Client-Side với targetPath cho trang Top Companies */}
-            <CompanyFilter initialSearch={search} initialIndustry={industry} targetPath="/companies/top-companies" />
+            <CompanyFilter initialSearch={search} initialIndustry={industry} targetPath="/companies/top-companies" categories={categories} />
 
             {/* Vùng hiển thị danh sách */}
             {orderedCompanies.length === 0 ? (

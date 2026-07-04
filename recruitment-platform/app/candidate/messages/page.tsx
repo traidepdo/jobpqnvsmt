@@ -361,21 +361,19 @@ function CandidateMessagesPageContent() {
                     <div className="flex border border-gray-100 rounded-xl p-0.5 bg-gray-50/60">
                         <button
                             onClick={() => { setActiveTab('direct'); }}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
-                                activeTab === 'direct'
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'direct'
                                     ? 'bg-white text-[#00b14f] shadow-sm'
                                     : 'text-gray-400 hover:text-gray-600'
-                            }`}
+                                }`}
                         >
                             Cá nhân
                         </button>
                         <button
                             onClick={() => { setActiveTab('group'); }}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
-                                activeTab === 'group'
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'group'
                                     ? 'bg-white text-[#00b14f] shadow-sm'
                                     : 'text-gray-400 hover:text-gray-600'
-                            }`}
+                                }`}
                         >
                             Nhóm
                         </button>
@@ -405,13 +403,12 @@ function CandidateMessagesPageContent() {
                                     <button
                                         key={conv.id}
                                         onClick={() => selectConv(conv.id, 'direct')}
-                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${
-                                            isActive
+                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${isActive
                                                 ? 'bg-green-50/60 border-l-[3.5px] border-l-[#00b14f]'
                                                 : hasUnread
-                                                ? 'bg-green-50/15 hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
-                                                : 'hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
-                                        }`}
+                                                    ? 'bg-green-50/15 hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
+                                                    : 'hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
+                                            }`}
                                     >
                                         <div className="relative flex-shrink-0">
                                             <Avatar name={conv.employer?.name} avatar={conv.employer?.avatar} size={10} />
@@ -419,9 +416,8 @@ function CandidateMessagesPageContent() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline gap-1">
-                                                <p className={`text-[13px] truncate ${
-                                                    hasUnread ? 'font-bold text-[#041b3c]' : 'font-semibold text-[#041b3c]'
-                                                }`}>
+                                                <p className={`text-[13px] truncate ${hasUnread ? 'font-bold text-[#041b3c]' : 'font-semibold text-[#041b3c]'
+                                                    }`}>
                                                     {conv.employer?.name ?? 'Nhà tuyển dụng'}
                                                 </p>
                                                 <span className="text-[9px] text-gray-400 flex-shrink-0 font-medium">
@@ -434,9 +430,8 @@ function CandidateMessagesPageContent() {
                                                 </p>
                                             )}
                                             {lastMsg && (
-                                                <p className={`text-xs truncate mt-1 ${
-                                                    hasUnread ? 'text-gray-900 font-bold' : 'text-gray-400'
-                                                }`}>
+                                                <p className={`text-xs truncate mt-1 ${hasUnread ? 'text-gray-900 font-bold' : 'text-gray-400'
+                                                    }`}>
                                                     {lastMsg.senderId === currentUserId ? 'Bạn: ' : ''}{lastMsg.content}
                                                 </p>
                                             )}
@@ -467,11 +462,10 @@ function CandidateMessagesPageContent() {
                                     <button
                                         key={g.id}
                                         onClick={() => selectConv(g.id, 'group')}
-                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${
-                                            isActive
+                                        className={`w-full text-left px-4 py-3.5 flex gap-3.5 items-start transition-all duration-150 cursor-pointer relative ${isActive
                                                 ? 'bg-green-50/60 border-l-[3.5px] border-l-[#00b14f]'
                                                 : 'hover:bg-gray-50 border-l-[3.5px] border-l-transparent'
-                                        }`}
+                                            }`}
                                     >
                                         <div className="relative flex-shrink-0">
                                             <GroupAvatar name={g.name} size={10} />
@@ -601,11 +595,10 @@ function CandidateMessagesPageContent() {
                                                             <span className="material-symbols-outlined text-[16px]">delete</span>
                                                         </button>
                                                     )}
-                                                    <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm whitespace-pre-line ${
-                                                        isMine
+                                                    <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm whitespace-pre-line ${isMine
                                                             ? 'bg-[#00b14f] text-white rounded-tr-sm shadow-green-600/5'
                                                             : 'bg-white text-gray-800 border border-gray-100 rounded-tl-sm'
-                                                    }`}>
+                                                        }`}>
                                                         {msg.content}
                                                     </div>
                                                 </div>
@@ -614,9 +607,8 @@ function CandidateMessagesPageContent() {
                                                         {new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                     {isMine && (
-                                                        <span className={`material-symbols-outlined text-[13px] ${
-                                                            msg.readAt ? 'text-[#00b14f] font-bold' : 'text-gray-350'
-                                                        }`}>
+                                                        <span className={`material-symbols-outlined text-[13px] ${msg.readAt ? 'text-[#00b14f] font-bold' : 'text-gray-350'
+                                                            }`}>
                                                             done_all
                                                         </span>
                                                     )}
@@ -633,13 +625,13 @@ function CandidateMessagesPageContent() {
                     {/* Floating input container */}
                     <div className="bg-white px-5 py-4 border-t border-gray-100 flex items-center gap-3.5 flex-shrink-0">
                         {/* Plus attachment icon placeholder */}
-                        <button 
+                        <button
                             className="w-9 h-9 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 flex items-center justify-center text-gray-400 hover:text-[#00b14f] transition-all cursor-pointer flex-shrink-0"
                             title="Đính kèm"
                         >
                             <span className="material-symbols-outlined text-[20px]">add_circle</span>
                         </button>
-                        
+
                         {/* Textarea input wrapper */}
                         <div className="flex-1 relative flex items-center bg-gray-50 border border-gray-150 rounded-2xl px-4 py-2 focus-within:bg-white focus-within:border-[#00b14f] focus-within:ring-2 focus-within:ring-green-50/30 transition-all duration-200">
                             <textarea

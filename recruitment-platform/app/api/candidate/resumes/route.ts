@@ -7,12 +7,13 @@ export async function GET() {
   if (auth.error) return auth.error;
 
   const resumes = await prisma.resume.findMany({
-    where: { userId: auth.payload.id },
+    where: { userId: auth.payload.id, isProfile: false },
     orderBy: { updatedAt: 'desc' },
     select: {
       id: true,
       title: true,
       isDefault: true,
+      isProfile: true,
       address: true,
       summary: true,
       education: true,

@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 const dataJob = cache(async (slug: string): Promise<JobDetail | null> => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const data = await fetch(`${baseUrl}/api/public/jobs/${slug}`);
+  const data = await fetch(`${baseUrl}/api/public/jobs/${slug}`, { cache: 'no-store' });
   if (!data.ok) {
     return null;
   }
@@ -112,7 +112,7 @@ export default async function JobViewPage({ params }: PageProps) {
     notFound();
   }
 
-  let userResumes: { id: string; title: string }[] = [];
+  let userResumes: { id: string; title: string, isDefault: boolean }[] = [];
   let initialSaved = false;
   let initialApplications: { id: string; jobId: string; status: string }[] = [];
   let user = null;
