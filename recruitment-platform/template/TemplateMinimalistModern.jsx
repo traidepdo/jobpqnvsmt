@@ -106,26 +106,28 @@ export default function TemplateMinimalistModern({
     return (
         <div className="min-h-screen bg-[#f3f4f6] py-8 px-4 print:p-0">
             {/* Control Panel (Hidden when printing) */}
-            <div className="max-w-3xl mx-auto mb-6 bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center print:hidden">
-                <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm">filter_vintage</span>
-                    Chế độ chỉnh sửa trực quan (Template Minimalist Modern)
-                </span>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleSave}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
-                    >
-                        Lưu thay đổi
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-900 transition"
-                    >
-                        In / Xuất PDF
-                    </button>
+            {!isControlled && (
+                <div className="max-w-3xl mx-auto mb-6 bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center print:hidden">
+                    <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">filter_vintage</span>
+                        Chế độ chỉnh sửa trực quan (Template Minimalist Modern)
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleSave}
+                            className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
+                        >
+                            Lưu thay đổi
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-900 transition"
+                        >
+                            In / Xuất PDF
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Resume Sheet */}
             <div className="max-w-3xl mx-auto bg-white shadow-xl border border-slate-100 min-h-[1100px] font-sans text-slate-800 p-16 print:shadow-none print:border-none print:my-0 print:p-10">

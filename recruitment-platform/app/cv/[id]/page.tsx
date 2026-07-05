@@ -57,7 +57,7 @@ export default async function CvPage({
     name: resume.user.name || '',
     email: resume.user.email || '',
     phone: resume.user.phone || '',
-    avatar: resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
+    avatar: resume.avatarUrl || resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
   };
 
   const resumeData = {

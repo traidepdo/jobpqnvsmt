@@ -88,7 +88,7 @@ export default function SuaCvPage() {
               name: cvName,
               email: cvEmail,
               phone: cvPhone,
-              avatar: resData.resume.user?.avatar || resData.resume.avatarUrl || 'https://i.pravatar.cc/150?img=12',
+              avatar: resData.resume.avatarUrl || resData.resume.user?.avatar || 'https://i.pravatar.cc/150?img=12',
             };
             setUserData(loadedUser);
 
@@ -269,8 +269,7 @@ export default function SuaCvPage() {
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden print:bg-white print:min-h-0 print:h-auto print:overflow-visible">
       {/* Interactive Editor - Hidden during Print */}
       <div className="flex-grow flex flex-col overflow-hidden print:hidden">
-        {/* Editor Header Toolbar */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm print:hidden">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-150 px-6 py-4 flex items-center justify-between shadow-[0_2px_15px_rgba(0,0,0,0.02)] print:hidden">
           <div className="flex items-center gap-4 shrink-0">
             <button
               onClick={() => {
@@ -278,13 +277,13 @@ export default function SuaCvPage() {
                   router.push('/candidate/resumes');
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition border-none cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition cursor-pointer"
             >
               ← Quay lại
             </button>
-            <div className="h-4 w-px bg-gray-250" />
-            <h1 className="text-sm font-bold text-gray-855">
-              Chỉnh sửa CV
+            <div className="h-4 w-px bg-gray-200" />
+            <h1 className="text-xs font-black uppercase tracking-wider text-gray-400">
+              Cập nhật hồ sơ
             </h1>
           </div>
 
@@ -294,18 +293,18 @@ export default function SuaCvPage() {
               type="text"
               value={cvTitle}
               onChange={(e) => setCvTitle(e.target.value)}
-              className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none placeholder-gray-400 bg-gray-50/50"
+              className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none placeholder-gray-450 bg-gray-50/50 transition-all"
               placeholder="Đặt tên cho CV này..."
               title="Tên CV / Hồ sơ"
             />
-            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+            <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
               <input
                 type="checkbox"
                 checked={isDefault}
                 onChange={(e) => setIsDefault(e.target.checked)}
-                className="rounded border-gray-300 text-[#00b14f] focus:ring-[#00b14f] h-3.5 w-3.5 cursor-pointer"
+                className="rounded border-gray-300 text-[#00b14f] focus:ring-[#00b14f] h-4 w-4 cursor-pointer transition-all"
               />
-              <span className="text-xs font-bold text-gray-650">Đặt mặc định</span>
+              <span className="text-xs font-bold text-gray-650">Đặt làm mặc định</span>
             </label>
           </div>
 
@@ -313,11 +312,11 @@ export default function SuaCvPage() {
           <div className="flex items-center gap-4">
             {templates.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-500">Mẫu CV:</span>
+                <span className="text-xs font-bold text-gray-500">Mẫu thiết kế:</span>
                 <select
                   value={slug}
                   onChange={(e) => handleTemplateChange(e.target.value)}
-                  className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#00b14f] cursor-pointer"
+                  className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#00b14f] cursor-pointer transition-all"
                 >
                   {templates.map(t => (
                     <option key={t.slug} value={t.slug}>
@@ -330,9 +329,10 @@ export default function SuaCvPage() {
 
             <button
               onClick={() => handleSave()}
-              className="flex items-center gap-1.5 px-4 py-1.8 bg-[#00b14f] text-white text-xs font-bold rounded-lg hover:bg-[#009640] transition shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#00b14f] hover:bg-[#009241] text-white text-xs font-bold rounded-xl transition shadow-[0_4px_12px_rgba(0,177,79,0.15)] hover:shadow-[0_6px_16px_rgba(0,177,79,0.25)] cursor-pointer"
             >
-              <FaSave size={12} /> Lưu CV
+              <FaSave size={12} />
+              <span>Lưu hồ sơ</span>
             </button>
           </div>
         </header>
@@ -340,115 +340,117 @@ export default function SuaCvPage() {
         {/* Editor Layout */}
         <div className="flex-grow flex overflow-hidden relative print:block print:overflow-visible">
           {saving && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-              <div className="bg-white p-6 rounded-xl flex items-center gap-3 shadow-xl">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-2xl flex items-center gap-3.5 shadow-2xl border border-gray-100">
                 <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
-                <span className="text-sm font-medium text-gray-700">Đang lưu CV...</span>
+                <span className="text-sm font-bold text-gray-800">Đang lưu trữ dữ liệu...</span>
               </div>
             </div>
           )}
 
           <>
             {/* Left Column: Editor Sidebar */}
-            <div className="w-[450px] shrink-0 border-r border-gray-200 bg-white flex flex-col h-full print:hidden">
-              {/* Tab Navigation */}
-              <div className="flex border-b border-gray-150 text-center text-xs font-bold text-gray-500 shrink-0">
+            <div className="w-[450px] shrink-0 border-r border-gray-150 bg-white flex flex-col h-full print:hidden">
+              {/* Tab Navigation (Modern Pill Design) */}
+              <div className="flex bg-gray-50 border border-gray-150/70 p-1 rounded-xl text-center text-[11px] font-bold text-gray-500 shrink-0 mx-4 mt-4">
                 <button
                   onClick={() => setActiveTab('info')}
-                  className={`flex-1 py-3 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
-                    activeTab === 'info' ? 'border-[#00b14f] text-[#00b14f]' : 'border-transparent hover:text-gray-800'
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'info' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
                   }`}
                 >
-                  <FaUser size={12} /> Thông tin cá nhân
+                  <FaUser size={11} /> Cá nhân
                 </button>
                 <button
                   onClick={() => setActiveTab('details')}
-                  className={`flex-1 py-3 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
-                    activeTab === 'details' ? 'border-[#00b14f] text-[#00b14f]' : 'border-transparent hover:text-gray-800'
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'details' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
                   }`}
                 >
-                  <FaBriefcase size={12} /> Chi tiết nội dung
+                  <FaBriefcase size={11} /> Nội dung
                 </button>
                 <button
                   onClick={() => setActiveTab('sections')}
-                  className={`flex-1 py-3 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
-                    activeTab === 'sections' ? 'border-[#00b14f] text-[#00b14f]' : 'border-transparent hover:text-gray-800'
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'sections' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
                   }`}
                 >
-                  <FaListUl size={12} /> Sắp xếp phần
+                  <FaListUl size={11} /> Sắp xếp
                 </button>
               </div>
 
               {/* Sidebar Tab Contents */}
               <div className="flex-grow overflow-y-auto p-5 space-y-6">
                 {activeTab === 'info' && (
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-gray-850">Thông tin liên hệ</h3>
-                    <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-250 p-2.5 rounded-lg font-medium leading-relaxed">
-                      💡 Ảnh đại diện, họ tên, email và số điện thoại được đồng bộ trực tiếp từ trang <strong>Thông tin cá nhân</strong> tài khoản của bạn để đảm bảo tính nhất quán.
-                    </p>
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-[13px] font-bold text-gray-900 mb-2">Thông tin liên hệ</h3>
+                      <p className="text-[11px] text-amber-700 bg-amber-50/50 border border-amber-250 p-3 rounded-xl font-medium leading-relaxed">
+                        💡 Ảnh đại diện, họ tên, email và số điện thoại được đồng bộ từ thông tin tài khoản của bạn để đảm bảo tính nhất quán. Bạn có thể thay đổi riêng ảnh đại diện trực tiếp trên phần xem trước CV ở cột bên phải.
+                      </p>
+                    </div>
                     
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                       <div className="relative group shrink-0">
                         <img
                           src={userData.avatar}
                           alt="Avatar"
-                          className="h-16 w-16 rounded-full border-2 border-gray-200 object-cover"
+                          className="h-16 w-16 rounded-2xl border-2 border-white shadow-md object-cover"
                         />
                       </div>
                       <div className="flex-grow">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Họ và Tên</label>
+                        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Họ và Tên</label>
                         <input
                           type="text"
                           value={userData.name}
                           disabled
-                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
+                          className="w-full text-xs font-bold border border-gray-200 bg-gray-100/60 text-gray-500 rounded-xl px-3 py-2.5 cursor-not-allowed"
                           placeholder="Họ và Tên"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Bằng cấp / Vị trí ứng tuyển</label>
+                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Bằng cấp / Vị trí ứng tuyển</label>
                       <input
                         type="text"
                         value={resumeData.degree}
                         onChange={(e) => setResumeData({ ...resumeData, degree: e.target.value })}
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none"
+                        className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none transition-all placeholder-gray-400"
                         placeholder="Cử nhân Công nghệ thông tin / Frontend Developer"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Email</label>
+                        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Email</label>
                         <input
                           type="email"
                           value={userData.email}
                           disabled
-                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
+                          className="w-full text-xs font-bold border border-gray-200 bg-gray-100/60 text-gray-500 rounded-xl px-3 py-2.5 cursor-not-allowed"
                           placeholder="example@gmail.com"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Số điện thoại</label>
+                        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Số điện thoại</label>
                         <input
                           type="text"
                           value={userData.phone}
                           disabled
-                          className="w-full text-sm border border-gray-200 bg-gray-50 text-gray-400 rounded-lg px-3 py-2 cursor-not-allowed"
+                          className="w-full text-xs font-bold border border-gray-200 bg-gray-100/60 text-gray-500 rounded-xl px-3 py-2.5 cursor-not-allowed"
                           placeholder="0912 345 678"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Địa chỉ</label>
+                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Địa chỉ</label>
                       <input
                         type="text"
                         value={resumeData.address}
                         onChange={(e) => setResumeData({ ...resumeData, address: e.target.value })}
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none"
+                        className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none transition-all placeholder-gray-400"
                         placeholder="Quận 1, TP. Hồ Chí Minh"
                       />
                     </div>
@@ -456,15 +458,15 @@ export default function SuaCvPage() {
                 )}
 
                 {activeTab === 'details' && (
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     {/* Summary */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Về tôi (Giới thiệu ngắn)</label>
+                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">Về tôi (Giới thiệu ngắn)</label>
                       <textarea
                         value={resumeData.summary}
                         onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })}
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none resize-y"
-                        rows={4}
+                        className="w-full text-xs font-medium text-gray-750 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none transition-all resize-y leading-relaxed"
+                        rows={5}
                         placeholder="Tóm tắt ngắn gọn thế mạnh, mục tiêu nghề nghiệp của bản thân..."
                       />
                     </div>
@@ -473,31 +475,31 @@ export default function SuaCvPage() {
 
                     {/* Education Section */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-bold text-gray-700">Học vấn</label>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500">Học vấn</label>
                         <button
                           type="button"
                           onClick={() => addArrayItem('education', { school: 'Trường học', degree: 'Cử nhân', field: 'Ngành học', startYear: '2020', endYear: '2024', GPA: '', description: '' })}
-                          className="text-xs text-[#00b14f] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                          className="text-[11px] text-[#00b14f] hover:text-[#009241] flex items-center gap-1.5 font-bold transition-colors cursor-pointer"
                         >
-                          <FaPlus size={10} /> Thêm trường
+                          <FaPlus size={10} /> Thêm trường học
                         </button>
                       </div>
                       <div className="space-y-3">
                         {resumeData.education.map((edu: any, index: number) => (
-                          <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative space-y-2">
+                          <div key={index} className="p-4 bg-gray-50/50 border border-gray-200 rounded-2xl relative space-y-3 shadow-xs">
                             <button
                               type="button"
                               onClick={() => removeArrayItem('education', index)}
-                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition cursor-pointer"
+                              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition cursor-pointer"
                             >
-                              <FaTrash size={12} />
+                              <FaTrash size={10} />
                             </button>
                             <input
                               type="text"
                               value={edu.school}
                               onChange={(e) => handleArrayChange('education', index, 'school', e.target.value)}
-                              className="w-[90%] text-xs font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
+                              className="w-[85%] text-xs font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
                               placeholder="Tên trường học"
                             />
                             <div className="grid grid-cols-2 gap-2">
@@ -505,14 +507,14 @@ export default function SuaCvPage() {
                                 type="text"
                                 value={edu.degree}
                                 onChange={(e) => handleArrayChange('education', index, 'degree', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Bằng cấp"
                               />
                               <input
                                 type="text"
                                 value={edu.field}
                                 onChange={(e) => handleArrayChange('education', index, 'field', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Ngành học"
                               />
                             </div>
@@ -521,21 +523,21 @@ export default function SuaCvPage() {
                                 type="text"
                                 value={edu.startYear}
                                 onChange={(e) => handleArrayChange('education', index, 'startYear', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Bắt đầu (Năm)"
                               />
                               <input
                                 type="text"
                                 value={edu.endYear || ''}
                                 onChange={(e) => handleArrayChange('education', index, 'endYear', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
-                                placeholder="Kết thúc (Năm)"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
+                                placeholder="Kết thúc"
                               />
                               <input
                                 type="text"
                                 value={edu.GPA || ''}
                                 onChange={(e) => handleArrayChange('education', index, 'GPA', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="GPA"
                               />
                             </div>
@@ -548,38 +550,38 @@ export default function SuaCvPage() {
 
                     {/* Experience Section */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-bold text-gray-700">Kinh nghiệm làm việc</label>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500">Kinh nghiệm làm việc</label>
                         <button
                           type="button"
                           onClick={() => addArrayItem('experience', { position: 'Chức danh', company: 'Công ty', startYear: '2023', endYear: '', description: '' })}
-                          className="text-xs text-[#00b14f] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                          className="text-[11px] text-[#00b14f] hover:text-[#009241] flex items-center gap-1.5 font-bold transition-colors cursor-pointer"
                         >
                           <FaPlus size={10} /> Thêm kinh nghiệm
                         </button>
                       </div>
                       <div className="space-y-3">
                         {resumeData.experience.map((exp: any, index: number) => (
-                          <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative space-y-2">
+                          <div key={index} className="p-4 bg-gray-50/50 border border-gray-200 rounded-2xl relative space-y-3 shadow-xs">
                             <button
                               type="button"
                               onClick={() => removeArrayItem('experience', index)}
-                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition cursor-pointer"
+                              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition cursor-pointer"
                             >
-                              <FaTrash size={12} />
+                              <FaTrash size={10} />
                             </button>
                             <input
                               type="text"
                               value={exp.position}
                               onChange={(e) => handleArrayChange('experience', index, 'position', e.target.value)}
-                              className="w-[90%] text-xs font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
+                              className="w-[85%] text-xs font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
                               placeholder="Vị trí / Chức vụ"
                             />
                             <input
                               type="text"
                               value={exp.company}
                               onChange={(e) => handleArrayChange('experience', index, 'company', e.target.value)}
-                              className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                              className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                               placeholder="Công ty"
                             />
                             <div className="grid grid-cols-2 gap-2">
@@ -587,21 +589,21 @@ export default function SuaCvPage() {
                                 type="text"
                                 value={exp.startYear}
                                 onChange={(e) => handleArrayChange('experience', index, 'startYear', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Bắt đầu (Tháng/Năm)"
                               />
                               <input
                                 type="text"
                                 value={exp.endYear || ''}
                                 onChange={(e) => handleArrayChange('experience', index, 'endYear', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Kết thúc"
                               />
                             </div>
                             <textarea
                               value={exp.description || ''}
                               onChange={(e) => handleArrayChange('experience', index, 'description', e.target.value)}
-                              className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none resize-y"
+                              className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none resize-y leading-relaxed"
                               placeholder="Mô tả công việc..."
                               rows={3}
                             />
@@ -614,31 +616,31 @@ export default function SuaCvPage() {
 
                     {/* Projects Section */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-bold text-gray-700">Dự án</label>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500">Dự án</label>
                         <button
                           type="button"
                           onClick={() => addArrayItem('projects', { name: 'Dự án mới', position: 'Vai trò', link: '', description: '' })}
-                          className="text-xs text-[#00b14f] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                          className="text-[11px] text-[#00b14f] hover:text-[#009241] flex items-center gap-1.5 font-bold transition-colors cursor-pointer"
                         >
                           <FaPlus size={10} /> Thêm dự án
                         </button>
                       </div>
                       <div className="space-y-3">
                         {resumeData.projects.map((proj: any, index: number) => (
-                          <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative space-y-2">
+                          <div key={index} className="p-4 bg-gray-50/50 border border-gray-200 rounded-2xl relative space-y-3 shadow-xs">
                             <button
                               type="button"
                               onClick={() => removeArrayItem('projects', index)}
-                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition cursor-pointer"
+                              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition cursor-pointer"
                             >
-                              <FaTrash size={12} />
+                              <FaTrash size={10} />
                             </button>
                             <input
                               type="text"
                               value={proj.name}
                               onChange={(e) => handleArrayChange('projects', index, 'name', e.target.value)}
-                              className="w-[90%] text-xs font-bold bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
+                              className="w-[85%] text-xs font-bold text-gray-800 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-[#00b14f] focus:outline-none pb-0.5"
                               placeholder="Tên dự án"
                             />
                             <div className="grid grid-cols-2 gap-2">
@@ -646,21 +648,21 @@ export default function SuaCvPage() {
                                 type="text"
                                 value={proj.position || ''}
                                 onChange={(e) => handleArrayChange('projects', index, 'position', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Vai trò"
                               />
                               <input
                                 type="text"
                                 value={proj.link || ''}
                                 onChange={(e) => handleArrayChange('projects', index, 'link', e.target.value)}
-                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                                className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none transition-colors"
                                 placeholder="Link dự án"
                               />
                             </div>
                             <textarea
                               value={proj.description || ''}
                               onChange={(e) => handleArrayChange('projects', index, 'description', e.target.value)}
-                              className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none resize-y"
+                              className="w-full text-xs font-medium border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 focus:border-[#00b14f] focus:outline-none resize-y leading-relaxed"
                               placeholder="Mô tả dự án..."
                               rows={3}
                             />
@@ -673,11 +675,11 @@ export default function SuaCvPage() {
 
                     {/* Languages & Skills */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Ngôn ngữ & kỹ năng</label>
+                      <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">Ngôn ngữ & kỹ năng</label>
                       <textarea
                         value={resumeData.languages}
                         onChange={(e) => setResumeData({ ...resumeData, languages: e.target.value })}
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00b14f] focus:outline-none resize-y"
+                        className="w-full text-xs font-medium text-gray-750 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none transition-all resize-y leading-relaxed"
                         rows={5}
                         placeholder="Ví dụ:&#13;Tiếng Anh (IELTS 7.0)&#13;JavaScript, React, Next.js"
                       />
@@ -695,9 +697,9 @@ export default function SuaCvPage() {
             </div>
 
             {/* Right Column: Live Interactive Sheet Editor */}
-            <div className="flex-grow bg-gray-100 overflow-y-auto flex items-start justify-center p-8 print:p-0 print:bg-white print:overflow-visible h-full">
-              <div className="transform origin-top scale-[0.9] lg:scale-100 transition-transform print:transform-none print:w-full print:h-auto">
-                <div className="sua-cv-preview-container w-[820px] min-h-[1160px] bg-white shadow-xl rounded-sm border border-gray-200 overflow-hidden print:w-full print:min-h-0 print:shadow-none print:border-none print:rounded-none">
+            <div className="flex-grow bg-slate-100 overflow-y-auto flex items-start justify-center p-8 print:p-0 print:bg-white print:overflow-visible h-full">
+              <div className="transform origin-top scale-[0.9] lg:scale-95 xl:scale-100 transition-transform print:transform-none print:w-full print:h-auto">
+                <div className="w-[820px] min-h-[1160px] bg-white shadow-[0_15px_60px_rgba(0,0,0,0.06)] rounded-lg overflow-hidden border border-gray-200/60 print:w-full print:min-h-0 print:shadow-none print:border-none print:rounded-none">
                   <TemplateComponent
                     isControlled={true}
                     controlledUserData={userData}

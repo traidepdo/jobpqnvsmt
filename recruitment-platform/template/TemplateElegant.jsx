@@ -106,26 +106,28 @@ export default function TemplateElegant({
     return (
         <div className="min-h-screen bg-stone-50 py-8 px-4 print:p-0">
             {/* Control Panel (Hidden when printing) */}
-            <div className="max-w-4xl mx-auto mb-6 bg-white p-4 rounded-lg shadow-sm border border-stone-200 flex justify-between items-center print:hidden">
-                <span className="text-sm font-semibold text-stone-600 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                    Chế độ chỉnh sửa trực quan (Template Elegant)
-                </span>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleSave}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
-                    >
-                        Lưu thay đổi
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="bg-stone-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-stone-700 transition"
-                    >
-                        In / Xuất PDF
-                    </button>
+            {!isControlled && (
+                <div className="max-w-4xl mx-auto mb-6 bg-white p-4 rounded-lg shadow-sm border border-stone-200 flex justify-between items-center print:hidden">
+                    <span className="text-sm font-semibold text-stone-600 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                        Chế độ chỉnh sửa trực quan (Template Elegant)
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleSave}
+                            className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
+                        >
+                            Lưu thay đổi
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="bg-stone-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-stone-700 transition"
+                        >
+                            In / Xuất PDF
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Resume Sheet */}
             <div className="max-w-4xl mx-auto bg-white shadow-xl border border-stone-200 min-h-[1100px] font-sans text-stone-850 p-12 print:shadow-none print:border-none print:my-0 print:p-8">

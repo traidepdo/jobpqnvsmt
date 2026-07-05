@@ -12,6 +12,7 @@ export default function ClientFollowCompany({
     initialItems: FollowedCompanyItem[];
 }) {
     const [items, setItems] = useState<FollowedCompanyItem[]>(initialItems);
+    const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
     const [unfollowingId, setUnfollowingId] = useState<string | null>(null);
 
     const handleUnfollowCompany = (companyId: string) => {
@@ -26,6 +27,12 @@ export default function ClientFollowCompany({
         }
         setUnfollowingId(null);
     };
+
+    const sortedItems = [...items].sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
     return (
         <div className="w-full space-y-6 animate-fadeIn pb-10">
@@ -55,9 +62,25 @@ export default function ClientFollowCompany({
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-12 translate-x-12" />
             </div>
 
-            <p className="text-sm text-slate-500">
-                Bạn đang theo dõi <span className="font-semibold text-slate-700">{items.length}</span> doanh nghiệp
-            </p>
+            {/* Filter and stats row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100/80">
+                <p className="text-sm text-slate-500">
+                    Bạn đang theo dõi <span className="font-semibold text-slate-700">{items.length}</span> doanh nghiệp
+                </p>
+                {items.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-500">Sắp xếp theo:</span>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+                            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                        >
+                            <option value="newest">Mới theo dõi gần đây</option>
+                            <option value="oldest">Theo dõi lâu nhất</option>
+                        </select>
+                    </div>
+                )}
+            </div>
 
             {items.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-100 p-12 text-center shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
@@ -68,57 +91,77 @@ export default function ClientFollowCompany({
                     <p className="text-xs text-slate-400 max-w-xs mx-auto mb-5">
                         Theo dõi công ty để nhận được thông báo tuyển dụng và tin tức mới nhất từ họ.
                     </p>
-                    <Link 
-                        href="/jobs" 
+                    <Link
+                        href="/jobs"
                         className="inline-flex items-center px-5 py-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold rounded-lg text-xs transition-all active:scale-95"
                     >
                         Xem danh sách việc làm
                     </Link>
                 </div>
             ) : (
-                <div className="space-y-3.5">
-                    {items.map(item => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sortedItems.map(item => (
                         <div
                             key={item.id}
-                            className="group bg-white rounded-xl border border-slate-100/80 p-4.5 flex flex-col sm:flex-row gap-4 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:border-slate-200/50 transition-all duration-300"
+                            className="group bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col shadow-[0_2px_12px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:border-slate-200/60 transition-all duration-300"
                         >
-                            {/* Logo */}
-                            <div className="w-14 h-14 rounded-lg border border-slate-100 bg-slate-50/50 flex items-center justify-center p-2 flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200">
-                                <img
-                                    src={item.company.logo || '/placeholder-company.png'}
-                                    alt={item.company.name}
-                                    className="w-full h-full object-contain rounded"
-                                    onError={e => {
-                                        (e.target as HTMLImageElement).src = '/placeholder-company.png';
-                                    }}
-                                />
+                            {/* Banner/Cover Image */}
+                            <div className="relative h-28 w-full overflow-hidden bg-slate-100 flex-shrink-0">
+                                {item.company.coverImage ? (
+                                    <img
+                                        src={item.company.coverImage}
+                                        alt={`${item.company.name} cover`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-6 sm:p-8 border border-emerald-500/10" />
+                                )}
+                                <div className="absolute inset-0 bg-slate-900/10" />
                             </div>
 
-                            {/* Details */}
-                            <div className="flex-1 min-w-0">
-                                <Link
-                                    href={`/companies/${item.company.id}`}
-                                    className="font-bold text-slate-800 hover:text-emerald-600 text-base block transition-colors"
-                                >
-                                    {item.company.name}
-                                </Link>
-                                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                                    {item.company.description || 'Chưa có thông tin giới thiệu về công ty này.'}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400">
-                                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                                    <span>Đã theo dõi từ {formatDateVi(item.createdAt)}</span>
+                            {/* Card Body */}
+                            <div className="p-5 pt-0 flex-1 flex flex-col relative">
+                                {/* Logo overlapping banner */}
+                                <div className="relative -mt-8 mb-3 w-16 h-16 rounded-xl border-2 border-white bg-white flex items-center justify-center p-1.5 shadow-md group-hover:scale-105 transition-transform duration-300 flex-shrink-0 z-10">
+                                    <img
+                                        src={item.company.logo || '/placeholder-company.png'}
+                                        alt={item.company.name}
+                                        className="w-full h-full object-contain rounded-lg"
+                                        onError={e => {
+                                            (e.target as HTMLImageElement).src = '/placeholder-company.png';
+                                        }}
+                                    />
                                 </div>
-                            </div>
 
-                            {/* Action Button */}
-                            <div className="flex-shrink-0 flex items-center border-t sm:border-t-0 border-slate-50 pt-3 sm:pt-0 justify-end">
-                                <button
-                                    onClick={() => handleUnfollowCompany(item.company.id)}
-                                    className="px-3.5 py-2 text-xs font-bold text-slate-500 border border-slate-200 rounded-lg hover:border-rose-200 hover:text-rose-600 hover:bg-rose-50/30 transition-all duration-200 cursor-pointer active:scale-95"
-                                >
-                                    Bỏ theo dõi
-                                </button>
+                                {/* Content info */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                    <div>
+                                        <Link
+                                            href={`/companies/${item.company.slug}`}
+                                            className="font-bold text-slate-800 hover:text-[#00b14f] text-base block transition-colors line-clamp-1 mb-1"
+                                        >
+                                            {item.company.name}
+                                        </Link>
+                                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed mb-4">
+                                            {item.company.description || 'Chưa có thông tin giới thiệu về công ty này.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Date & Button */}
+                                    <div className="border-t border-slate-50 pt-4 flex items-center justify-between gap-2 mt-auto">
+                                        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                                            <span className="material-symbols-outlined text-[13px]">schedule</span>
+                                            <span>Theo dõi {formatDateVi(item.createdAt)}</span>
+                                        </div>
+
+                                        <button
+                                            onClick={() => handleUnfollowCompany(item.company.id)}
+                                            className="px-3 py-1.5 text-xs font-bold text-slate-500 border border-slate-200 rounded-lg hover:border-rose-200 hover:text-rose-600 hover:bg-rose-50/40 transition-all duration-200 cursor-pointer active:scale-95"
+                                        >
+                                            Bỏ theo dõi
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ))}

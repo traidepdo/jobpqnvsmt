@@ -3,6 +3,7 @@ import { JobStatus } from '@prisma/client';
 import { companyCardSelect } from '@/lib/prismaSafe';
 import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
 import { verifyToken } from '@/lib/auth';
+import { cacheLife } from 'next/cache';
 
 interface JobSearchParams {
   query?: string;
@@ -65,6 +66,8 @@ function getSalaryMaxCondition(operator: 'lte' | 'gte', value: number) {
 }
 
 export async function getFilteredJobs(params: JobSearchParams, token?: string) {
+  'use cache';
+  cacheLife('hours');
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const limit = 12;
   const skip = (page - 1) * limit;
@@ -189,8 +192,13 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     if (comp) activeCompanyName = comp.name;
   }
 
+  const now = new Date();
   const where = {
     status: JobStatus.ACTIVE,
+    OR: [
+      { deadline: null },
+      { deadline: { gte: now } }
+    ],
     ...(category && { category: { slug: category } }),
     ...(companySlug && { company: { slug: companySlug } }),
     ...(type && { type: type as never }),

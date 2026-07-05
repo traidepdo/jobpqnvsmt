@@ -33,6 +33,8 @@ export async function getFollowCompany(id: string): Promise<FollowedCompanyItem[
                         name: true,
                         logo: true,
                         description: true,
+                        coverImage: true,
+                        slug: true,
                     },
                 },
             },

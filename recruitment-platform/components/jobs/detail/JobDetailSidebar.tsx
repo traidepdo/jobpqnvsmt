@@ -27,28 +27,43 @@ export default function JobDetailSidebar({
         <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/5 -translate-y-8 translate-x-8" />
         <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-white/5 translate-y-6 -translate-x-6" />
         <div className="relative z-10">
-          <p className="text-white font-bold text-sm mb-1">Đừng bỏ lỡ cơ hội này!</p>
-          <p className="text-white/60 text-xs mb-4 leading-relaxed">Phản hồi phỏng vấn trong 2–3 ngày làm việc.</p>
-          {!isApplied ? (
-            <button
-              onClick={onApplyClick}
-              className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
-            >
-              Nộp hồ sơ ngay
-            </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <button className="w-full bg-[#00b14f]/30 text-white/70 font-semibold text-sm py-3 rounded-xl cursor-not-allowed">
-                Đã nộp hồ sơ
+          {job.deadline && new Date(job.deadline) < new Date() ? (
+            <div>
+              <p className="text-white font-bold text-sm mb-1">Tin tuyển dụng đã hết hạn</p>
+              <p className="text-white/60 text-xs mb-4 leading-relaxed">Không còn nhận hồ sơ ứng tuyển cho vị trí này.</p>
+              <button
+                disabled
+                className="w-full bg-slate-800 text-white/50 font-bold text-sm py-3 rounded-xl cursor-not-allowed"
+              >
+                Đã hết hạn nộp
               </button>
-              {isPendingOrReviewing && (
+            </div>
+          ) : (
+            <div>
+              <p className="text-white font-bold text-sm mb-1">Đừng bỏ lỡ cơ hội này!</p>
+              <p className="text-white/60 text-xs mb-4 leading-relaxed">Phản hồi phỏng vấn trong 2–3 ngày làm việc.</p>
+              {!isApplied ? (
                 <button
-                  onClick={onCancelClick}
-                  disabled={applyLoading}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold text-sm py-3 rounded-xl cursor-pointer disabled:opacity-50"
+                  onClick={onApplyClick}
+                  className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"
                 >
-                  {applyLoading ? 'Đang hủy...' : 'Hủy ứng tuyển'}
+                  Nộp hồ sơ ngay
                 </button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <button className="w-full bg-[#00b14f]/30 text-white/70 font-semibold text-sm py-3 rounded-xl cursor-not-allowed">
+                    Đã nộp hồ sơ
+                  </button>
+                  {isPendingOrReviewing && (
+                    <button
+                      onClick={onCancelClick}
+                      disabled={applyLoading}
+                      className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold text-sm py-3 rounded-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {applyLoading ? 'Đang hủy...' : 'Hủy ứng tuyển'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

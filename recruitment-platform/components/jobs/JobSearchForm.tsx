@@ -34,12 +34,12 @@ interface Ward {
   name: string;
 }
 
-export default function JobSearchForm({ 
-  initialQuery, 
+export default function JobSearchForm({
+  initialQuery,
   initialLocation,
   wards = []
-}: { 
-  initialQuery: string; 
+}: {
+  initialQuery: string;
   initialLocation: string;
   wards?: Ward[];
 }) {
@@ -132,7 +132,7 @@ export default function JobSearchForm({
         const results = data.suggestions || [];
         clientCacheRef.current[trimmed] = results;
         setSuggestions(results);
-        
+
         // Double check focus/open state before showing dropdown
         if (document.activeElement === inputRef.current) {
           setIsOpen(true);
@@ -155,7 +155,7 @@ export default function JobSearchForm({
   }, [queryInput, isOpen]);
 
   return (
-    <div className="bg-white border-b border-gray-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] sticky top-[60px] z-40">
+    <div className="bg-green-700 border-b border-gray-100 shadow-[0_1px_0_rgba(0,0,0,0.04)] sticky top-[60px] z-40 my-2">
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-4">
         <form onSubmit={handleSearchSubmit}>
           <div className="flex gap-2.5">
@@ -241,7 +241,7 @@ export default function JobSearchForm({
                                 </span>
                               )}
                             </div>
-                            
+
                             {isCompany && (
                               <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium truncate">
                                 {item.industry && <span>{item.industry}</span>}
@@ -263,7 +263,7 @@ export default function JobSearchForm({
                 </ul>
               )}
             </div>
-            
+
             <div className="w-[220px] relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -285,7 +285,7 @@ export default function JobSearchForm({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
-            
+
             <button
               type="submit"
               className="h-11 px-7 bg-[#00b14f] hover:bg-[#009940] active:scale-95 text-white font-bold text-[14px] rounded-xl transition-all cursor-pointer shadow-sm shadow-green-200 whitespace-nowrap"

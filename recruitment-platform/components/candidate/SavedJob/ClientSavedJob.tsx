@@ -157,6 +157,12 @@ export default function ClientSavedJob({
 
                                     {/* Badges/Tags */}
                                     <div className="flex flex-wrap gap-2 text-[11px] mt-2.5">
+                                        {item.job.deadline && new Date(item.job.deadline) < new Date() && (
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-600 font-bold border border-red-100">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                                Đã hết hạn
+                                            </span>
+                                        )}
                                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50/40 text-[#00b14f] font-bold">
                                             <span className="material-symbols-outlined text-[14px]">payments</span>
                                             {formatSalary(item.job.salaryMin, item.job.salaryMax)}
@@ -178,12 +184,21 @@ export default function ClientSavedJob({
 
                                 {/* Action Buttons */}
                                 <div className="flex md:flex-col gap-2 w-full md:w-auto justify-end md:justify-center border-t md:border-0 border-slate-50 pt-3 md:pt-0 flex-shrink-0">
-                                    <Link
-                                        href={`/jobs/${item.job.slug}`}
-                                        className="flex-1 md:flex-none px-4 py-2 text-xs font-bold text-white bg-[#00b14f] hover:bg-[#009940] rounded-lg text-center shadow-md shadow-[#00b14f]/5 hover:shadow-[#00b14f]/15 active:scale-95 transition-all duration-200"
-                                    >
-                                        Xem & ứng tuyển
-                                    </Link>
+                                    {item.job.deadline && new Date(item.job.deadline) < new Date() ? (
+                                        <button
+                                            disabled
+                                            className="flex-1 md:flex-none px-4 py-2 text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-lg text-center cursor-not-allowed"
+                                        >
+                                            Hết hạn nộp
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={`/jobs/${item.job.slug}`}
+                                            className="flex-1 md:flex-none px-4 py-2 text-xs font-bold text-white bg-[#00b14f] hover:bg-[#009940] rounded-lg text-center shadow-md shadow-[#00b14f]/5 hover:shadow-[#00b14f]/15 active:scale-95 transition-all duration-200"
+                                        >
+                                            Xem & ứng tuyển
+                                        </Link>
+                                    )}
                                     <button
                                         onClick={() => handleUnsave(item.job.id)}
                                         className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded-lg hover:bg-rose-50/30 active:scale-95 transition-all duration-200 cursor-pointer flex items-center justify-center gap-0.5"

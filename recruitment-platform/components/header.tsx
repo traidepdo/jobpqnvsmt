@@ -131,7 +131,7 @@ function NavItem({ label, href, dropdown }: {
             <li>
                 <Link
                     href={href}
-                    className={`flex items-center gap-1 text-sm font-semibold py-5 border-b-2 transition-all duration-200
+                    className={`flex items-center gap-1 text-sm font-semibold py-3 border-b-2 transition-all duration-200
                         ${isActive ? "text-[#00b14f] border-[#00b14f]" : "text-[#434654] border-transparent hover:text-[#00b14f] hover:border-[#00b14f]"}`}
                 >
                     {label}
@@ -146,7 +146,7 @@ function NavItem({ label, href, dropdown }: {
                 onMouseEnter={openMenu}
                 onMouseLeave={closeMenu}
                 onClick={() => setOpen(p => !p)}
-                className={`flex items-center gap-0.5 text-sm font-semibold py-5 border-b-2 transition-all duration-200 cursor-pointer
+                className={`flex items-center gap-0.5 text-sm font-semibold py-3 border-b-2 transition-all duration-200 cursor-pointer
                     ${open || isActive ? "text-[#00b14f] border-[#00b14f]" : "text-[#434654] border-transparent hover:text-[#00b14f] hover:border-[#00b14f]"}`}
             >
                 {label}

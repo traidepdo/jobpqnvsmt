@@ -106,26 +106,28 @@ export default function TemplateFuturistic({
     return (
         <div className="min-h-screen bg-white py-8 px-4 print:p-0">
             {/* Control Panel (Hidden when printing) */}
-            <div className="max-w-4xl mx-auto mb-6 bg-slate-900/80 p-4 rounded-xl border border-cyan-500/20 backdrop-blur-md flex justify-between items-center print:hidden">
-                <span className="text-sm font-semibold text-cyan-400 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm animate-pulse">rocket_launch</span>
-                    Chế độ chỉnh sửa trực quan (Template Futuristic)
-                </span>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleSave}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
-                    >
-                        Lưu thay đổi
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="bg-cyan-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-cyan-700 transition"
-                    >
-                        In / Xuất PDF
-                    </button>
+            {!isControlled && (
+                <div className="max-w-4xl mx-auto mb-6 bg-slate-900/80 p-4 rounded-xl border border-cyan-500/20 backdrop-blur-md flex justify-between items-center print:hidden">
+                    <span className="text-sm font-semibold text-cyan-400 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm animate-pulse">rocket_launch</span>
+                        Chế độ chỉnh sửa trực quan (Template Futuristic)
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleSave}
+                            className="bg-emerald-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-emerald-700 transition"
+                        >
+                            Lưu thay đổi
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="bg-cyan-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-cyan-700 transition"
+                        >
+                            In / Xuất PDF
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Resume Sheet */}
             <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl overflow-hidden min-h-[1100px] font-sans p-10 print:border-none print:bg-slate-900 print:my-0 print:p-10 print:rounded-none">

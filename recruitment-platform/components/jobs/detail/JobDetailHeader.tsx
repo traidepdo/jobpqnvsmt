@@ -94,6 +94,12 @@ export default function JobDetailHeader({
             <div className="flex-1 min-w-0">
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 mb-2">
+                {job.deadline && new Date(job.deadline) < new Date() && (
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-100 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    Đã hết hạn
+                  </span>
+                )}
                 <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
                   {job.category.name}
                 </span>
@@ -157,7 +163,14 @@ export default function JobDetailHeader({
 
             {/* Actions */}
             <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-              {!isApplied ? (
+              {job.deadline && new Date(job.deadline) < new Date() ? (
+                <button
+                  disabled
+                  className="apply-btn bg-gray-200 text-gray-400 font-bold text-sm px-5 py-2.5 rounded-xl cursor-not-allowed hidden md:block"
+                >
+                  Đã hết hạn
+                </button>
+              ) : !isApplied ? (
                 <button
                   onClick={onApplyClick}
                   className="apply-btn bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm px-5 py-2.5 rounded-xl cursor-pointer hidden md:block"
@@ -196,7 +209,14 @@ export default function JobDetailHeader({
 
           {/* Mobile apply button */}
           <div className="mt-4 md:hidden">
-            {!isApplied ? (
+            {job.deadline && new Date(job.deadline) < new Date() ? (
+              <button
+                disabled
+                className="apply-btn w-full bg-gray-200 text-gray-400 font-bold text-sm py-3 rounded-xl cursor-not-allowed"
+              >
+                Đã hết hạn
+              </button>
+            ) : !isApplied ? (
               <button
                 onClick={onApplyClick}
                 className="apply-btn w-full bg-[#00b14f] hover:bg-[#009940] text-white font-semibold text-sm py-3 rounded-xl cursor-pointer"

@@ -6,5 +6,7 @@ export interface FollowedCompanyItem {
         name: string;
         logo: string | null;
         description: string | null;
+        coverImage?: string | null;
+        slug: string;
     };
 }

@@ -146,8 +146,13 @@ export async function GET(req: Request) {
       default:
         orderBy = { createdAt: 'desc' };
     }
+    const now = new Date();
     const where = {
       status: JobStatus.ACTIVE,
+      OR: [
+        { deadline: null },
+        { deadline: { gte: now } }
+      ],
       ...(category && { category: { slug: category } }),
       ...(type && { type: type as never }),
       ...(experience && { experience: experience as never }),
