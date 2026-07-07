@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationBell from './NotificationBell';
+import PusherBeamsInitializer from '@/components/PusherBeamsInitializer';
 
 interface CompanyInfo {
   name: string;
@@ -31,6 +32,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState('');
   const [company, setCompany] = useState<CompanyInfo | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -103,6 +105,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
           return;
         }
         setUserName(d.user.name);
+        setUserId(d.user.id);
         if (d.user.company) setCompany(d.user.company);
         setLoading(false);
       })
@@ -147,6 +150,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f0f4ff] relative">
+      {userId && <PusherBeamsInitializer userId={userId} />}
       {/* Mobile Drawer Backdrop */}
       {sidebarOpen && (
         <div

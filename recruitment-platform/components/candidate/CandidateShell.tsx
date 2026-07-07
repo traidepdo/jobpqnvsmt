@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationBell from "@/components/candidate/NotificationBell";
+import PusherBeamsInitializer from "@/components/PusherBeamsInitializer";
 
 interface User {
   id: string;
@@ -160,6 +161,7 @@ export default function CandidateShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f7f6]">
+      {user?.id && <PusherBeamsInitializer userId={user.id} />}
       {/* Backdrop for mobile */}
       {mobileOpen && (
         <div

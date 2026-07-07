@@ -288,7 +288,7 @@ export default function JobSearchForm({
 
             <button
               type="submit"
-              className="h-11 px-7 bg-[#00b14f] hover:bg-[#009940] active:scale-95 text-white font-bold text-[14px] rounded-xl transition-all cursor-pointer shadow-sm shadow-green-200 whitespace-nowrap"
+              className="h-11 px-7 bg-[#00b14f] hover:bg-[#009840] active:scale-95 text-white font-bold text-[14px] rounded-xl transition-all cursor-pointer shadow-sm shadow-[#00b14f]/20 whitespace-nowrap"
             >
               Tìm kiếm
             </button>

@@ -6,7 +6,10 @@ import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatSalary } from '@/lib/jobLabels';
 import FollowButton from '@/components/companies/FollowButton';
+import ShareButton from '@/components/companies/ShareButton';
 import CompanyJobsList from '@/components/companies/CompanyJobsList';
+import CompanyTabs from '@/components/companies/CompanyTabs';
+import CompanyImages from '@/components/companies/CompanyImages';
 
 interface RouteParams {
     params: Promise<{ slug: string }>;
@@ -152,6 +155,9 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
         }))
     } : null;
 
+    const hasImages = !!(company.images && Array.isArray(company.images) && (company.images as string[]).length > 0);
+    const hasJobs = !!(company.jobs && company.jobs.length > 0);
+
     return (
         <main className="bg-slate-50/50 min-h-screen py-8 px-4">
             {/* JSON-LD for Search Engines */}
@@ -177,18 +183,19 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                 <div
                     className="h-48 md:h-72 bg-gradient-to-r from-[#041b3c] to-[#0a3366] relative"
                     style={company.coverImage ? {
-                        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url(${company.coverImage})`,
+                        backgroundImage: `url(${company.coverImage})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
                     } : undefined}
                 >
-                    <div className="absolute inset-0 bg-black/10" />
+                    {/* Gradient Overlay bottom to ensure text and logo contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 </div>
 
                 {/* 2. LOGO, CÁC THÔNG TIN CHÍNH VÀ NÚT TƯƠNG TÁC */}
                 <div className="px-8 pt-2 pb-6 relative z-10">
-                    <div className="flex flex-col md:flex-row gap-5 items-start md:items-end -mt-16 pb-8 border-b border-slate-100">
-                        <div className="w-32 h-32 bg-white rounded-3xl p-2 shadow-lg border border-slate-100 flex-shrink-0">
+                    <div className="flex flex-col md:flex-row gap-5 items-start md:items-end -mt-16 md:-mt-20 pb-8 border-b border-slate-100">
+                        <div className="w-28 h-28 md:w-36 md:h-36 bg-white rounded-3xl p-2 shadow-lg border border-slate-100 flex-shrink-0 flex items-center justify-center">
                             <img
                                 src={company.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150'}
                                 alt={company.name}
@@ -212,60 +219,51 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
                             </div>
                         </div>
 
-                        {/* NÚT THEO DÕI */}
-                        <div className="flex-shrink-0 w-full md:w-auto md:mb-2">
-                            <FollowButton
-                                companyId={company.id}
-                                initialFollowed={initialFollowed}
-                                isLoggedIn={isLoggedIn}
-                            />
+                        {/* NHÓM CTA ACTIONS */}
+                        <div className="flex-shrink-0 w-full md:w-auto flex items-center gap-2 md:mb-2">
+                            <div className="flex-1 md:flex-none">
+                                <FollowButton
+                                    companyId={company.id}
+                                    initialFollowed={initialFollowed}
+                                    isLoggedIn={isLoggedIn}
+                                />
+                            </div>
+                            <ShareButton />
                         </div>
                     </div>
+
+                    {/* INTERACTIVE STICKY TABS */}
+                    <CompanyTabs hasImages={hasImages} hasJobs={hasJobs} />
 
                     {/* 3. CHI TIẾT NỘI DUNG CHIA 2 CỘT */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 items-start">
 
                         {/* CỘT TRÁI (2/3): GIỚI THIỆU & VIỆC LÀM & ẢNH */}
-                        <div className="lg:col-span-2 space-y-8">
-                            <section aria-labelledby="company-intro-heading">
-                                <h2 id="company-intro-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
+                        <div className="lg:col-span-2 space-y-12">
+                            <section id="intro" className="scroll-mt-36" aria-labelledby="company-intro-heading">
+                                <h2 id="company-intro-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-6">
                                     Giới thiệu công ty
                                 </h2>
-                                <p className="text-sm text-slate-655 leading-relaxed">
+                                <p className="text-sm text-slate-655 leading-relaxed whitespace-pre-line">
                                     {company.description || "Chưa có bài viết mô tả chi tiết cho công ty này."}
                                 </p>
                             </section>
 
                             {/* HÌNH ẢNH HOẠT ĐỘNG CỦA CÔNG TY */}
-                            {company.images && Array.isArray(company.images) && (company.images as string[]).length > 0 && (
-                                <section className="pt-8 border-t border-slate-100 animate-fadeIn" aria-labelledby="company-photos-heading">
-                                    <h2 id="company-photos-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
-                                        Hình ảnh hoạt động
-                                    </h2>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                        {(company.images as string[]).map((img, idx) => (
-                                            <div key={idx} className="aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 group relative shadow-sm">
-                                                <img
-                                                    src={img}
-                                                    alt={`${company.name} photo ${idx + 1}`}
-                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
+                            {hasImages && (
+                                <CompanyImages images={company.images as string[]} companyName={company.name} />
                             )}
 
-                            <section className="pt-8 border-t border-slate-100 animate-fadeIn" aria-labelledby="company-jobs-heading">
-                                <h2 id="company-jobs-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-4">
+                            <section id="jobs" className="pt-10 border-t border-slate-100 animate-fadeIn scroll-mt-36" aria-labelledby="company-jobs-heading">
+                                <h2 id="company-jobs-heading" className="text-lg font-bold text-slate-850 border-l-4 border-[#00b14f] pl-3 mb-6">
                                     Tuyển dụng ({company.jobs?.length || 0})
                                 </h2>
                                 <CompanyJobsList jobs={company.jobs} />
                             </section>
                         </div>
 
-                        {/* CỘT PHẢI (1/3): THÔNG TIN BỔ TRỢ */}
-                        <aside className="lg:col-span-1 lg:border-l lg:border-slate-100 lg:pl-8 space-y-6 self-stretch">
+                        {/* CỘT PHẢI (1/3): THÔNG TIN BỔ TRỢ - STICKY */}
+                        <aside className="lg:col-span-1 lg:border-l lg:border-slate-100 lg:pl-8 space-y-6 lg:sticky lg:top-28 h-fit">
                             <section aria-labelledby="company-contact-heading">
                                 <h2 id="company-contact-heading" className="text-base font-bold text-slate-850 border-b border-slate-100 pb-3 mb-4">
                                     Thông tin liên hệ

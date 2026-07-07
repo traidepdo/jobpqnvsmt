@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import { sendPushNotification } from "@/lib/pusher-beams";
 
 async function getUser() {
     const cookieStore = await cookies();
@@ -62,6 +63,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             }
         })
     ]);
+
+    // Send realtime push notification to candidate
+    sendPushNotification(
+        conv.candidateId,
+        `Tin nhắn mới từ ${user.name || 'Nhà tuyển dụng'}`,
+        content.trim(),
+        `/candidate/messages`
+    );
 
     return NextResponse.json({ message });
 }
