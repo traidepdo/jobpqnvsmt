@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       if (actualSalary > 100000) {
         actualSalary = actualSalary / 1000000;
       }
+      // tính % lương cao hơn hay thấp hơn
       percentageDiff = Math.round(((actualSalary - predictedSalary) / predictedSalary) * 100);
 
       if (actualSalary >= 1.15 * predictedSalary) {

@@ -1,32 +1,5 @@
 import { prisma } from './prisma';
 
-// Encode experience ordinal mapping
-export function encodeExperience(exp: string | null | undefined): number {
-  switch (exp) {
-    case 'NO_EXPERIENCE': return 0;
-    case 'UNDER_1_YEAR': return 1;
-    case 'ONE_TO_THREE_YEARS': return 2;
-    case 'THREE_TO_FIVE_YEARS': return 4;
-    case 'OVER_FIVE_YEARS': return 6;
-    default: return 0;
-  }
-}
-
-// Encode level ordinal mapping
-export function encodeLevel(lvl: string | null | undefined): number {
-  switch (lvl) {
-    case 'INTERN': return 0;
-    case 'FRESHER': return 1;
-    case 'JUNIOR': return 2;
-    case 'MID': return 3.5;
-    case 'SENIOR': return 5.5;
-    case 'LEAD': return 7.5;
-    case 'MANAGER': return 9.5;
-    case 'DIRECTOR': return 12;
-    default: return 1.5;
-  }
-}
-
 // Solve Ridge Regression: (X_design^T * X_design + lambda * I) * w = X_design^T * y
 // Gaussian elimination with pivoting is used to solve the linear system.
 function solveRidgeRegression(X: number[][], y: number[], lambda = 0.5): { weights: number[], intercept: number } {
@@ -135,8 +108,19 @@ export async function trainSalaryModel() {
   // Seed default weights if there are too few jobs
   if (jobs.length < 5) {
     const defaultWeights = {
-      experience: 1.5,
-      level: 2.0,
+      experience_NO_EXPERIENCE: 0.0,
+      experience_UNDER_1_YEAR: 1.5,
+      experience_ONE_TO_THREE_YEARS: 3.0,
+      experience_THREE_TO_FIVE_YEARS: 6.0,
+      experience_OVER_FIVE_YEARS: 9.0,
+      level_INTERN: 0.0,
+      level_FRESHER: 1.5,
+      level_JUNIOR: 3.0,
+      level_MID: 5.0,
+      level_SENIOR: 8.0,
+      level_LEAD: 11.0,
+      level_MANAGER: 14.0,
+      level_DIRECTOR: 18.0,
       type_FULL_TIME: 2.0,
       type_PART_TIME: -3.0,
       type_INTERNSHIP: -5.0,
@@ -152,13 +136,15 @@ export async function trainSalaryModel() {
     return;
   }
 
+  const uniqueExperiences = Array.from(new Set(jobs.map(j => j.experience).filter(Boolean)));
+  const uniqueLevels = Array.from(new Set(jobs.map(j => j.level).filter(Boolean)));
   const uniqueTypes = Array.from(new Set(jobs.map(j => j.type).filter(Boolean)));
   const uniqueCategories = Array.from(new Set(jobs.map(j => j.categoryId).filter(Boolean)));
   const uniqueWards = Array.from(new Set(jobs.map(j => j.wardId).filter(Boolean)));
 
   const featureNames: string[] = [
-    'experience',
-    'level',
+    ...uniqueExperiences.map(e => `experience_${e}`),
+    ...uniqueLevels.map(l => `level_${l}`),
     ...uniqueTypes.map(t => `type_${t}`),
     ...uniqueCategories.map(c => `category_${c}`),
     ...uniqueWards.map(w => `ward_${w}`),
@@ -178,8 +164,11 @@ export async function trainSalaryModel() {
     }
     const row = Array(featureNames.length).fill(0);
 
-    row[0] = encodeExperience(job.experience);
-    row[1] = encodeLevel(job.level);
+    const expIdx = featureNames.indexOf(`experience_${job.experience}`);
+    if (expIdx !== -1) row[expIdx] = 1;
+
+    const lvlIdx = featureNames.indexOf(`level_${job.level}`);
+    if (lvlIdx !== -1) row[lvlIdx] = 1;
 
     const typeIdx = featureNames.indexOf(`type_${job.type}`);
     if (typeIdx !== -1) row[typeIdx] = 1;
@@ -229,7 +218,21 @@ export async function getLatestModel(): Promise<{ weights: Record<string, number
 
   if (!model) {
     return {
-      weights: { experience: 1.5, level: 2.0 },
+      weights: {
+        experience_NO_EXPERIENCE: 0.0,
+        experience_UNDER_1_YEAR: 1.5,
+        experience_ONE_TO_THREE_YEARS: 3.0,
+        experience_THREE_TO_FIVE_YEARS: 6.0,
+        experience_OVER_FIVE_YEARS: 9.0,
+        level_INTERN: 0.0,
+        level_FRESHER: 1.5,
+        level_JUNIOR: 3.0,
+        level_MID: 5.0,
+        level_SENIOR: 8.0,
+        level_LEAD: 11.0,
+        level_MANAGER: 14.0,
+        level_DIRECTOR: 18.0,
+      },
       intercept: 10.0
     };
   }
@@ -252,11 +255,13 @@ export function predictSalary(
 ): number {
   let prediction = model.intercept;
 
-  const expVal = encodeExperience(features.experience);
-  prediction += (model.weights['experience'] ?? 0) * expVal;
+  if (features.experience) {
+    prediction += model.weights[`experience_${features.experience}`] ?? 0;
+  }
 
-  const lvlVal = encodeLevel(features.level);
-  prediction += (model.weights['level'] ?? 0) * lvlVal;
+  if (features.level) {
+    prediction += model.weights[`level_${features.level}`] ?? 0;
+  }
 
   if (features.type) {
     prediction += model.weights[`type_${features.type}`] ?? 0;
