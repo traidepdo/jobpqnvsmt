@@ -15,6 +15,7 @@
     "@prisma/client": "^7.8.0",
     "@pusher/push-notifications-server": "^1.2.7",
     "@pusher/push-notifications-web": "^1.1.0",
+    "@tensorflow/tfjs": "^4.22.0",
     "@tiptap/extension-image": "^3.24.0",
     "@tiptap/extension-link": "^3.24.0",
     "@tiptap/extension-placeholder": "^3.24.0",
@@ -40,6 +41,7 @@
     "react-icons": "^5.6.0",
     "recharts": "^3.8.1",
     "redis": "^6.0.0",
+    "scikitjs": "^1.24.0",
     "ws": "^8.21.0"
   },
   "devDependencies": {

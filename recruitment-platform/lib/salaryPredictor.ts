@@ -1,92 +1,9 @@
 import { prisma } from './prisma';
+import { RidgeRegression, setBackend } from 'scikitjs';
+import * as tf from '@tensorflow/tfjs';
 
-// Solve Ridge Regression: (X_design^T * X_design + lambda * I) * w = X_design^T * y
-// Gaussian elimination with pivoting is used to solve the linear system.
-function solveRidgeRegression(X: number[][], y: number[], lambda = 0.5): { weights: number[], intercept: number } {
-  const N = X.length;
-  if (N === 0) return { weights: [], intercept: 0 };
-  const M = X[0].length; // number of features (excluding intercept)
-
-  const A: number[][] = Array(M + 1).fill(0).map(() => Array(M + 1).fill(0));
-  const B: number[] = Array(M + 1).fill(0);
-
-  for (let i = 0; i < N; i++) {
-    const row = [1, ...X[i]];
-    const yi = y[i];
-    for (let j = 0; j <= M; j++) {
-      B[j] += row[j] * yi;
-      for (let k = 0; k <= M; k++) {
-        A[j][k] += row[j] * row[k];
-      }
-    }
-  }
-
-  // Apply L2 regularization to features (excluding intercept A[0][0])
-  for (let j = 1; j <= M; j++) {
-    A[j][j] += lambda;
-  }
-
-  const w = solveLinearSystem(A, B);
-  if (!w) {
-    return { weights: Array(M).fill(0), intercept: B[0] / (N || 1) };
-  }
-
-  return {
-    intercept: w[0],
-    weights: w.slice(1)
-  };
-}
-
-function solveLinearSystem(A: number[][], B: number[]): number[] | null {
-  const n = B.length;
-  const a = A.map(row => [...row]);
-  const b = [...B];
-
-  for (let i = 0; i < n; i++) {
-    let maxEl = Math.abs(a[i][i]);
-    let maxRow = i;
-    for (let k = i + 1; k < n; k++) {
-      if (Math.abs(a[k][i]) > maxEl) {
-        maxEl = Math.abs(a[k][i]);
-        maxRow = k;
-      }
-    }
-
-    const tempRow = a[maxRow];
-    a[maxRow] = a[i];
-    a[i] = tempRow;
-
-    const tempVal = b[maxRow];
-    b[maxRow] = b[i];
-    b[i] = tempVal;
-
-    if (Math.abs(a[i][i]) < 1e-12) {
-      return null;
-    }
-
-    for (let k = i + 1; k < n; k++) {
-      const c = -a[k][i] / a[i][i];
-      for (let j = i; j < n; j++) {
-        if (i === j) {
-          a[k][j] = 0;
-        } else {
-          a[k][j] += c * a[i][j];
-        }
-      }
-      b[k] += c * b[i];
-    }
-  }
-
-  const x = Array(n).fill(0);
-  for (let i = n - 1; i >= 0; i--) {
-    let sum = b[i];
-    for (let j = i + 1; j < n; j++) {
-      sum -= a[i][j] * x[j];
-    }
-    x[i] = sum / a[i][i];
-  }
-  return x;
-}
+// Set tensorflow backend for scikitjs
+setBackend(tf);
 
 export async function trainSalaryModel() {
   const jobs = await prisma.job.findMany({
@@ -183,17 +100,22 @@ export async function trainSalaryModel() {
     y.push(avgSalary);
   }
 
-  const result = solveRidgeRegression(X, y);
+  // Use scikitjs RidgeRegression
+  const ridge = new RidgeRegression({ alpha: 0.5 });
+  await ridge.fit(X, y);
+
+  const coefArray = ridge.coef.arraySync() as number[];
+  const interceptVal = ridge.intercept as number;
 
   const weightsObj: Record<string, number> = {};
   for (let i = 0; i < featureNames.length; i++) {
-    weightsObj[featureNames[i]] = result.weights[i] || 0;
+    weightsObj[featureNames[i]] = coefArray[i] || 0;
   }
 
   await prisma.salaryModel.create({
     data: {
       weights: weightsObj,
-      intercept: result.intercept,
+      intercept: interceptVal,
     }
   });
 }
