@@ -63,7 +63,7 @@ export default function Hero({ wards }) {
                             boxShadow: '0 4px 20px rgba(22,163,74,0.15)',
                         }}>
                         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        500+ việc làm đang tuyển tại Phú Quốc
+                        5000+ việc làm đang tuyển tại Phú Quốc
                         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     </span>
                 </div>

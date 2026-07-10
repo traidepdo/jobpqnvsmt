@@ -9,6 +9,7 @@ def get_embedding_model():
     global _model
     if _model is None:
         print("Loading SentenceTransformer model (keepitreal/vietnamese-sbert)...")
+        # dựa trên encoder layer của bert 
         _model = SentenceTransformer('keepitreal/vietnamese-sbert')
         print("SentenceTransformer model loaded successfully.")
     return _model

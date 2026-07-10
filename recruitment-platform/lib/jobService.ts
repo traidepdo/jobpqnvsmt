@@ -66,8 +66,6 @@ function getSalaryMaxCondition(operator: 'lte' | 'gte', value: number) {
 }
 
 export async function getFilteredJobs(params: JobSearchParams, token?: string) {
-  'use cache';
-  cacheLife('hours');
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const limit = 12;
   const skip = (page - 1) * limit;
@@ -244,16 +242,15 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
         logo: true,
         slug: true,
         jobs: {
-          where: { status: JobStatus.ACTIVE },
           select: {
             id: true,
+            status: true,
             _count: {
               select: { applications: true }
             }
           }
         }
-      },
-      take: 20
+      }
     }),
     prisma.ward.findMany({
       select: { id: true, name: true },
@@ -265,16 +262,22 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
   const featuredCompanies = topCompanies
     .map(c => {
       const totalApplies = c.jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0);
+      const activeJobCount = c.jobs.filter(j => j.status === JobStatus.ACTIVE).length;
       return {
         name: c.name,
         logo: c.logo,
         slug: c.slug,
         totalApplies,
-        jobCount: c.jobs.length
+        jobCount: activeJobCount
       };
     })
     .filter(c => c.jobCount > 0)
-    .sort((a, b) => b.totalApplies - a.totalApplies)
+    .sort((a, b) => {
+      if (b.totalApplies !== a.totalApplies) {
+        return b.totalApplies - a.totalApplies;
+      }
+      return b.jobCount - a.jobCount;
+    })
     .slice(0, 6);
 
   // Apply AI Salary prediction analysis

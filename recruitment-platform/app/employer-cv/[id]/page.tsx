@@ -8,10 +8,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const resume = await prisma.resume.findUnique({
     where: { id },
-    select: { cvData: true, user: { select: { name: true } } }
+    select: { cvData: true, fullName: true, user: { select: { name: true } } }
   });
   if (!resume) return {};
-  const name = (resume.cvData as any)?.name || resume.user.name || 'Hồ sơ';
+  const name = (resume.cvData as any)?.name || resume.fullName || resume.user.name || 'Hồ sơ';
   return {
     title: `CV - ${name} (Employer View)`,
   };
@@ -51,10 +51,10 @@ export default async function EmployerCvPage({
   }
 
   const user = {
-    name: resume.user.name || '',
-    email: resume.user.email || '',
-    phone: resume.user.phone || '',
-    avatar: resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
+    name: (resume.cvData as any)?.name || resume.fullName || resume.user.name || '',
+    email: (resume.cvData as any)?.email || resume.user.email || '',
+    phone: (resume.cvData as any)?.phone || resume.user.phone || '',
+    avatar: resume.avatarUrl || resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
   };
 
   const resumeData = {

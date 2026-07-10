@@ -126,6 +126,7 @@ export const SORT_OPTIONS = [
 export const TABS: FilterTab[] = [
   { label: 'Tất cả' },
   { label: 'Đang hiển thị', status: 'ACTIVE' },
+  { label: 'Hết hạn', status: 'EXPIRED' },
   { label: 'Chờ duyệt', status: 'PENDING' },
   { label: 'Bị từ chối', status: 'REJECTED' },
   { label: 'Nháp', status: 'DRAFT' },

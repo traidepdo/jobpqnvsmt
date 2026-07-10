@@ -59,8 +59,6 @@ export async function getApplications(params: GetApplicationsParams) {
         prisma.application.findMany({
             where,
             orderBy: { createdAt: 'desc' },
-            skip,
-            take: limit,
             include: {
                 user: {
                     select: {

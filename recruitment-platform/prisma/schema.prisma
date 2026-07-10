@@ -364,6 +364,7 @@ model Application {
 model Resume {
   id          String          @id @default(cuid())
   userId      String
+  fullName    String?
   title       String          @default("Hồ sơ của tôi")
   isDefault   Boolean         @default(false)
   address     String?

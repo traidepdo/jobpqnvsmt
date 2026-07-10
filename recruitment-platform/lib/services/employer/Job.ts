@@ -8,7 +8,21 @@ export async function getJobs(employerId: string, status?: string, isVisible?: s
         company: {
             ownerId: employerId,
         },
-        ...(status && { status: status as JobStatus }),
+        ...(status === 'ACTIVE' && {
+            status: 'ACTIVE' as JobStatus,
+            OR: [
+                { deadline: null },
+                { deadline: { gte: new Date() } }
+            ]
+        }),
+        ...(status === 'EXPIRED' && {
+            status: 'ACTIVE' as JobStatus,
+            deadline: { lt: new Date() }
+        }),
+        ...(status === 'CLOSED' && {
+            status: 'CLOSED' as JobStatus
+        }),
+        ...(status && status !== 'ACTIVE' && status !== 'EXPIRED' && status !== 'CLOSED' && { status: status as JobStatus }),
         ...(isVisible === 'true' && { isVisible: true }),
         ...(isVisible === 'false' && { isVisible: false }),
         ...(search?.trim() && {

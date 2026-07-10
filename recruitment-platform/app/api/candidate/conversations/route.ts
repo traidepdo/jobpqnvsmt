@@ -19,7 +19,20 @@ export async function GET() {
     const conversations = await prisma.conversation.findMany({
         where: { candidateId: userId },
         include: {
-            employer: { select: { id: true, name: true, avatar: true } },
+            employer: {
+                select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
+                    company: {
+                        select: {
+                            id: true,
+                            name: true,
+                            logo: true
+                        }
+                    }
+                }
+            },
             application: {
                 select: {
                     id: true,

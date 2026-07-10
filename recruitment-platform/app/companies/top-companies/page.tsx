@@ -39,7 +39,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     const search = params.search || '';
     const industry = params.industry || '';
     const page = parseInt(params.page || '1');
-    const limit = 10;
+    const limit = 12;
     const skip = (page - 1) * limit;
 
     const whereClause: any = {
@@ -189,24 +189,39 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     };
 
     return (
-        <main className="max-w-6xl mx-auto px-4 py-8 min-h-screen bg-gray-50/50">
+        <main className="max-w-[1300px] w-full mx-auto px-4 py-8 min-h-screen bg-gray-50/50">
             {/* JSON-LD Structured Data for SEO */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }}
             />
 
-            {/* Tiêu đề & Cấu trúc Heading chuẩn SEO */}
-            <header className="mb-8">
-                <h1 className="text-2xl font-bold text-[#041b3c] mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-amber-500 text-3xl">local_fire_department</span>
-                    Top Nhà Tuyển Dụng Nổi Bật Tại Phú Quốc
-                </h1>
-                <p className="text-sm text-gray-500">Danh sách doanh nghiệp được xếp hạng theo quy mô tin tuyển dụng hoạt động tích cực nhất.</p>
-            </header>
+            {/* Hero Section - Unified header and search filter in Premium Corporate Emerald Green */}
+            <section className="bg-gradient-to-r from-[#005325] via-[#00853b] to-[#00a84b] rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden shadow-md mt-3">
+                {/* Decorative background grid/blobs */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-10 left-10 w-64 h-64 bg-emerald-300/10 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Bộ lọc Client-Side với targetPath cho trang Top Companies */}
-            <CompanyFilter initialSearch={search} initialIndustry={industry} targetPath="/companies/top-companies" categories={categories} />
+                <div className="relative z-10">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#00b14f] bg-white px-3 py-1.5 rounded-full mb-3.5 shadow-sm">
+                        <span className="material-symbols-outlined text-xs font-bold text-[#00b14f]">local_fire_department</span>
+                        <span className="text-[#005325]">Bảng xếp hạng</span>
+                    </span>
+
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                        Top <span className="text-yellow-300">Nhà Tuyển Dụng Nổi Bật</span> tại Phú Quốc
+                    </h1>
+
+                    <p className="text-green-100 text-sm max-w-2xl leading-relaxed mb-6">
+                        Danh sách doanh nghiệp tuyển dụng hoạt động tích cực nhất được xếp hạng từ <strong className="text-white font-bold">{total}</strong> nhà tuyển dụng uy tín tại đảo Ngọc.
+                    </p>
+
+                    {/* Bộ lọc Client-Side component với targetPath cho trang Top Companies */}
+                    <div className="!mb-0">
+                        <CompanyFilter initialSearch={search} initialIndustry={industry} targetPath="/companies/top-companies" categories={categories} />
+                    </div>
+                </div>
+            </section>
 
             {/* Vùng hiển thị danh sách */}
             {orderedCompanies.length === 0 ? (
@@ -217,56 +232,86 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
                 </section>
             ) : (
                 <section className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
                         {orderedCompanies.map((company, index) => (
                             <article
                                 key={company.id}
-                                className="bg-white rounded-xl border border-gray-100 p-5 flex gap-4 shadow-sm hover:shadow-md hover:border-[#00b14f]/30 transition-all group relative"
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col relative"
                             >
                                 {/* Huy hiệu thứ hạng */}
                                 {renderRankBadge(index)}
 
-                                <img
-                                    src={company.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=100'}
-                                    alt={company.name}
-                                    className="w-16 h-16 rounded-xl object-contain border bg-gray-50 flex-shrink-0 mt-1"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <Link
-                                        href={`/companies/${company.slug}`}
-                                        className="font-bold text-[#041b3c] group-hover:text-[#00b14f] text-base block mb-1 transition-colors truncate"
-                                    >
-                                        {company.name}
-                                    </Link>
+                                {/* Cover Photo Container */}
+                                <div className="h-28 w-full relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-emerald-500/10 via-green-400/5 to-teal-500/10">
+                                    {company.coverImage ? (
+                                        <img
+                                            src={company.coverImage}
+                                            alt={`${company.name} cover`}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full relative opacity-95">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#005325] via-[#00853b] to-[#00a84b]" />
+                                            <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-110 transition-transform duration-700" />
+                                            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-white/5 rounded-full blur-xl group-hover:scale-110 transition-transform duration-700" />
+                                        </div>
+                                    )}
+                                    {/* Floating Active Jobs Badge */}
+                                    <span className="absolute top-3 right-3 text-[11px] font-bold text-white bg-[#00b14f] px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px] font-bold">work</span>
+                                        {company._count?.jobs || 0} việc làm
+                                    </span>
+                                </div>
 
-                                    {/* Số việc làm đang tuyển và thông tin chung */}
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                                        <span className="text-[#00b14f] bg-[#00b14f]/10 text-xs font-semibold px-2 py-0.5 rounded">
+                                {/* Logo Overlap Container */}
+                                <div className="px-5 -mt-8 relative z-10 flex items-end justify-between">
+                                    <div className="w-16 h-16 rounded-xl bg-white p-1 shadow-md border border-gray-100/80 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={company.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=100'}
+                                            alt={company.name}
+                                            className="w-full h-full object-contain rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Content Details */}
+                                <div className="p-5 pt-3 flex-1 flex flex-col">
+                                    {/* Name and Industry */}
+                                    <div className="mb-2">
+                                        <Link
+                                            href={`/companies/${company.slug}`}
+                                            className="font-bold text-gray-900 group-hover:text-[#00b14f] text-[16px] leading-tight block transition-colors line-clamp-1 mb-1"
+                                            title={company.name}
+                                        >
+                                            {company.name}
+                                        </Link>
+                                        <span className="inline-block text-[11px] font-semibold text-[#00b14f] bg-[#00b14f]/10 px-2.5 py-0.5 rounded-md">
                                             {company.industry || 'Chưa cập nhật'}
-                                        </span>
-                                        {company.size && (
-                                            <span className="text-xs text-gray-400 font-medium">
-                                                • Quy mô: {company.size}
-                                            </span>
-                                        )}
-                                        <span className="text-xs text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded flex items-center gap-0.5 ml-auto">
-                                            <span className="material-symbols-outlined text-[13px]">work</span>
-                                            {company._count?.jobs ?? 0} đang tuyển
                                         </span>
                                     </div>
 
-                                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                                    {/* Description */}
+                                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4 flex-1">
                                         {company.description || 'Chưa có thông tin mô tả chi tiết về doanh nghiệp này.'}
                                     </p>
 
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                                        <span className="material-symbols-outlined text-[15px] flex-shrink-0">location_on</span>
-                                        <span className="truncate">
-                                            {company.ward?.district?.province
-                                                ? `${company.ward.district.name}, ${company.ward.district.province.name}`
-                                                : 'Toàn quốc'
-                                            }
-                                        </span>
+                                    {/* Info list */}
+                                    <div className="space-y-2 pt-3 border-t border-gray-100 text-[12px] text-gray-500">
+                                        {company.size && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[16px] text-gray-400">group</span>
+                                                <span>Quy mô: {company.size}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[16px] text-gray-400">location_on</span>
+                                            <span className="truncate">
+                                                {company.ward?.district?.province
+                                                    ? `${company.ward.district.name}, ${company.ward.district.province.name}`
+                                                    : 'Toàn quốc'
+                                                }
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </article>

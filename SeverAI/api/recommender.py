@@ -8,6 +8,7 @@ def get_related_jobs(job_id, top_n=5):
     Prioritizes jobs in the same category first, then falls back to other categories.
     """
     # 1. Fetch the target job
+    # Kiểm tra id có trong job chuă nếu  k tồn tại thì trả về rỗng
     try:
         job = Job.objects.get(id=job_id)
         category_id = job.categoryid
@@ -21,7 +22,7 @@ def get_related_jobs(job_id, top_n=5):
         row = cursor.fetchone()
         if row:
             val = row[0]
-            # Keep it as a string to avoid string formatting issues in psycopg2 with long lists
+            # Giữ nguyên embedding dạng chuỗi để tránh lỗi định dạng khi dùng psycopg2 với các danh sách vector dài
             if isinstance(val, str):
                 target_embedding = val
             elif isinstance(val, list):
@@ -29,6 +30,7 @@ def get_related_jobs(job_id, top_n=5):
             else:
                 target_embedding = str(val)
 
+    # Nếu không có embedding thì tạo mới
     if not target_embedding:
         try:
             combined_text = f"Tiêu đề: {job.title}\nMô tả: {job.description or ''}\nYêu cầu: {job.requirements or ''}\nQuyền lợi: {job.benefits or ''}"
@@ -61,10 +63,12 @@ def get_related_jobs(job_id, top_n=5):
             LIMIT %s
         """
         with connection.cursor() as cursor:
+            # Lấy top_n similar jobs từ cùng 1 category
             cursor.execute(query_same_cat, [target_embedding, job_id, category_id, target_embedding, top_n])
             rows = cursor.fetchall()
             for row in rows:
                 score = float(row[11])
+                # Lọc ra các jobs có similarity_score > 0.0
                 if score <= 0.0:
                     continue
                 related_jobs.append({
@@ -85,6 +89,7 @@ def get_related_jobs(job_id, top_n=5):
         print(f"Error querying similar jobs in same category: {e}")
 
     # Step 3b: If not enough related jobs, fill from other categories
+    # Nếu chưa đủ top_n jobs thì lấy từ các category khác
     if len(related_jobs) < top_n:
         try:
             exclude_ids = [r['id'] for r in related_jobs] + [job_id]

@@ -207,6 +207,7 @@ export default function TaoCvSlugPage() {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          fullName: uData.name || null,
           title: cvTitle.trim() || (uData.name ? `CV ${uData.name}` : 'Hồ sơ của tôi'),
           isDefault,
           templateId: template?.id || null,

@@ -9,7 +9,16 @@ interface Conversation {
     id: string;
     updatedAt: string;
     unreadCount: number;
-    employer: { id: string; name: string; avatar: string | null };
+    employer: {
+        id: string;
+        name: string;
+        avatar: string | null;
+        company?: {
+            id: string;
+            name: string;
+            logo: string | null;
+        } | null;
+    };
     application: {
         id: string;
         job: { id: string; title: string; slug: string };
@@ -411,14 +420,14 @@ function CandidateMessagesPageContent() {
                                             }`}
                                     >
                                         <div className="relative flex-shrink-0">
-                                            <Avatar name={conv.employer?.name} avatar={conv.employer?.avatar} size={10} />
+                                            <Avatar name={conv.employer?.company?.name || conv.employer?.name} avatar={conv.employer?.company?.logo || conv.employer?.avatar} size={10} />
                                             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline gap-1">
                                                 <p className={`text-[13px] truncate ${hasUnread ? 'font-bold text-[#041b3c]' : 'font-semibold text-[#041b3c]'
                                                     }`}>
-                                                    {conv.employer?.name ?? 'Nhà tuyển dụng'}
+                                                    {(conv.employer?.company?.name || conv.employer?.name) ?? 'Nhà tuyển dụng'}
                                                 </p>
                                                 <span className="text-[9px] text-gray-400 flex-shrink-0 font-medium">
                                                     {lastMsg ? formatDateVi(lastMsg.createdAt) : formatDateVi(conv.updatedAt)}
@@ -519,12 +528,12 @@ function CandidateMessagesPageContent() {
                             ) : activeConv ? (
                                 <>
                                     <div className="relative flex-shrink-0">
-                                        <Avatar name={activeConv.employer?.name} avatar={activeConv.employer?.avatar} size={10} />
+                                        <Avatar name={activeConv.employer?.company?.name || activeConv.employer?.name} avatar={activeConv.employer?.company?.logo || activeConv.employer?.avatar} size={10} />
                                         <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse" />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-[#041b3c] text-[14px] truncate">
-                                            {activeConv.employer?.name ?? 'Nhà tuyển dụng'}
+                                            {(activeConv.employer?.company?.name || activeConv.employer?.name) ?? 'Nhà tuyển dụng'}
                                         </p>
                                         {activeConv.application?.job && (
                                             <Link

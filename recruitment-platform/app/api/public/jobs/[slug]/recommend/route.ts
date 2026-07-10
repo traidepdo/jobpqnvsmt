@@ -20,7 +20,7 @@ export async function GET(
 
         let recommendedIds: string[] = [];
 
-        // 2. Query Django recommender API (with fallback on failure)
+        // lấy gợi ý từ django
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 800);
@@ -48,6 +48,7 @@ export async function GET(
         }
 
         // 3. Fallback: Query jobs in the same category if Django recommendations are empty or service is offline
+        // lấy gợi ý từ db nếu django không trả về được gì
         if (recommendedIds.length === 0) {
             const fallbackJobs = await prisma.job.findMany({
                 where: {
@@ -65,7 +66,7 @@ export async function GET(
             return NextResponse.json(fallbackJobs, { status: 200 });
         }
 
-        // 4. Query rich details from Prisma for these IDs
+        // lấy thông tin chi tiết các jobs từ recommendedIds
         const relatedJobs = await prisma.job.findMany({
             where: {
                 id: { in: recommendedIds },

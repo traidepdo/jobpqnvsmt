@@ -50,9 +50,114 @@ function DeclineModal({ onConfirm, onClose }: { onConfirm: (reason: string) => v
     );
 }
 
+// ── Modal chi tiết lịch phỏng vấn ──────────────────────────────
+function DetailsModal({ interview, onClose, formatDateTime }: { interview: Interview; onClose: () => void; formatDateTime: (d: string) => string }) {
+    const sCfg = STATUS_CFG[interview.status];
+    const cCfg = CANDIDATE_CFG[interview.candidateStatus];
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 animate-slideUp">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                            <span className="material-symbols-outlined text-[18px]">info</span>
+                        </div>
+                        <h3 className="font-bold text-slate-800 text-sm">Chi tiết lịch phỏng vấn</h3>
+                    </div>
+                    <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
+                
+                {/* Modal Body */}
+                <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <h4 className="text-base font-bold text-slate-800">{interview.application.job.title}</h4>
+                        <p className="text-xs text-slate-500 mt-1">{interview.application.job.company.name}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-100 py-3.5 text-xs">
+                        <div>
+                            <span className="text-slate-400 block mb-1">Trạng thái lịch</span>
+                            <span className="inline-block px-2.5 py-0.5 rounded-lg border font-bold text-[10px]"
+                                style={{ color: sCfg.color, background: sCfg.bg, borderColor: sCfg.border }}>
+                                {sCfg.label}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-slate-400 block mb-1">Phản hồi của bạn</span>
+                            <span className="inline-block px-2.5 py-0.5 rounded-lg font-bold text-[10px]"
+                                style={{ color: cCfg.color, background: cCfg.bg }}>
+                                {cCfg.label}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 text-xs text-slate-600">
+                        <div className="flex gap-2">
+                            <span className="material-symbols-outlined text-slate-400 text-base">schedule</span>
+                            <div>
+                                <span className="font-bold text-slate-700 block">Thời gian phỏng vấn</span>
+                                <span>{formatDateTime(interview.scheduledAt)}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <span className="material-symbols-outlined text-slate-400 text-base">
+                                {interview.type === 'ONLINE' ? 'videocam' : 'location_on'}
+                            </span>
+                            <div>
+                                <span className="font-bold text-slate-700 block">Hình thức & địa điểm</span>
+                                <span>{interview.type === 'ONLINE' ? 'Phỏng vấn Online' : 'Phỏng vấn trực tiếp'}</span>
+                                <p className="text-slate-500 mt-0.5">{interview.location}</p>
+                                {interview.type === 'ONLINE' && (
+                                    <a href={interview.location} target="_blank" rel="noreferrer"
+                                        className="mt-1.5 inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                                        Vào phòng phỏng vấn
+                                        <span className="material-symbols-outlined text-xs">open_in_new</span>
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {interview.notes && (
+                            <div className="flex gap-2 border-t border-slate-100 pt-3">
+                                <span className="material-symbols-outlined text-slate-400 text-base">description</span>
+                                <div>
+                                    <span className="font-bold text-slate-700 block">Ghi chú từ nhà tuyển dụng</span>
+                                    <p className="text-slate-500 whitespace-pre-line mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100/50">{interview.notes}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {interview.declineReason && (
+                            <div className="flex gap-2 border-t border-slate-100 pt-3">
+                                <span className="material-symbols-outlined text-rose-400 text-base">cancel</span>
+                                <div>
+                                    <span className="font-bold text-rose-700 block">Lý do từ chối</span>
+                                    <p className="text-rose-600 whitespace-pre-line mt-1 bg-rose-50/50 p-3 rounded-lg border border-rose-100/50">{interview.declineReason}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="px-5 py-3.5 border-t border-slate-50 flex justify-end">
+                    <button onClick={onClose} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ── Main Page ────────────────────────────────────────────────
 export default function CandidateInterviewsPage({ interviewsData }: { interviewsData: Interview[] }) {
     const { formatDateTime, formatCountdown, interviews, loading, respondingId, declineModal, setDeclineModal, setRespondingId, setInterviews, setLoading, respond } = useInterviews(interviewsData);
+    const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
     
     useEffect(() => {
         if (interviewsData) {
@@ -154,7 +259,16 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
 
                                                         <div className="min-w-0">
                                                             <p className="font-bold text-slate-800 text-sm sm:text-base line-clamp-1">{iv.application.job.title}</p>
-                                                            <p className="text-xs text-slate-500 mt-0.5">{iv.application.job.company.name}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <p className="text-xs text-slate-500">{iv.application.job.company.name}</p>
+                                                                <span className="text-slate-300 text-xs">•</span>
+                                                                <button
+                                                                    onClick={() => setSelectedInterview(iv)}
+                                                                    className="text-xs text-[#00b14f] hover:text-[#009940] hover:underline font-semibold cursor-pointer"
+                                                                >
+                                                                    Chi tiết lịch hẹn
+                                                                </button>
+                                                            </div>
 
                                                             {/* Thời gian */}
                                                             <div className="mt-3 flex flex-wrap gap-2 text-xs">
@@ -274,7 +388,7 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+                                            <div className="flex items-center gap-2.5 flex-shrink-0 self-end sm:self-auto">
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg border"
                                                     style={{ color: sCfg.color, background: sCfg.bg, borderColor: sCfg.border }}>
                                                     {sCfg.label}
@@ -283,6 +397,13 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                                                     style={{ color: cCfg.color, background: cCfg.bg }}>
                                                     {cCfg.label}
                                                 </span>
+                                                <button
+                                                    onClick={() => setSelectedInterview(iv)}
+                                                    className="px-2.5 py-1.5 border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                                    Chi tiết
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -291,6 +412,15 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* Details modal */}
+            {selectedInterview && (
+                <DetailsModal
+                    interview={selectedInterview}
+                    onClose={() => setSelectedInterview(null)}
+                    formatDateTime={formatDateTime}
+                />
             )}
 
             {/* Decline modal */}

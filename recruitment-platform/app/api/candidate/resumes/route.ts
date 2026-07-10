@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault } = body;
+    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault, fullName } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Vui lòng nhập tên hồ sơ' }, { status: 400 });
@@ -53,6 +53,8 @@ export async function POST(req: Request) {
       cleanCvData = Object.keys(rest).length > 0 ? rest : null;
     }
 
+    const finalFullName = fullName || cvData?.name || null;
+
     let resume;
     if (isDefault) {
       resume = await prisma.$transaction(async (tx) => {
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
         return tx.resume.create({
           data: {
             userId: auth.payload.id,
+            fullName: finalFullName,
             title: title.trim(),
             address: address || null,
             summary: summary || null,
@@ -86,6 +89,7 @@ export async function POST(req: Request) {
       resume = await prisma.resume.create({
         data: {
           userId: auth.payload.id,
+          fullName: finalFullName,
           title: title.trim(),
           address: address || null,
           summary: summary || null,

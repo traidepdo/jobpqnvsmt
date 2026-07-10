@@ -7,10 +7,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const resume = await prisma.resume.findUnique({
     where: { id },
-    select: { cvData: true, user: { select: { name: true } } }
+    select: { cvData: true, fullName: true, user: { select: { name: true } } }
   });
   if (!resume) return {};
-  const name = (resume.cvData as any)?.name || resume.user.name || 'Hồ sơ';
+  const name = (resume.cvData as any)?.name || resume.fullName || resume.user.name || 'Hồ sơ';
   return {
     title: `CV - ${name}`,
   };
@@ -21,11 +21,12 @@ export default async function CvPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ readOnly?: string }>;
+  searchParams: Promise<{ readOnly?: string; print?: string }>;
 }) {
   const { id } = await params;
   const resolvedParams = await searchParams;
   const isReadOnly = resolvedParams.readOnly === 'true';
+  const shouldPrint = resolvedParams.print === 'true';
 
   const resume = await prisma.resume.findUnique({
     where: { id },
@@ -54,9 +55,9 @@ export default async function CvPage({
   }
 
   const user = {
-    name: resume.user.name || '',
-    email: resume.user.email || '',
-    phone: resume.user.phone || '',
+    name: (resume.cvData as any)?.name || resume.fullName || resume.user.name || '',
+    email: (resume.cvData as any)?.email || resume.user.email || '',
+    phone: (resume.cvData as any)?.phone || resume.user.phone || '',
     avatar: resume.avatarUrl || resume.user.avatar || 'https://i.pravatar.cc/150?img=12',
   };
 
@@ -103,7 +104,19 @@ export default async function CvPage({
         <TemplateComponent user={user} resume={resumeData} />
       </div>
 
-
+      {shouldPrint && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              };
+            `,
+          }}
+        />
+      )}
     </div>
   );
 }

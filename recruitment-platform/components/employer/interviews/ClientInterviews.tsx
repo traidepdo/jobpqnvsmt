@@ -32,6 +32,13 @@ export default function EmployerInterviewsPage({
     // Filters — pending section
     const [onlyBookmarked, setOnlyBookmarked] = useState(false);
     const [jobSearch, setJobSearch] = useState('');
+    const [pendingSearchQuery, setPendingSearchQuery] = useState('');
+    const [pendingPage, setPendingPage] = useState(1);
+    const pendingPageSize = 9;
+
+    useEffect(() => {
+        setPendingPage(1);
+    }, [onlyBookmarked, jobSearch, pendingSearchQuery]);
 
     // Filter — interview list
     const [filterStatus, setFilterStatus] = useState<InterviewStatus | ''>('');
@@ -97,7 +104,22 @@ export default function EmployerInterviewsPage({
     // Derived lists
     const filteredPending = pendingApps
         .filter(c => !onlyBookmarked || c.isBookmarked)
-        .filter(c => !jobSearch || c.jobTitle.toLowerCase().includes(jobSearch.toLowerCase()));
+        .filter(c => !jobSearch || c.jobTitle.toLowerCase().includes(jobSearch.toLowerCase()))
+        .filter(c => {
+            if (!pendingSearchQuery) return true;
+            const query = pendingSearchQuery.toLowerCase();
+            return (
+                c.name.toLowerCase().includes(query) ||
+                c.email.toLowerCase().includes(query) ||
+                (c.phone && c.phone.toLowerCase().includes(query))
+            );
+        });
+
+    const totalPendingPages = Math.ceil(filteredPending.length / pendingPageSize);
+    const paginatedPending = filteredPending.slice(
+        (pendingPage - 1) * pendingPageSize,
+        pendingPage * pendingPageSize
+    );
 
     const filteredInterviews = interviews.filter(iv => !filterStatus || iv.status === filterStatus);
 
@@ -158,7 +180,19 @@ export default function EmployerInterviewsPage({
                             </span>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Search input */}
+                            <div className="relative">
+                                <span className="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 font-bold">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Tìm ứng viên..."
+                                    value={pendingSearchQuery}
+                                    onChange={e => setPendingSearchQuery(e.target.value)}
+                                    className="pl-9 pr-4 h-9 text-xs border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-700 outline-none focus:ring-2 focus:ring-[#0052CC]/15 transition-all w-48 font-bold"
+                                />
+                            </div>
+
                             {/* Bookmark filter */}
                             <button
                                 onClick={() => setOnlyBookmarked(v => !v)}
@@ -203,36 +237,72 @@ export default function EmployerInterviewsPage({
                             <p className="text-xs font-bold">Không tìm thấy ứng viên phù hợp</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredPending.map(c => (
-                                <div key={c.applicationId} className="bg-slate-50/50 rounded-2xl border border-dashed border-[#C7D9FF] p-4 flex items-center justify-between gap-3 hover:border-[#0052CC] hover:bg-white hover:shadow-md transition-all group">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="relative w-11 h-11 flex-shrink-0">
-                                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white font-black text-base overflow-hidden">
-                                                {c.avatar ? <img src={c.avatar} className="w-full h-full object-cover" alt={c.name} /> : c.name[0]?.toUpperCase()}
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {paginatedPending.map(c => (
+                                    <div key={c.applicationId} className="bg-slate-50/50 rounded-2xl border border-dashed border-[#C7D9FF] p-4 flex items-center justify-between gap-3 hover:border-[#0052CC] hover:bg-white hover:shadow-md transition-all group">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="relative w-11 h-11 flex-shrink-0">
+                                                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white font-black text-base overflow-hidden">
+                                                    {c.avatar ? <img src={c.avatar} className="w-full h-full object-cover" alt={c.name} /> : c.name[0]?.toUpperCase()}
+                                                </div>
+                                                {c.isBookmarked && (
+                                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
+                                                        <span className="material-symbols-outlined text-[10px] text-white">bookmark</span>
+                                                    </span>
+                                                )}
                                             </div>
-                                            {c.isBookmarked && (
-                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
-                                                    <span className="material-symbols-outlined text-[10px] text-white">bookmark</span>
-                                                </span>
-                                            )}
+                                            <div className="min-w-0">
+                                                <p className="font-extrabold text-slate-800 text-xs truncate">{c.name}</p>
+                                                <p className="text-[10px] text-[#0052CC] font-bold truncate mt-0.5">{c.jobTitle}</p>
+                                                <p className="text-[10px] text-slate-400 font-medium truncate">{c.email}</p>
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="font-extrabold text-slate-800 text-xs truncate">{c.name}</p>
-                                            <p className="text-[10px] text-[#0052CC] font-bold truncate mt-0.5">{c.jobTitle}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium truncate">{c.email}</p>
-                                        </div>
+                                        <button
+                                            onClick={() => router.push(`/employer/interviews/${c.applicationId}`)}
+                                            className="h-8 px-3 inline-flex items-center gap-1 bg-[#0052CC] hover:bg-[#0040a2] text-white text-[11px] font-black rounded-lg transition-all flex-shrink-0 cursor-pointer shadow-sm active:scale-97"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px] font-bold">add</span>
+                                            Lên lịch
+                                        </button>
                                     </div>
+                                ))}
+                            </div>
+
+                            {/* Pagination */}
+                            {totalPendingPages > 1 && (
+                                <div className="flex items-center justify-center gap-1.5 pt-4 border-t border-slate-50">
                                     <button
-                                        onClick={() => router.push(`/employer/interviews/${c.applicationId}`)}
-                                        className="h-8 px-3 inline-flex items-center gap-1 bg-[#0052CC] hover:bg-[#0040a2] text-white text-[11px] font-black rounded-lg transition-all flex-shrink-0 cursor-pointer shadow-sm active:scale-97"
+                                        onClick={() => setPendingPage(p => Math.max(1, p - 1))}
+                                        disabled={pendingPage === 1}
+                                        className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 flex items-center justify-center disabled:opacity-40 disabled:hover:bg-white cursor-pointer transition-colors"
                                     >
-                                        <span className="material-symbols-outlined text-[13px] font-bold">add</span>
-                                        Lên lịch
+                                        <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                                    </button>
+
+                                    {Array.from({ length: totalPendingPages }, (_, i) => i + 1).map(p => (
+                                        <button
+                                            key={p}
+                                            onClick={() => setPendingPage(p)}
+                                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${pendingPage === p
+                                                ? 'bg-[#0052CC] text-white shadow-sm'
+                                                : 'border border-slate-200 bg-white text-slate-650 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        onClick={() => setPendingPage(p => Math.min(totalPendingPages, p + 1))}
+                                        disabled={pendingPage === totalPendingPages}
+                                        className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 flex items-center justify-center disabled:opacity-40 disabled:hover:bg-white cursor-pointer transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                                     </button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             )}

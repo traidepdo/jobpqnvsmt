@@ -37,11 +37,11 @@ export function SearchBox({ wards = [] }: SearchBoxProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
-  
+
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const clientCacheRef = useRef<Record<string, Suggestion[]>>({});
@@ -67,53 +67,77 @@ export function SearchBox({ wards = [] }: SearchBoxProps) {
   }, []);
 
   // Autocomplete logic
+
+  // khi query thay đổi
   useEffect(() => {
+    // chuyển hóa query thành chữ thường, xóa khoảng trắng đầu cuối và thay thế nhiều khoảng trắng liên tiếp bằng 1 khoảng trắng
     const trimmed = searchQuery.toLowerCase().trim().replace(/\s+/g, ' ');
 
+    // nếu không có query thì không hiển thị suggestions
     if (!trimmed) {
+      // xóa ds gợi ý
       setSuggestions([]);
+      // đóng dropdown
       setIsOpen(false);
+      // tắt loading
       setLoading(false);
+      // return
       return;
     }
 
     // 1. Kiểm tra Hot Keywords ở Client
     if (HOT_KEYWORDS[trimmed]) {
+      // set gợi ý
       setSuggestions(HOT_KEYWORDS[trimmed]);
+      // mở dropdown
       setIsOpen(true);
+      // tắt loading
       setLoading(false);
+      // return
       return;
     }
 
     // 2. Kiểm tra bộ nhớ đệm tại trình duyệt (Client-side Cache)
     if (clientCacheRef.current[trimmed]) {
+      // set gợi ý
       setSuggestions(clientCacheRef.current[trimmed]);
+      // mở dropdown
       setIsOpen(true);
+      // tắt loading
       setLoading(false);
+      // return
       return;
     }
 
-    // Hủy request cũ (Abort Controller)
+    // 1. Kiểm tra xem có Request cũ nào đang chạy hay không
     if (abortControllerRef.current) {
+      // Nếu có, gọi hàm abort() để hủy ngay lập tức request đó ở phía trình duyệt
       abortControllerRef.current.abort();
     }
+    // 2. Tạo một bộ điều khiển hủy mới cho Request sắp sửa gửi đi
     abortControllerRef.current = new AbortController();
 
+    // Bật trạng thái loading
     setLoading(true);
 
     // Kỹ thuật Debounce 500ms
     const delayDebounceFn = setTimeout(async () => {
       try {
+        // fetch data từ API
         const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
+          // đây là cách pass abort signal
           signal: abortControllerRef.current?.signal
         });
         const data = await response.json();
+        // Lấy suggestions từ response
         const results = data.suggestions || [];
-        
+
         // Lưu vào bộ nhớ đệm tại trình duyệt
         clientCacheRef.current[trimmed] = results;
-        
+
+        // set suggestions
         setSuggestions(results);
+        // mở dropdown
         setIsOpen(true);
       } catch (err: any) {
         if (err.name !== 'AbortError') {

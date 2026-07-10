@@ -194,3 +194,43 @@ export async function DELETE(
   }
 }
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireEmployer();
+  if (auth.error) return auth.error;
+
+  const { id } = await params;
+  const existing = await getOwnedJob(auth.company.id, id);
+  if (!existing) {
+    return NextResponse.json({ error: 'Không tìm thấy tin tuyển dụng' }, { status: 404 });
+  }
+
+  try {
+    const body = await req.json();
+    const { deadline } = body;
+
+    if (!deadline) {
+      return NextResponse.json({ error: 'Thiếu ngày gia hạn' }, { status: 400 });
+    }
+
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        deadline: new Date(deadline),
+        ...(existing.status === 'ACTIVE' && { status: 'ACTIVE' }),
+      },
+      include: {
+        category: { select: { id: true, name: true } },
+        ward: { select: { id: true, name: true } },
+      },
+    });
+
+    return NextResponse.json({ job });
+  } catch (error) {
+    console.error('Patch job error:', error);
+    return NextResponse.json({ error: 'Không thể gia hạn tin đăng' }, { status: 500 });
+  }
+}
+

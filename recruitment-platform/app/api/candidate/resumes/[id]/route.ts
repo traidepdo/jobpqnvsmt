@@ -37,7 +37,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault } = body;
+    const { title, address, summary, education, experience, projects, degree, languages, socialLinks, templateId, cvData, isDefault, fullName } = body;
 
     const existing = await prisma.resume.findFirst({
       where: { id, userId: auth.payload.id },
@@ -55,6 +55,8 @@ export async function PUT(
       cleanCvData = Object.keys(rest).length > 0 ? rest : null;
     }
 
+    const finalFullName = fullName !== undefined ? fullName : (cvData?.name !== undefined ? cvData.name : undefined);
+
     let updated;
     if (isDefault) {
       updated = await prisma.$transaction(async (tx) => {
@@ -65,6 +67,7 @@ export async function PUT(
         return tx.resume.update({
           where: { id },
           data: {
+            fullName: finalFullName !== undefined ? finalFullName : existing.fullName,
             title: title ? title.trim() : existing.title,
             address: address !== undefined ? address : existing.address,
             summary: summary !== undefined ? summary : existing.summary,
@@ -88,6 +91,7 @@ export async function PUT(
       updated = await prisma.resume.update({
         where: { id },
         data: {
+          fullName: finalFullName !== undefined ? finalFullName : existing.fullName,
           title: title ? title.trim() : existing.title,
           address: address !== undefined ? address : existing.address,
           summary: summary !== undefined ? summary : existing.summary,

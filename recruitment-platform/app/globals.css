@@ -88,7 +88,6 @@ body {
   body {
     background-color: #ffffff !important;
     background: #ffffff !important;
-    color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
     height: auto !important;
@@ -97,11 +96,34 @@ body {
     print-color-adjust: exact !important;
   }
 
-  /* Reset outer background wrappers only */
-  .cv-viewer-container,
-  .min-h-screen {
-    background-color: transparent !important;
+  /* Ensure the outer container and wrappers stretch full width */
+  .cv-viewer-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: transparent !important;
+  }
+
+  .cv-viewer-container > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  /* The actual CV sheet wrapper inside the template */
+  .cv-viewer-container > div > div:not(.print\:hidden) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    /* Do NOT override padding here to preserve the template's internal padding (e.g. p-10) */
   }
 
   /* Reset min-h-screen/height attributes that trigger blank pages */
@@ -112,19 +134,6 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
-  }
-
-  /* Make CV containers stretch to full page width with proper padding */
-  .max-w-4xl,
-  .max-w-5xl,
-  [class*="max-w-"] {
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 15mm 20mm !important; /* Standard corporate CV margins */
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
   }
 
   /* Hide print-hidden classes and components */
@@ -141,5 +150,59 @@ body {
   @page {
     size: A4;
     margin: 0mm;
+  }
+
+  /* Prevent elements from being awkwardly cut across pages */
+  section,
+  .experience-item,
+  .education-item,
+  .project-item,
+  li,
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Force desktop layout configurations (md:) during printing */
+  .flex-col.md\:flex-row {
+    flex-direction: row !important;
+  }
+  
+  .text-center.md\:text-left {
+    text-align: left !important;
+  }
+
+  .inline-block.md\:block {
+    display: block !important;
+  }
+
+  .justify-center.md\:justify-start {
+    justify-content: flex-start !important;
+  }
+
+  .items-center.md\:items-start {
+    align-items: flex-start !important;
+  }
+
+  .grid-cols-1.md\:grid-cols-\[1fr_260px\] {
+    grid-template-columns: 1fr 260px !important;
+  }
+
+  .grid-cols-1.md\:grid-cols-\[280px_1fr\] {
+    grid-template-columns: 280px 1fr !important;
+  }
+
+  .grid-cols-1.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .mx-auto.md\:mx-0 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Fix for specific elements in Futuristic header */
+  .cv-viewer-container header .mx-auto.md\:mx-0 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }

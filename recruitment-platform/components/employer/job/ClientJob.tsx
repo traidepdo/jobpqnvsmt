@@ -18,6 +18,10 @@ export default function EmployerJobsPage({ jobsData, paginationData, categories 
     const [categoryValue, setCategoryValue] = useState(searchParams.get('category') || '');
     const [categoryList, setCategoryList] = useState<{ id: string, name: string, slug: string }[]>(categories || []);
 
+    const [extendingJobId, setExtendingJobId] = useState<string | null>(null);
+    const [newDeadline, setNewDeadline] = useState('');
+    const [submittingExtension, setSubmittingExtension] = useState(false);
+
     useEffect(() => {
         setJobs(jobsData || []);
         setPagination(paginationData);
@@ -52,6 +56,29 @@ export default function EmployerJobsPage({ jobsData, paginationData, categories 
         const res = await fetch(`/api/employer/jobs/${id}`, { method: 'DELETE' });
         if (res.ok) {
             router.refresh();
+        }
+    };
+
+    const handleExtend = async (id: string, date: string) => {
+        if (!date) return;
+        setSubmittingExtension(true);
+        try {
+            const res = await fetch(`/api/employer/jobs/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deadline: new Date(date).toISOString() })
+            });
+            if (res.ok) {
+                router.refresh();
+                setExtendingJobId(null);
+            } else {
+                alert('Không thể gia hạn tin. Vui lòng thử lại.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống khi gia hạn tin.');
+        } finally {
+            setSubmittingExtension(false);
         }
     };
 
@@ -190,114 +217,148 @@ export default function EmployerJobsPage({ jobsData, paginationData, categories 
                     )}
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {/* Job Cards - Borderless */}
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Job Cards - Premium Grid Style */}
                     {jobs.map(job => {
                         const style = statusStyle[job.status] || { bg: 'bg-slate-55', text: 'text-slate-700', dot: 'bg-slate-400', label: job.status };
+                        const isExpired = job.status === 'ACTIVE' && job.deadline ? new Date(job.deadline) < new Date() : false;
                         return (
                             <div
                                 key={job.id}
-                                className={`bg-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-6 group relative overflow-hidden ${!job.isVisible ? 'bg-orange-50/10' : ''}`}
+                                className={`bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${!job.isVisible ? 'bg-orange-50/5' : ''}`}
                             >
-                                {/* Glow hover accent bar */}
-                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-transform duration-300 -translate-x-full group-hover:translate-x-0 ${!job.isVisible ? 'bg-orange-500' : 'bg-[#0052CC]'}`} />
+                                <div className="space-y-4">
+                                    {/* Category and status badge */}
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-[#0052CC]/80 bg-[#0052CC]/5 px-2.5 py-1 rounded-lg truncate">
+                                            {job.category.name}
+                                        </span>
+                                        <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                                            {!isExpired && (
+                                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+                                                    <span className={`w-1 h-1 rounded-full ${style.dot} animate-pulse`} />
+                                                    {style.label}
+                                                </span>
+                                            )}
 
-                                {/* Info content */}
-                                <div className="flex-1 min-w-0 space-y-3">
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                        <Link
-                                            href={`/jobs/${job.slug}`}
-                                            target="_blank"
-                                            className="font-extrabold text-slate-900 hover:text-[#0052CC] text-lg tracking-tight leading-snug transition-colors group-hover:text-[#0052CC] flex items-center gap-1"
-                                        >
-                                            {job.title}
-                                            <span className="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[#0052CC]">
-                                                open_in_new
-                                            </span>
-                                        </Link>
-
-                                        <div className="flex flex-wrap items-center gap-1.5">
-                                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full ${style.bg} ${style.text}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${style.dot} animate-pulse`} />
-                                                {style.label}
-                                            </span>
+                                            {isExpired && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
+                                                    <span className="w-1 h-1 rounded-full bg-rose-500 animate-pulse" />
+                                                    Hết hạn
+                                                </span>
+                                            )}
 
                                             {!job.isVisible && (
-                                                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-orange-50 text-orange-700">
-                                                    🚫 Vô hiệu hóa bởi Admin
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                                    Bị ẩn
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Attributes tags row - Borderless */}
-                                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600">
-                                            <span className="material-symbols-outlined text-[15px] text-[#0052CC]">folder</span> {job.category.name}
-                                        </span>
-                                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600">
-                                            <span className="material-symbols-outlined text-[15px] text-[#0052CC]">payments</span> {formatSalary(job.salaryMin, job.salaryMax)}
-                                        </span>
-                                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600">
-                                            <span className="material-symbols-outlined text-[15px] text-[#0052CC]">location_on</span> {job.ward?.name || 'Phú Quốc'}
-                                        </span>
+                                    {/* Job Title */}
+                                    <div className="space-y-1">
+                                        <Link
+                                            href={`/jobs/${job.slug}`}
+                                            target="_blank"
+                                            className="font-extrabold text-slate-800 hover:text-[#0052CC] text-base tracking-tight leading-snug transition-colors group-hover:text-[#0052CC] flex items-center gap-1.5"
+                                        >
+                                            <span className="truncate">{job.title}</span>
+                                            <span className="material-symbols-outlined text-[15px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[#0052CC] flex-shrink-0">
+                                                open_in_new
+                                            </span>
+                                        </Link>
                                     </div>
 
-                                    {/* Stats application counts */}
-                                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-400 font-semibold">
-                                        <span className="flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-[15px]">group</span> Lượt ứng tuyển: <strong className="text-[#0052CC] font-extrabold">{job._count.applications}</strong> ứng viên
-                                        </span>
+                                    {/* Stats grid */}
+                                    <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-3 rounded-2xl border border-slate-100/50">
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Lượt ứng tuyển</span>
+                                            <div className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[16px] text-[#0052CC]">group</span>
+                                                {job._count.applications}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Mức lương</span>
+                                            <div className="text-xs font-extrabold text-[#00875A] truncate">
+                                                {formatSalary(job.salaryMin, job.salaryMax)}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Job detail info */}
+                                    <div className="space-y-2 pt-1">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                            <span className="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
+                                            <span className="truncate">{job.ward?.name || 'Phú Quốc'}</span>
+                                        </div>
                                         {job.deadline && (
-                                            <span className="flex items-center gap-1">
-                                                <span className="material-symbols-outlined text-[15px]">calendar_month</span> Hạn nộp hồ sơ: <strong className="text-slate-700 font-extrabold">{formatDateVi(job.deadline)}</strong>
-                                            </span>
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                <span className="material-symbols-outlined text-[16px] text-slate-400">calendar_month</span>
+                                                <span className="truncate">Hạn: <strong className={isExpired ? "text-rose-600 font-extrabold" : "text-slate-700 font-extrabold"}>{formatDateVi(job.deadline)}</strong></span>
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Admin notices */}
-                                    {!job.isVisible && (
-                                        <div className="text-xs text-orange-700 bg-orange-50/50 p-3 rounded-2xl leading-relaxed max-w-3xl flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[18px]">warning</span>
-                                            <div>
-                                                <strong>Tin đăng đang bị ẩn:</strong> Tin tuyển dụng đã bị tắt chế độ hiển thị công khai trên hệ thống. Ứng viên sẽ không tìm thấy hoặc nộp hồ sơ được. Vui lòng liên hệ Admin để duyệt lại.
-                                            </div>
+                                    {/* Expiry and Visibility alerts inside card */}
+                                    {isExpired && (
+                                        <div className="text-[10px] text-rose-700 bg-rose-50/60 p-2.5 rounded-xl flex items-start gap-1.5 leading-relaxed">
+                                            <span className="material-symbols-outlined text-[15px] flex-shrink-0 text-rose-500">error</span>
+                                            <span><strong>Tin đã hết hạn:</strong> Vui lòng gia hạn hạn nộp hồ sơ để tiếp tục nhận ứng cử viên.</span>
                                         </div>
                                     )}
 
-                                    {/* Rejections alerts */}
+                                    {!job.isVisible && (
+                                        <div className="text-[10px] text-amber-700 bg-amber-50/60 p-2.5 rounded-xl flex items-start gap-1.5 leading-relaxed">
+                                            <span className="material-symbols-outlined text-[15px] flex-shrink-0 text-amber-500">warning</span>
+                                            <span><strong>Tin bị ẩn bởi Admin:</strong> Ứng viên không thể tìm thấy hoặc nộp hồ sơ.</span>
+                                        </div>
+                                    )}
+
                                     {job.status === 'REJECTED' && job.rejectReason && (
-                                        <div className="text-xs text-rose-700 bg-rose-50 rounded-2xl p-4 max-w-3xl flex items-start gap-2 shadow-inner">
-                                            <span className="material-symbols-outlined text-[18px]">cancel</span>
-                                            <div className="space-y-1">
-                                                <strong>Lý lý do tin bị từ chối phê duyệt:</strong>
-                                                <p className="text-rose-600 italic bg-white/60 p-2 rounded-xl mt-1">{job.rejectReason}</p>
-                                                <p className="text-[11px] text-slate-500 mt-1.5">
-                                                    👉 Vui lòng nhấp vào nút <strong>Chỉnh sửa</strong> để cập nhật lại tin đăng theo yêu cầu của Admin.
-                                                </p>
+                                        <div className="text-[10px] text-rose-700 bg-rose-50/60 p-2.5 rounded-xl flex flex-col gap-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="material-symbols-outlined text-[15px] flex-shrink-0 text-rose-500">cancel</span>
+                                                <strong>Tin bị từ chối duyệt:</strong>
                                             </div>
+                                            <p className="italic bg-white/70 p-2 rounded-lg text-rose-600 font-semibold">{job.rejectReason}</p>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Action Buttons Panel - Borderless style */}
-                                <div className="flex lg:flex-col gap-2.5 flex-shrink-0 justify-end lg:w-36 pt-4 lg:pt-0">
+                                {/* Divider line and actions panel */}
+                                <div className="border-t border-slate-50 pt-4 mt-5 flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setExtendingJobId(job.id);
+                                            const d = new Date();
+                                            d.setDate(d.getDate() + 30);
+                                            setNewDeadline(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="flex-1 text-center py-2 text-[11px] font-black text-amber-700 bg-amber-50 border border-amber-200/60 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer"
+                                    >
+                                        Gia hạn
+                                    </button>
                                     <Link
                                         href={`/employer/jobs/${job.id}/edit`}
-                                        className="flex-1 lg:flex-initial text-center px-4 py-2.5 text-xs font-bold text-[#0052CC] bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-150 active:scale-98 shadow-sm"
+                                        className="flex-1 text-center py-2 text-[11px] font-black text-[#0052CC] bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-center block"
                                     >
-                                        Chỉnh sửa tin
+                                        Sửa tin
                                     </Link>
                                     <button
                                         onClick={() => handleDelete(job.id)}
-                                        className="flex-1 lg:flex-initial text-center px-4 py-2.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all duration-150 active:scale-98 cursor-pointer"
+                                        className="px-2.5 text-center py-2 text-[11px] font-black text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors cursor-pointer"
+                                        title="Xóa tin đăng"
                                     >
-                                        Xóa tin đăng
+                                        <span className="material-symbols-outlined text-[16px] leading-none">delete</span>
                                     </button>
                                 </div>
                             </div>
                         );
                     })}
+                </div>
 
                     {/* Pagination control bar - borderless style */}
                     {pagination && pagination.totalPages > 1 && (
@@ -349,6 +410,83 @@ export default function EmployerJobsPage({ jobsData, paginationData, categories 
                             </div>
                         </div>
                     )}
+                </>
+            )}
+            {/* Modal Gia Hạn Tin Tuyển Dụng */}
+            {extendingJobId && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-amber-500 text-[28px]">hourglass_top</span>
+                                <h3 className="text-lg font-black text-slate-805">Gia hạn tin tuyển dụng</h3>
+                            </div>
+                            <button
+                                onClick={() => setExtendingJobId(null)}
+                                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-650 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-xs font-semibold text-slate-500 leading-relaxed">
+                                Chọn mốc thời gian muốn gia hạn thêm hoặc tùy chỉnh ngày kết thúc mới cho tin tuyển dụng này:
+                            </p>
+
+                            {/* Quick options */}
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { label: '+7 ngày', days: 7 },
+                                    { label: '+15 ngày', days: 15 },
+                                    { label: '+30 ngày', days: 30 }
+                                ].map(opt => (
+                                    <button
+                                        key={opt.days}
+                                        type="button"
+                                        onClick={() => {
+                                            const d = new Date();
+                                            d.setDate(d.getDate() + opt.days);
+                                            setNewDeadline(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="py-2.5 rounded-xl border border-slate-200 hover:border-[#0052CC]/55 text-xs font-bold text-slate-600 hover:text-[#0052CC] hover:bg-[#0052CC]/5 transition-all cursor-pointer"
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Custom Date Input */}
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-black uppercase tracking-wider text-slate-450">Ngày kết thúc mới</label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={newDeadline}
+                                        onChange={e => setNewDeadline(e.target.value)}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full h-11 px-4 border border-slate-200 rounded-xl text-slate-705 outline-none focus:ring-2 focus:ring-[#0052CC]/15 transition-all text-sm font-bold"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setExtendingJobId(null)}
+                                className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs cursor-pointer transition-colors"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={() => handleExtend(extendingJobId, newDeadline)}
+                                disabled={submittingExtension || !newDeadline}
+                                className="flex-1 h-11 rounded-xl bg-[#0052CC] hover:bg-[#0040a2] disabled:bg-slate-300 text-white font-bold text-xs cursor-pointer transition-all shadow-md active:scale-98"
+                            >
+                                {submittingExtension ? 'Đang cập nhật...' : 'Xác nhận gia hạn'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

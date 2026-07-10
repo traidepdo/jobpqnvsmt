@@ -29,9 +29,9 @@ export async function GET(
         const html = renderReactTemplate(
             slug,
             {
-                name: resume.user.name,
-                email: resume.user.email,
-                phone: resume.user.phone || "",
+                name: (resume.cvData as any)?.name || resume.fullName || resume.user.name,
+                email: (resume.cvData as any)?.email || resume.user.email,
+                phone: (resume.cvData as any)?.phone || resume.user.phone || "",
                 avatar: resume.avatarUrl || resume.user.avatar || "",
             },
             resume
