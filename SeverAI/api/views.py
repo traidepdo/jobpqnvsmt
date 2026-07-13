@@ -176,14 +176,16 @@ def evaluate_cv_api(request):
     if not job_text or not job_text.strip():
         return JsonResponse({'error': 'Không tìm thấy nội dung tin tuyển dụng.'}, status=400)
         
+    print(f"[API evaluate-cv] Request received. App ID: {application_id}, CV text length: {len(cv_text)}, Job text length: {len(job_text)}")
     score = calculate_match_score(cv_text, job_text)
     
     if application_id:
         try:
             # Update matching score directly
             Application.objects.filter(id=application_id).update(matchscore=score)
+            print(f"[API evaluate-cv] Successfully updated matchscore={score} for Application ID {application_id} in DB.")
         except Exception as e:
-            print(f"Error saving matchscore to DB: {e}")
+            print(f"[API evaluate-cv] Error saving matchscore to DB: {e}")
             
     return JsonResponse({'score': score})
 

@@ -6,6 +6,7 @@ import { getLatestModel, predictSalary } from "@/lib/salaryPredictor";
 export async function GET() {
 
     try {
+        const now = new Date();
         const countapplicate = await prisma.application.groupBy({
             by: ["jobId"],
             _count: {
@@ -20,6 +21,10 @@ export async function GET() {
             where: {
                 job: {
                     status: "ACTIVE",
+                    OR: [
+                        { deadline: null },
+                        { deadline: { gte: now } }
+                    ]
                 }
             }
         })
@@ -32,7 +37,11 @@ export async function GET() {
                 status: "ACTIVE",
                 id: {
                     in: jobIds
-                }
+                },
+                OR: [
+                    { deadline: null },
+                    { deadline: { gte: now } }
+                ]
             },
             include: {
                 company: { select: companyCardSelect },

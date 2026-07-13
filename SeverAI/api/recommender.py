@@ -58,7 +58,7 @@ def get_related_jobs(job_id, top_n=5):
                 (1 - (je.embedding <=> %s::vector)) AS similarity_score
             FROM job_embeddings je
             JOIN jobs j ON je.job_id = j.id
-            WHERE j.id != %s AND j."isVisible" = TRUE AND j."categoryId" = %s
+            WHERE j.id != %s AND j."isVisible" = TRUE AND j.status = 'ACTIVE' AND (j.deadline IS NULL OR j.deadline >= NOW()) AND j."categoryId" = %s
             ORDER BY je.embedding <=> %s::vector
             LIMIT %s
         """
@@ -104,7 +104,7 @@ def get_related_jobs(job_id, top_n=5):
                     (1 - (je.embedding <=> %s::vector)) AS similarity_score
                 FROM job_embeddings je
                 JOIN jobs j ON je.job_id = j.id
-                WHERE j.id NOT IN ({placeholders}) AND j."isVisible" = TRUE
+                WHERE j.id NOT IN ({placeholders}) AND j."isVisible" = TRUE AND j.status = 'ACTIVE' AND (j.deadline IS NULL OR j.deadline >= NOW())
                 ORDER BY je.embedding <=> %s::vector
                 LIMIT %s
             """

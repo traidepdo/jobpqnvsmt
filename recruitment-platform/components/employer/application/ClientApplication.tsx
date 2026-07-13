@@ -292,7 +292,11 @@ export default function EmployerApplicationsPage({
         const app = apps.find(a => a.id === appId);
         if (!app || app.status === targetStatus) return;
 
-        handleStatusChangeClick(appId, targetStatus);
+        if (selectedIds.includes(appId)) {
+            handleBulkStatusUpdateClick(targetStatus as any);
+        } else {
+            handleStatusChangeClick(appId, targetStatus);
+        }
     };
 
     const handleDragOver = (e: React.DragEvent) => {

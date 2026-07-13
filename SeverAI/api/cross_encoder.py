@@ -25,6 +25,8 @@ def calculate_match_score(cv_text: str, job_text: str) -> int:
     cv_truncated = cv_text[:1200]
     job_truncated = job_text[:1000]
     
+    print(f"[AI Cross-Encoder] Calculating match score. Truncated CV len: {len(cv_truncated)}, Job len: {len(job_truncated)}")
+    
     try:
         model = get_model()
         # Predict returns logit or probability score.
@@ -38,7 +40,9 @@ def calculate_match_score(cv_text: str, job_text: str) -> int:
             probability = 1 / (1 + math.exp(-raw_score))
             
         score = int(round(probability * 100))
-        return max(0, min(100, score))
+        final_score = max(0, min(100, score))
+        print(f"[AI Cross-Encoder] Calculation successful. Raw score: {raw_score:.4f} -> Probability: {probability:.4f} -> Final score: {final_score}%")
+        return final_score
     except Exception as e:
-        print(f"Error computing PhoRanker match score: {e}")
+        print(f"[AI Cross-Encoder] Error computing PhoRanker match score: {e}")
         return 0

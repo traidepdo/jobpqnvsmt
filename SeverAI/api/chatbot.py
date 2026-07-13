@@ -100,7 +100,7 @@ def get_gemini_recommendations(cv_text, top_n=3):
                 (1 - (je.embedding <=> %s::vector)) AS similarity_score
             FROM job_embeddings je
             JOIN jobs j ON je.job_id = j.id
-            WHERE j."isVisible" = TRUE
+            WHERE j."isVisible" = TRUE AND j.status = 'ACTIVE' AND (j.deadline IS NULL OR j.deadline >= NOW())
             ORDER BY je.embedding <=> %s::vector
             LIMIT 12
         """

@@ -14,7 +14,7 @@ interface GetApplicationsParams {
 }
 
 export async function getApplications(params: GetApplicationsParams) {
-    const limit = params.limit || 10;
+    const limit = params.limit || 100;
     const page = params.page || 1;
     const skip = (page - 1) * limit;
 

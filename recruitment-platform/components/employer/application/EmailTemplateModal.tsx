@@ -32,16 +32,11 @@ export default function EmailTemplateModal({
         if (status === 'ACCEPTED') {
             setSubject(`Thư mời phỏng vấn - Vị trí ${jobTitle} - ${companyName}`);
             setBody(
-`Chào ${candidateName},
+                `Chào ${candidateName},
 
 Cảm ơn bạn đã quan tâm và gửi hồ sơ ứng tuyển vào vị trí ${jobTitle} tại ${companyName}.
 
 Hồ sơ của bạn đã được ban tuyển dụng đánh giá cao. Chúng tôi trân trọng kính mời bạn tham dự buổi phỏng vấn trao đổi chi tiết hơn về công việc.
-
-Thông tin lịch hẹn phỏng vấn dự kiến:
-- Thời gian: [Thời gian phỏng vấn dự kiến, ví dụ: 09:00 Thứ Hai tuần sau]
-- Hình thức: Phỏng vấn Trực tuyến / Trực tiếp tại văn phòng
-- Nội dung chuẩn bị: Bản in CV và các sản phẩm dự án tiêu biểu (nếu có).
 
 Bạn vui lòng phản hồi lại email này để xác nhận sự tham gia hoặc đề xuất khung giờ phù hợp hơn.
 
@@ -51,7 +46,7 @@ Ban tuyển dụng ${companyName}`
         } else {
             setSubject(`Thư cảm ơn ứng tuyển vị trí ${jobTitle} - ${companyName}`);
             setBody(
-`Chào ${candidateName},
+                `Chào ${candidateName},
 
 Cảm ơn bạn đã dành thời gian quan tâm và gửi hồ sơ ứng tuyển vị trí ${jobTitle} tại ${companyName}.
 
