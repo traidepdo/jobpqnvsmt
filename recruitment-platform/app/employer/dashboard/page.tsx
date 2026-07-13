@@ -202,7 +202,7 @@ export default function EmployerDashboardPage() {
   return (
     <div className="dash">
       <style>{`
-        .dash { font-family: -apple-system, "Segoe UI", Inter, sans-serif; background: #F6F7FB; padding: 24px 0; color: #1A1D29; min-height: 100vh; box-sizing: border-box; }
+        .dash { font-family: -apple-system, "Segoe UI", Inter, sans-serif; background: #F6F7FB; padding: 24px 24px; color: #1A1D29; min-height: 100vh; box-sizing: border-box; }
         .dash * { box-sizing: border-box; }
         .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
         .greeting h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px; color: #0f172a; }

@@ -160,62 +160,48 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
       )}
 
       {/* ── Sidebar (Responsive Drawer) ── */}
-      <aside className={`${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:w-[68px] md:translate-x-0'} fixed md:static inset-y-0 left-0 z-50 flex-shrink-0 flex flex-col transition-all duration-300 bg-white shadow-md overflow-hidden`}>
+      <aside className={`${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:w-[76px] md:translate-x-0'} fixed md:static inset-y-0 left-0 z-50 flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out bg-white border-r border-slate-100 overflow-hidden`}>
 
         {/* Logo */}
-        <div className={`h-16 flex items-center border-b border-slate-50 flex-shrink-0 ${sidebarOpen ? 'px-5 gap-3' : 'justify-center'}`}>
-          <Link href="/" className="flex items-center gap-1.5 group" onClick={handleNavClick}>
-            <div className="w-8 h-8 rounded-lg bg-[#0052CC] flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-extrabold text-sm">PQ</span>
+        <div className={`h-16 flex items-center border-b border-slate-100 flex-shrink-0 px-6 transition-all duration-300 ${sidebarOpen ? 'gap-3 justify-start' : 'justify-center px-0'}`}>
+          <Link href="/" className="flex items-center gap-2 group" onClick={handleNavClick}>
+            <div className="w-8 h-8 rounded-lg bg-[#0052CC] flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-102">
+              <span className="text-white font-bold text-sm">PQ</span>
             </div>
-            {sidebarOpen && (
-              <span className="font-extrabold text-lg text-[#041b3c] group-hover:opacity-80 transition-opacity">
-                Jobs<span className="text-[#0052CC]">.</span>
-              </span>
-            )}
+            <span className={`font-extrabold text-base text-[#0f172a] tracking-tight transition-all duration-300 whitespace-nowrap
+              ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 pointer-events-none'}`}>
+              Jobs<span className="text-[#0052CC]">.</span>
+            </span>
           </Link>
         </div>
 
-        {/* Company card */}
-        {sidebarOpen ? (
-          <div className="mx-3 mt-4 p-3 rounded-xl bg-[#f0f4ff]">
-            <div className="flex items-center gap-3">
-              {company?.logo ? (
-                <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 flex-shrink-0" />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-[#0052CC] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  {company?.name?.[0] ?? 'C'}
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-[#041b3c] truncate">{company?.name ?? 'Công ty'}</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${company?.isApproved ? 'bg-[#00b14f]' : 'bg-amber-400'}`} />
-                  <span className={`text-[11px] font-medium ${company?.isApproved ? 'text-[#00b14f]' : 'text-amber-500'}`}>
-                    {company?.isApproved ? 'Đã xác minh' : 'Chờ duyệt'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center mt-4">
+        {/* Company Card (Minimalist style) */}
+        <div className={`mx-4 mt-4 mb-2 p-2 rounded-xl border border-slate-100 bg-slate-50/50 transition-all duration-300 ${sidebarOpen ? 'px-3' : 'px-1 justify-center'}`}>
+          <div className="flex items-center gap-3 justify-start">
             {company?.logo ? (
-              <img src={company.logo} alt="" className="w-10 h-10 rounded-xl object-contain bg-white p-0.5" />
+              <img src={company.logo} alt="" className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-100 p-0.5 flex-shrink-0 shadow-sm" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-[#0052CC] flex items-center justify-center text-white font-bold">
+              <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-base flex-shrink-0">
                 {company?.name?.[0] ?? 'C'}
               </div>
             )}
+            <div className={`min-w-0 transition-all duration-300 ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 pointer-events-none'}`}>
+              <p className="text-xs font-bold text-[#0f172a] truncate">{company?.name ?? 'Công ty'}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${company?.isApproved ? 'bg-[#00b14f]' : 'bg-amber-400'}`} />
+                <span className={`text-[10px] font-semibold ${company?.isApproved ? 'text-[#00b14f]' : 'text-amber-600'}`}>
+                  {company?.isApproved ? 'Đã xác minh' : 'Chờ duyệt'}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Nav label */}
-        {sidebarOpen && (
-          <p className="px-4 mt-5 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            Quản lý
-          </p>
-        )}
+        <p className={`px-6 mt-4 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap transition-all duration-300
+          ${sidebarOpen ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden pointer-events-none mt-0 mb-0'}`}>
+          Quản lý
+        </p>
 
         {/* Nav items */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
@@ -234,53 +220,55 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
                 href={item.href}
                 onClick={handleNavClick}
                 title={!sidebarOpen ? item.label : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-155 group
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 group
                   ${active
-                    ? 'bg-[#0052CC] text-white shadow-sm shadow-[#0052CC]/30'
-                    : 'text-gray-500 hover:bg-[#f0f4ff] hover:text-[#0052CC]'
+                    ? 'bg-blue-50/80 text-[#0052CC]'
+                    : 'text-slate-600 hover:bg-slate-50/80 hover:text-slate-950'
                   }
-                  ${!sidebarOpen ? 'justify-center' : ''}
                 `}
               >
-                {/* Icon + badge khi collapsed */}
-                <div className="relative flex-shrink-0">
-                  <span className={`material-symbols-outlined text-[20px] transition-colors
-                    ${active ? 'text-white' : 'text-gray-400 group-hover:text-[#0052CC]'}`}>
+                {/* Active Indicator Bar (Left) */}
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r bg-[#0052CC]" />
+                )}
+
+                {/* Icon */}
+                <div className="relative flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                  <span className={`material-symbols-outlined text-[20px] transition-colors duration-200
+                    ${active ? 'text-[#0052CC]' : 'text-slate-400 group-hover:text-slate-600'}`}>
                     {item.icon}
                   </span>
+
+                  {/* Badge số khi collapsed */}
                   {!sidebarOpen && isMessages && unreadMessages > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center shadow-sm">
                       {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                  {!sidebarOpen && isSupport && unreadSupport > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center shadow-sm">
+                      {unreadSupport > 9 ? '9+' : unreadSupport}
                     </span>
                   )}
                 </div>
 
                 {/* Label */}
-                {sidebarOpen && <span className="truncate">{item.label}</span>}
+                <span className={`whitespace-nowrap transition-all duration-300 ease-in-out truncate font-medium
+                  ${sidebarOpen ? 'opacity-100 w-auto ml-0' : 'opacity-0 w-0 pointer-events-none ml-[-12px]'}`}>
+                  {item.label}
+                </span>
 
                 {/* Badge số khi expanded */}
                 {sidebarOpen && isMessages && unreadMessages > 0 && (
-                  <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center
-                    ${active ? 'bg-white text-[#0052CC]' : 'bg-red-500 text-white'}`}>
+                  <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center transition-all duration-300
+                    ${active ? 'bg-blue-100 text-[#0052CC]' : 'bg-rose-500 text-white'}`}>
                     {unreadMessages > 99 ? '99+' : unreadMessages}
                   </span>
                 )}
-
-                {/* Active dot khi collapsed */}
-                {!sidebarOpen && active && !isMessages && (
-                  <span className="absolute right-2 w-1.5 h-1.5 rounded-full bg-[#0052CC]" />
-                )}
-
                 {sidebarOpen && isSupport && unreadSupport > 0 && (
-                  <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center
-                    ${active ? 'bg-white text-[#0052CC]' : 'bg-red-500 text-white'}`}>
+                  <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center transition-all duration-300
+                    ${active ? 'bg-blue-100 text-[#0052CC]' : 'bg-rose-500 text-white'}`}>
                     {unreadSupport > 99 ? '99+' : unreadSupport}
-                  </span>
-                )}
-
-                {!sidebarOpen && isSupport && unreadSupport > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full flex items-center justify-center">
-                    {unreadSupport > 9 ? '9+' : unreadSupport}
                   </span>
                 )}
               </Link>
@@ -289,14 +277,17 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
         </nav>
 
         {/* Bottom */}
-        <div className="p-3 space-y-2 border-t border-slate-50">
+        <div className="p-3 border-t border-slate-100">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors cursor-pointer
-              ${!sidebarOpen ? 'justify-center' : ''}`}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 cursor-pointer"
+            title={!sidebarOpen ? 'Đăng xuất' : undefined}
           >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            {sidebarOpen && 'Đăng xuất'}
+            <span className="material-symbols-outlined text-[20px] flex-shrink-0 text-slate-400">logout</span>
+            <span className={`whitespace-nowrap transition-all duration-300 font-medium
+              ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 pointer-events-none'}`}>
+              Đăng xuất
+            </span>
           </button>
         </div>
       </aside>
@@ -304,27 +295,27 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Topbar */}
-        <header className="h-16 bg-white flex items-center justify-between px-6 shadow-sm flex-shrink-0 z-10">
+        <header className="h-16 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 border-b border-slate-100 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(o => !o)}
-              className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
+              className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-[#0052CC] transition-all cursor-pointer shadow-sm"
             >
-              <span className="material-symbols-outlined text-[20px]">
+              <span className="material-symbols-outlined text-[20px] transition-transform duration-200">
                 {sidebarOpen ? 'menu_open' : 'menu'}
               </span>
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400 hidden sm:block">Nhà tuyển dụng</span>
-              <span className="material-symbols-outlined text-[14px] text-gray-300 hidden sm:block">chevron_right</span>
-              <h1 className="text-sm font-bold text-[#041b3c]">{pageTitle}</h1>
+              <span className="text-sm text-slate-400 font-medium hidden sm:block">Nhà tuyển dụng</span>
+              <span className="material-symbols-outlined text-[14px] text-slate-300 hidden sm:block">chevron_right</span>
+              <h1 className="text-sm font-extrabold text-[#041b3c]">{pageTitle}</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link
               href="/employer/jobs/new"
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-[#0052CC] hover:bg-[#0040a2] text-white text-xs font-bold rounded-xl shadow-sm shadow-[#0052CC]/20 transition-all"
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-tr from-[#0052CC] to-[#0073e6] hover:brightness-110 active:scale-98 text-white text-xs font-bold rounded-xl shadow-md shadow-[#0052CC]/15 transition-all duration-200"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               Đăng tin mới
@@ -335,37 +326,37 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
             <div className="relative" data-user-menu>
               <button
                 onClick={() => setUserMenuOpen(p => !p)}
-                className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all cursor-pointer"
+                className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all cursor-pointer group"
               >
-                <div className="w-7 h-7 rounded-lg bg-[#0052CC] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0052CC] to-[#0073e6] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">
                   {userName?.[0]?.toUpperCase() ?? 'U'}
                 </div>
-                <span className="text-sm font-semibold text-[#041b3c] hidden sm:block max-w-[120px] truncate">
+                <span className="text-sm font-bold text-[#041b3c] hidden sm:block max-w-[120px] truncate">
                   {userName || 'Tài khoản'}
                 </span>
-                <span className="material-symbols-outlined text-[16px] text-gray-400">keyboard_arrow_down</span>
+                <span className="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-slate-600 transition-colors">keyboard_arrow_down</span>
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 py-1">
-                  <div className="px-4 py-3 border-b border-gray-50">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100/80 overflow-hidden z-50 py-1.5">
+                  <div className="px-4 py-3 border-b border-slate-50">
                     <p className="text-sm font-bold text-[#041b3c] truncate">{userName}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Nhà tuyển dụng</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Nhà tuyển dụng</p>
                   </div>
                   <Link href="/employer/company"
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0052CC] transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">business</span>
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#0052CC] transition-colors font-medium">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">business</span>
                     Hồ sơ công ty
                   </Link>
                   <Link href="/employer/settings"
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0052CC] transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">settings</span>
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#0052CC] transition-colors font-medium">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">settings</span>
                     Cài đặt
                   </Link>
-                  <div className="border-t border-gray-50 mt-1">
+                  <div className="border-t border-slate-50 mt-1">
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer font-semibold"
                     >
                       <span className="material-symbols-outlined text-[18px]">logout</span>
                       Đăng xuất
@@ -377,7 +368,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-3 overflow-auto">
           {children}
         </main>
       </div>

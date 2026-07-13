@@ -41,7 +41,7 @@ export default function EmployerInterviewsPage({
     }, [onlyBookmarked, jobSearch, pendingSearchQuery]);
 
     // Filter — interview list
-    const [filterStatus, setFilterStatus] = useState<InterviewStatus | ''>('');
+    const [filterStatus, setFilterStatus] = useState<InterviewStatus | 'EXPIRED' | ''>('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     const load = async () => {
@@ -121,11 +121,22 @@ export default function EmployerInterviewsPage({
         pendingPage * pendingPageSize
     );
 
-    const filteredInterviews = interviews.filter(iv => !filterStatus || iv.status === filterStatus);
+    const filteredInterviews = interviews.filter(iv => {
+        const isExpired = iv.status === 'SCHEDULED' && new Date(iv.scheduledAt) < new Date();
+        if (filterStatus === 'EXPIRED') {
+            return isExpired;
+        }
+        if (filterStatus === 'SCHEDULED') {
+            return iv.status === 'SCHEDULED' && !isExpired;
+        }
+        if (!filterStatus) return true;
+        return iv.status === filterStatus;
+    });
 
     const stats = {
         total: interviews.length,
-        scheduled: interviews.filter(i => i.status === 'SCHEDULED').length,
+        scheduled: interviews.filter(i => i.status === 'SCHEDULED' && new Date(i.scheduledAt) >= new Date()).length,
+        expired: interviews.filter(i => i.status === 'SCHEDULED' && new Date(i.scheduledAt) < new Date()).length,
         confirmed: interviews.filter(i => i.candidateStatus === 'CONFIRMED').length,
         pending: interviews.filter(i => i.candidateStatus === 'PENDING' && i.status === 'SCHEDULED').length,
     };
@@ -148,10 +159,11 @@ export default function EmployerInterviewsPage({
             </div>
 
             {/* Stats Dashboard */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 {[
                     { label: 'Tổng lịch', value: stats.total, icon: 'calendar_month', color: '#0052CC', bg: 'bg-[#EFF4FF]' },
                     { label: 'Sắp diễn ra', value: stats.scheduled, icon: 'event', color: '#FF8B00', bg: 'bg-[#FFFAE6]' },
+                    { label: 'Hết hạn', value: stats.expired, icon: 'history', color: '#DE350B', bg: 'bg-[#FFEBE6]' },
                     { label: 'Đã xác nhận', value: stats.confirmed, icon: 'thumb_up', color: '#00875A', bg: 'bg-[#E3FCEF]' },
                     { label: 'Chờ phản hồi', value: stats.pending, icon: 'hourglass_empty', color: '#6554C0', bg: 'bg-[#EAE6FF]' },
                 ].map(s => (
@@ -197,7 +209,7 @@ export default function EmployerInterviewsPage({
                             <button
                                 onClick={() => setOnlyBookmarked(v => !v)}
                                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${onlyBookmarked
-                                    ? 'bg-amber-450 border-amber-450 text-white shadow-sm'
+                                    ? 'bg-yellow-400 border-yellow-400 text-white shadow-sm'
                                     : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-400 hover:text-amber-500'
                                     }`}
                             >
@@ -315,7 +327,7 @@ export default function EmployerInterviewsPage({
                         <h2 className="font-extrabold text-slate-800 text-base">Lịch phỏng vấn</h2>
                     </div>
                     <div className="flex flex-wrap gap-1 bg-slate-55 p-0.5 rounded-xl border border-slate-100">
-                        {([['', 'Tất cả'], ['SCHEDULED', 'Đã lên lịch'], ['COMPLETED', 'Hoàn thành'], ['CANCELLED', 'Đã hủy']] as [string, string][]).map(([val, label]) => (
+                        {([['', 'Tất cả'], ['SCHEDULED', 'Đã lên lịch'], ['EXPIRED', 'Hết hạn'], ['COMPLETED', 'Hoàn thành'], ['CANCELLED', 'Đã hủy']] as [string, string][]).map(([val, label]) => (
                             <button
                                 key={val}
                                 onClick={() => setFilterStatus(val as any)}
@@ -342,7 +354,10 @@ export default function EmployerInterviewsPage({
                 ) : (
                     <div className="grid grid-cols-1 gap-3.5">
                         {filteredInterviews.map(iv => {
-                            const sCfg = STATUS_CFG[iv.status];
+                            const isExpired = iv.status === 'SCHEDULED' && new Date(iv.scheduledAt) < new Date();
+                            const sCfg = isExpired
+                                ? { label: 'Hết hạn', color: '#DE350B', bg: '#FFEBE6', border: '#FFBDAD', icon: 'history' }
+                                : STATUS_CFG[iv.status];
                             const cCfg = CANDIDATE_CFG[iv.candidateStatus];
 
                             return (

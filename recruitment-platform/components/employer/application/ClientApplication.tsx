@@ -8,6 +8,7 @@ import { parseResumeJson, type EducationItem, type ExperienceItem } from '@/lib/
 import type { Application } from '@/lib/types/employer/application';
 import { statusStyle, getStatusActions, actionBtnStyle, actionLabel } from '@/lib/jobLabelsApplication';
 import EmailTemplateModal from '@/components/employer/application/EmailTemplateModal';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 export default function EmployerApplicationsPage({
     applications,
@@ -42,7 +43,15 @@ export default function EmployerApplicationsPage({
     const [sendingEmail, setSendingEmail] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [bulkModal, setBulkModal] = useState<{ status: 'ACCEPTED' | 'REJECTED' } | null>(null);
-    const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
+    const [collapsedColumns, setCollapsedColumns] = useState<string[]>(['REVIEWING', 'ACCEPTED', 'REJECTED']);
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+    const [quickFilter, setQuickFilter] = useState<'all' | 'high_ai' | 'quiz' | 'bookmarked'>('all');
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     const [visiblePages, setVisiblePages] = useState<Record<string, number>>({
         PENDING: 1,
         REVIEWING: 1,
@@ -324,9 +333,63 @@ export default function EmployerApplicationsPage({
         REJECTED: { bg: 'bg-rose-50', text: 'text-rose-850', icon: 'cancel' },
     };
 
+    const totalApps = apps.length;
+    const pendingCount = apps.filter(a => a.status === 'PENDING').length;
+    const reviewingCount = apps.filter(a => a.status === 'REVIEWING').length;
+    const acceptedCount = apps.filter(a => a.status === 'ACCEPTED').length;
+    const rejectedCount = apps.filter(a => a.status === 'REJECTED').length;
+
+    const scoredApps = apps.filter(a => a.matchScore !== undefined && a.matchScore !== null);
+    const avgScore = scoredApps.length 
+        ? Math.round(scoredApps.reduce((acc, curr) => acc + (curr.matchScore || 0), 0) / scoredApps.length) 
+        : 0;
+    const acceptRate = totalApps ? Math.round((acceptedCount / totalApps) * 100) : 0;
+
+    const chartData = [
+        { name: 'Chờ xử lý', value: pendingCount, color: '#f59e0b' },
+        { name: 'Đang xem xét', value: reviewingCount, color: '#6366f1' },
+        { name: 'Chấp nhận', value: acceptedCount, color: '#10b981' },
+        { name: 'Từ chối', value: rejectedCount, color: '#f43f5e' }
+    ].filter(d => d.value > 0);
+
+    const getFilteredApps = () => {
+        let list = apps;
+        if (quickFilter === 'high_ai') {
+            list = list.filter(a => (a.matchScore || 0) >= 75);
+        } else if (quickFilter === 'quiz') {
+            list = list.filter(a => a.quizScore !== undefined && a.quizScore !== null);
+        } else if (quickFilter === 'bookmarked') {
+            list = list.filter(a => a.isBookmarked);
+        }
+        return list;
+    };
+
+    const filteredAppsList = getFilteredApps();
+
+    const exportCSV = () => {
+        const headers = ['Tên ứng viên', 'Vị trí ứng tuyển', 'Trạng thái', 'Điểm AI', 'Điểm Test', 'Ngày nộp'];
+        const rows = filteredAppsList.map(a => [
+            a.user.name,
+            a.job.title,
+            a.status,
+            a.matchScore || 'N/A',
+            a.quizScore || 'N/A',
+            new Date(a.createdAt).toLocaleDateString('vi-VN')
+        ]);
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+            + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Bao_cao_ung_vien_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6 w-full mx-auto px-4 py-6 text-slate-800 animate-fadeIn">
-            {/* Redesigned clean header without borders, themed with #0052CC */}
+            {/* Header Block */}
             <div className="relative overflow-hidden bg-gradient-to-r from-[#0052CC] to-[#0040a2] rounded-3xl p-8 shadow-md text-white">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_120%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
                 <div className="relative z-10 space-y-2">
@@ -343,7 +406,93 @@ export default function EmployerApplicationsPage({
                 </div>
             </div>
 
-            {/* Combined Search & Filters panel - borderless, shadow-sm */}
+            {/* Analytics & Stats & Pie Chart Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Donut Chart (Left 5 cols) */}
+                <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[220px]">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 self-start">Tỷ lệ trạng thái hồ sơ</h4>
+                    {isMounted && chartData.length > 0 ? (
+                        <div className="w-full h-36 flex items-center justify-between gap-2">
+                            <div className="w-1/2 h-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={chartData}
+                                            innerRadius={45}
+                                            outerRadius={60}
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                        >
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="w-1/2 flex flex-col gap-2.5">
+                                {chartData.map((d, i) => (
+                                    <div key={i} className="flex items-center justify-between text-xs font-semibold">
+                                        <div className="flex items-center gap-1.5 text-slate-500">
+                                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                                            <span>{d.name}</span>
+                                        </div>
+                                        <span className="text-slate-800 font-bold">{d.value} ({Math.round((d.value / totalApps) * 100)}%)</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-slate-400 text-xs italic py-8">Chưa có dữ liệu biểu đồ</div>
+                    )}
+                </div>
+
+                {/* Right stats counters (Right 7 cols) */}
+                <div className="lg:col-span-7 grid grid-cols-2 gap-4">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng ứng tuyển</p>
+                            <h4 className="text-2xl font-black text-slate-800">{totalApps}</h4>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0052CC] flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-[20px]">groups</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Điểm AI trung bình</p>
+                            <h4 className="text-2xl font-black text-emerald-600">{avgScore}%</h4>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-[20px]">neurology</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Đang xem xét</p>
+                            <h4 className="text-2xl font-black text-indigo-600">{reviewingCount}</h4>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-indigo-55 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tỷ lệ nhận</p>
+                            <h4 className="text-2xl font-black text-teal-600">{acceptRate}%</h4>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Combined Search & Filters panel */}
             <div className="bg-white rounded-3xl p-6 shadow-sm space-y-6">
                 <form onSubmit={handleSearch} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                     <div className="lg:col-span-6 relative">
@@ -355,7 +504,7 @@ export default function EmployerApplicationsPage({
                             placeholder="Tìm kiếm ứng viên bằng tên, email..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            className="w-full h-12 pl-12 pr-4 text-sm bg-slate-50 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 transition-all duration-200"
+                            className="w-full h-12 pl-12 pr-4 text-sm bg-slate-50/70 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 transition-all duration-200"
                         />
                     </div>
 
@@ -363,7 +512,7 @@ export default function EmployerApplicationsPage({
                         <select
                             value={filterJob}
                             onChange={(e) => setFilterJob(e.target.value)}
-                            className="w-full h-12 pl-4 pr-10 text-sm bg-slate-50 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 appearance-none cursor-pointer font-bold text-slate-700"
+                            className="w-full h-12 pl-4 pr-10 text-sm bg-slate-50/70 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-[#0052CC]/25 appearance-none cursor-pointer font-bold text-slate-700"
                             style={{
                                 backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                                 backgroundRepeat: 'no-repeat',
@@ -383,36 +532,148 @@ export default function EmployerApplicationsPage({
                             type="submit"
                             className="w-full h-12 bg-[#0052CC] hover:bg-[#0040a2] text-white text-sm font-bold rounded-2xl transition-all duration-200 cursor-pointer shadow-md active:scale-98"
                         >
-                            Lọc & Tìm kiếm
+                            Tìm kiếm ứng tuyển
                         </button>
                     </div>
                 </form>
 
-                {/* Filter Status Tabs & Categories selection */}
-                <div className="pt-2 flex justify-end">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400 font-bold whitespace-nowrap">Ngành nghề:</span>
-                        <select
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
-                            className="text-xs bg-slate-50 rounded-xl px-3 py-2 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#0052CC]/20 cursor-pointer"
+                {/* Sub controls bar: Quick filters, View toggle & Reports */}
+                <div className="pt-4 border-t border-slate-100/70 flex flex-wrap items-center justify-between gap-4">
+                    {/* Quick filter chips */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={() => setQuickFilter('all')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                quickFilter === 'all' ? 'bg-[#0052CC] text-white' : 'bg-slate-50 text-slate-650 hover:bg-slate-100'
+                            }`}
                         >
-                            <option value="">Tất cả ngành nghề</option>
-                            {categories.map((c) => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                            Tất cả
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setQuickFilter('high_ai')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                quickFilter === 'high_ai' ? 'bg-[#0052CC] text-white' : 'bg-slate-50 text-slate-650 hover:bg-slate-100'
+                            }`}
+                        >
+                            AI xuất sắc (≥75%)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setQuickFilter('quiz')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                quickFilter === 'quiz' ? 'bg-[#0052CC] text-white' : 'bg-slate-50 text-slate-650 hover:bg-slate-100'
+                            }`}
+                        >
+                            Có điểm test
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setQuickFilter('bookmarked')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                quickFilter === 'bookmarked' ? 'bg-[#0052CC] text-white' : 'bg-slate-50 text-slate-650 hover:bg-slate-100'
+                            }`}
+                        >
+                            Đã lưu sao
+                        </button>
+                    </div>
+
+                    {/* View togglers & actions */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400 font-bold whitespace-nowrap">Lọc ngành:</span>
+                            <select
+                                value={filterCategory}
+                                onChange={(e) => setFilterCategory(e.target.value)}
+                                className="text-xs bg-slate-50 border border-slate-150 rounded-xl px-3 py-2 font-bold text-slate-700 outline-none cursor-pointer"
+                            >
+                                <option value="">Tất cả ngành nghề</option>
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="h-6 w-[1px] bg-slate-200 mx-1" />
+
+                        {/* Export Button */}
+                        <button
+                            type="button"
+                            onClick={exportCSV}
+                            title="Xuất báo cáo Excel CSV"
+                            className="w-9 h-9 bg-slate-50 hover:bg-slate-100 border border-slate-150 rounded-xl flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">download</span>
+                        </button>
+
+                        {/* View mode toggle */}
+                        <div className="bg-slate-100 p-0.5 rounded-xl flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('board')}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                                    viewMode === 'board' ? 'bg-white shadow-sm text-[#0052CC]' : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                                title="Giao diện thẻ Kanban"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">view_week</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('list')}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                                    viewMode === 'list' ? 'bg-white shadow-sm text-[#0052CC]' : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                                title="Giao diện danh sách"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">table_rows</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Content body - Borderless Cards, using theme color */}
+            {/* Contextual Bulk Action Bar */}
+            {selectedIds.length > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between animate-fadeIn">
+                    <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px] text-[#0052CC]">check_box</span>
+                        <span className="text-xs font-bold text-[#0052CC]">Đã chọn {selectedIds.length} ứng viên</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleBulkStatusUpdateClick('ACCEPTED')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                        >
+                            Chấp nhận hàng loạt
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleBulkStatusUpdateClick('REJECTED')}
+                            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                        >
+                            Từ chối hàng loạt
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedIds([])}
+                            className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                        >
+                            Bỏ chọn
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Content body - Switchable based on viewMode */}
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 space-y-4">
                     <div className="w-12 h-12 border-4 border-slate-150 border-t-[#0052CC] rounded-full animate-spin" />
                     <p className="text-xs text-slate-400 font-bold tracking-wide">Đang cập nhật hồ sơ ứng tuyển...</p>
                 </div>
-            ) : apps.length === 0 ? (
+            ) : filteredAppsList.length === 0 ? (
                 <div className="bg-white rounded-3xl p-20 text-center shadow-sm">
                     <div className="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5">
                         <span className="material-symbols-outlined text-[36px] text-slate-400">group_off</span>
@@ -422,7 +683,128 @@ export default function EmployerApplicationsPage({
                         Hệ thống hiện tại chưa có đơn ứng tuyển nào khớp với bộ lọc tìm kiếm này.
                     </p>
                 </div>
+            ) : viewMode === 'list' ? (
+                /* ── Table View Mode ── */
+                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <th className="p-4 w-12">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.length === filteredAppsList.length && filteredAppsList.length > 0}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedIds(filteredAppsList.map(a => a.id));
+                                            } else {
+                                                setSelectedIds([]);
+                                            }
+                                        }}
+                                        className="w-3.5 h-3.5 rounded border-slate-300 text-[#0052CC] focus:ring-[#0052CC] cursor-pointer"
+                                    />
+                                </th>
+                                <th className="p-4">Ứng viên / Công việc</th>
+                                <th className="p-4">Trạng thái</th>
+                                <th className="p-4">Điểm đánh giá</th>
+                                <th className="p-4">Ngày nộp</th>
+                                <th className="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                            {filteredAppsList.map(app => (
+                                <tr key={app.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => setSelectedApp(app)}>
+                                    <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(app.id)}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setSelectedIds(prev => 
+                                                    checked ? [...prev, app.id] : prev.filter(id => id !== app.id)
+                                                );
+                                            }}
+                                            className="w-3.5 h-3.5 rounded border-slate-300 text-[#0052CC] focus:ring-[#0052CC] cursor-pointer"
+                                        />
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white text-[11px] font-black overflow-hidden flex-shrink-0">
+                                                {app.user.avatar ? (
+                                                    <img src={app.user.avatar} alt={app.user.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    app.user.name[0]
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="text-xs font-bold text-slate-800 leading-snug">{app.user.name}</h4>
+                                                <p className="text-[10px] font-medium text-slate-400 mt-0.5">{app.job.title}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                                            app.status === 'PENDING' ? 'bg-amber-500/10 text-amber-800' :
+                                            app.status === 'REVIEWING' ? 'bg-indigo-500/10 text-indigo-800' :
+                                            app.status === 'ACCEPTED' ? 'bg-emerald-500/10 text-emerald-800' :
+                                            'bg-rose-500/10 text-rose-800'
+                                        }`}>
+                                            {app.status === 'PENDING' ? 'Chờ xử lý' :
+                                             app.status === 'REVIEWING' ? 'Đang xem xét' :
+                                             app.status === 'ACCEPTED' ? 'Chấp nhận' : 'Từ chối'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex gap-2">
+                                            {app.matchScore !== undefined && app.matchScore !== null && (
+                                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${
+                                                    app.matchScore >= 75 ? 'bg-emerald-50/70 text-emerald-700 border-emerald-100/50' :
+                                                    app.matchScore >= 50 ? 'bg-amber-50/70 text-amber-700 border-amber-100/50' :
+                                                    'bg-rose-50/70 text-rose-700 border-rose-100/50'
+                                                }`}>
+                                                    AI: {app.matchScore}%
+                                                </span>
+                                            )}
+                                            {app.quizScore !== undefined && app.quizScore !== null && (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-blue-50/70 text-blue-700 border border-blue-100/50">
+                                                    Test: {app.quizScore}%
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-xs font-semibold text-slate-400">
+                                        {new Date(app.createdAt).toLocaleDateString('vi-VN')}
+                                    </td>
+                                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedApp(app)}
+                                                className="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-[#0052CC] flex items-center justify-center cursor-pointer transition-colors"
+                                                title="Xem chi tiết"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleBookmark(app.id)}
+                                                className={`w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center cursor-pointer transition-colors ${
+                                                    app.isBookmarked ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'
+                                                }`}
+                                                title="Đánh dấu"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">
+                                                    {app.isBookmarked ? 'star' : 'star_border'}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             ) : (
+                /* ── Kanban Board View Mode ── */
                 <div className="flex flex-row overflow-x-auto gap-4 items-start select-none pb-4 scrollbar-thin w-full">
                     {[
                         { status: 'PENDING', label: 'Chờ xử lý', color: 'bg-amber-500/10 text-amber-800' },
@@ -430,7 +812,7 @@ export default function EmployerApplicationsPage({
                         { status: 'ACCEPTED', label: 'Chấp nhận', color: 'bg-emerald-500/10 text-emerald-800' },
                         { status: 'REJECTED', label: 'Từ chối', color: 'bg-rose-500/10 text-rose-800' }
                     ].map(col => {
-                        const colApps = apps.filter(app => app.status === col.status);
+                        const colApps = filteredAppsList.filter(app => app.status === col.status);
                         const visibleLimit = (visiblePages[col.status] || 1) * 8;
                         const slicedApps = colApps.slice(0, visibleLimit);
                         const isCollapsed = collapsedColumns.includes(col.status);
@@ -460,9 +842,32 @@ export default function EmployerApplicationsPage({
                         return (
                             <div
                                 key={col.status}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, col.status)}
-                                className="bg-slate-50 rounded-3xl p-4 h-[calc(100vh-240px)] flex flex-col gap-3 transition-all duration-300 flex-1 min-w-[282px]"
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    if (dragOverColumn !== col.status) {
+                                        setDragOverColumn(col.status);
+                                    }
+                                }}
+                                onDragLeave={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    if (
+                                        e.clientX < rect.left ||
+                                        e.clientX >= rect.right ||
+                                        e.clientY < rect.top ||
+                                        e.clientY >= rect.bottom
+                                    ) {
+                                        setDragOverColumn(null);
+                                    }
+                                }}
+                                onDrop={(e) => {
+                                    setDragOverColumn(null);
+                                    handleDrop(e, col.status);
+                                }}
+                                className={`rounded-3xl p-4 h-[calc(100vh-240px)] flex flex-col gap-3 transition-all duration-300 flex-1 min-w-[282px] ${
+                                    dragOverColumn === col.status
+                                        ? 'bg-blue-50/50 ring-2 ring-dashed ring-[#0052CC]/30 shadow-inner'
+                                        : 'bg-slate-50'
+                                }`}
                             >
                                 {/* Column Header */}
                                 <div className="flex items-center justify-between px-1 py-1">
@@ -486,7 +891,13 @@ export default function EmployerApplicationsPage({
 
                                 {/* Cards list */}
                                 <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 scrollbar-thin">
-                                    {colApps.length === 0 ? (
+                                    {dragOverColumn === col.status && (
+                                        <div className="border-2 border-dashed border-[#0052CC]/30 bg-white/70 rounded-2xl p-4 h-24 flex flex-col items-center justify-center gap-1.5 text-xs font-bold text-[#0052CC] animate-pulse flex-shrink-0 shadow-sm">
+                                            <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                                            Thả hồ sơ tại đây
+                                        </div>
+                                    )}
+                                    {colApps.length === 0 && dragOverColumn !== col.status ? (
                                         <div className="py-12 text-center text-xs text-slate-400 italic">
                                             Kéo hồ sơ vào đây
                                         </div>
@@ -497,11 +908,11 @@ export default function EmployerApplicationsPage({
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, app.id)}
                                                 onClick={() => setSelectedApp(app)}
-                                                className="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-150 cursor-grab active:cursor-grabbing space-y-3"
+                                                className="bg-white p-3.5 rounded-xl border border-slate-100/80 hover:border-slate-200/80 hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing space-y-2.5 shadow-sm"
                                             >
                                                 {/* Header info */}
                                                 <div className="flex items-start gap-2.5">
-                                                    <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="pt-1.5" onClick={(e) => e.stopPropagation()}>
                                                         <input
                                                             type="checkbox"
                                                             checked={selectedIds.includes(app.id)}
@@ -516,7 +927,7 @@ export default function EmployerApplicationsPage({
                                                             className="w-3.5 h-3.5 rounded border-slate-300 text-[#0052CC] focus:ring-[#0052CC] cursor-pointer"
                                                         />
                                                     </div>
-                                                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white text-[11px] font-black overflow-hidden flex-shrink-0">
+                                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0052CC] to-[#0040a2] flex items-center justify-center text-white text-[11px] font-black overflow-hidden flex-shrink-0">
                                                         {app.user.avatar ? (
                                                             <img src={app.user.avatar} alt={app.user.name} className="w-full h-full object-cover" />
                                                         ) : (
@@ -524,10 +935,10 @@ export default function EmployerApplicationsPage({
                                                         )}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <h4 className="text-xs font-extrabold text-slate-900 truncate hover:text-[#0052CC]">
+                                                        <h4 className="text-xs font-bold text-slate-800 truncate hover:text-[#0052CC] transition-colors leading-snug">
                                                             {app.user.name}
                                                         </h4>
-                                                        <p className="text-[9px] font-semibold text-slate-450 truncate">
+                                                        <p className="text-[10px] font-medium text-slate-400 truncate mt-0.5">
                                                             {app.job.title}
                                                         </p>
                                                     </div>
@@ -536,27 +947,33 @@ export default function EmployerApplicationsPage({
                                                 {/* Meta metrics */}
                                                 <div className="flex flex-wrap gap-1.5 items-center">
                                                     {app.matchScore !== undefined && app.matchScore !== null && (
-                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-0.5 ${app.matchScore >= 75 ? 'bg-emerald-50 text-emerald-700' : app.matchScore >= 50 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>
-                                                            <span className="material-symbols-outlined text-[11px]">neurology</span>
+                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                                                            app.matchScore >= 75 
+                                                                ? 'bg-emerald-50/70 text-emerald-700 border-emerald-100/50' 
+                                                                : app.matchScore >= 50 
+                                                                    ? 'bg-amber-50/70 text-amber-700 border-amber-100/50' 
+                                                                    : 'bg-rose-50/70 text-rose-700 border-rose-100/50'
+                                                        }`}>
+                                                            <span className="material-symbols-outlined text-[12px]">neurology</span>
                                                             AI: {app.matchScore}%
                                                         </span>
                                                     )}
                                                     {app.quizScore !== undefined && app.quizScore !== null && (
-                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 flex items-center gap-0.5">
-                                                            <span className="material-symbols-outlined text-[11px]">assignment</span>
-                                                            {app.quizScore}%
+                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-blue-50/70 text-blue-700 border border-blue-100/50 flex items-center gap-1">
+                                                            <span className="material-symbols-outlined text-[12px]">assignment</span>
+                                                            Test: {app.quizScore}%
                                                         </span>
                                                     )}
                                                 </div>
 
                                                 {/* View CV Quick button & Quick status action buttons */}
-                                                <div className="pt-2 border-t border-slate-50 flex items-center justify-between">
-                                                    <span className="flex items-center gap-0.5 text-[10px] font-bold text-slate-400">
-                                                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                                    <span className="flex items-center gap-1 text-[9px] font-medium text-slate-400">
+                                                        <span className="material-symbols-outlined text-[12px] text-slate-350">schedule</span>
                                                         {new Date(app.createdAt).toLocaleDateString('vi-VN')}
                                                     </span>
 
-                                                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                         {app.status === 'PENDING' && (
                                                             <button
                                                                 type="button"
