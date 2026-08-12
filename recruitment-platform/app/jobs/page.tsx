@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { getFilteredJobs } from '@/lib/jobService';
+import { getJobsLayoutData, getJobsListData } from '@/lib/jobService';
 import { formatSalary, getExperienceLabel, getJobTypeLabel, SALARY_OPTIONS, EXPERIENCE_OPTIONS, TYPE_OPTIONS, LEVEL_OPTIONS, SORT_OPTIONS } from '@/lib/jobLabels';
 import JobSearchForm from '@/components/jobs/JobSearchForm';
 import JobSidebarFilters from '@/components/jobs/JobSidebarFilters';
@@ -12,6 +12,9 @@ import ActiveFilter from '@/components/jobs/ActiveFilter';
 import JobResultHeader from '@/components/jobs/JobResultHeader';
 import Breadcrumbs from '@/components/jobs/Breadcrumbs';
 import JobCompany from '@/components/jobs/JobCompany';
+import useDetailsJob from '@/lib/hooks/useDetailsJob';
+import { JobsLoadingProvider } from '@/components/jobs/JobsLoadingContext';
+import JobListWrapper from '@/components/jobs/JobListWrapper';
 
 interface RouteParams {
   searchParams: Promise<{
@@ -65,33 +68,21 @@ export default async function JobsPage({ searchParams }: RouteParams) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
 
-  const {
-    jobs,
-    total,
-    categories,
-    featuredCompanies,
-    wards,
-    isLoggedIn,
-    savedJobs,
-    appliedJobs,
-    activeCompanyName,
-    matchedCompanies,
-    query,
-    category,
-    salary,
-    type,
-    location,
-    experience,
-    level,
-    sort,
-    companySlug,
-    page,
-    limit,
-    featured,
-  } = await getFilteredJobs(params, token);
+  const { categories, featuredCompanies, wards } = await getJobsLayoutData();
+
+  const query = params.query || '';
+  const category = params.category || '';
+  const salary = params.salary || '';
+  const type = params.type || '';
+  const location = params.location || '';
+  const experience = params.experience || '';
+  const level = params.level || '';
+  const sort = params.sort || 'newest';
+  const companySlug = params.company || '';
+  const page = params.page || '1';
+  const featured = params.featured || '';
 
   const activeFilterCount = [category, type, salary, experience, level, companySlug].filter(Boolean).length;
-  const totalPages = Math.ceil(total / limit) || 1;
   const getCategoryName = (v: string) => categories.find(c => c.slug === v)?.name || v;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
 
@@ -121,6 +112,96 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     ]
   };
 
+  return (
+    <JobsLoadingProvider>
+      <main className="min-h-screen bg-slate-50 pt-[60px] pb-16">
+        {/* SEO Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+
+        {/* Search form component */}
+        <JobSearchForm initialQuery={query} initialLocation={location} wards={wards} />
+
+        {/* Main Layout Grid */}
+        <div className="max-w-[1300px] mx-auto px-4 md:px-8 mt-5">
+          {/* Breadcrumbs */}
+          <Breadcrumbs query={query} category={category} getCategoryName={getCategoryName} />
+
+          <div className="flex gap-5 items-start">
+            {/* LEFT SIDEBAR FILTERS */}
+            <aside className="w-[260px] flex-shrink-0 pb-6 sticky top-[143px] hidden lg:block" style={{ maxHeight: 'calc(100vh - 158px)', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#e5e7eb transparent' }}>
+              <JobSidebarFilters
+                categories={categories}
+                activeCategory={category}
+                activeSalary={salary}
+                activeExperience={experience}
+                activeType={type}
+                activeLevel={level}
+                activeFilterCount={activeFilterCount}
+              />
+
+              {/* FEATURED COMPANIES (HOT COMPANIES BY APPLICATIONS COUNT) */}
+              <CompaniesHot featuredCompanies={featuredCompanies} />
+            </aside>
+
+            {/* JOB LISTINGS CONTENT */}
+            <div className="flex-1 min-w-0 pb-6">
+              <JobListWrapper fallback={<JobCardsSkeleton />}>
+                <Suspense fallback={<JobCardsSkeleton />}>
+                  <JobListSection
+                    searchParams={params}
+                    token={token}
+                    categories={categories}
+                    getCategoryName={getCategoryName}
+                    baseUrl={baseUrl}
+                  />
+                </Suspense>
+              </JobListWrapper>
+            </div>
+          </div>
+        </div>
+      </main>
+    </JobsLoadingProvider>
+  );
+}
+
+// ─── JOBS LIST LOADER COMPONENT (SUSPENSED) ──────────────────────────────────
+interface JobListSectionProps {
+  searchParams: any;
+  token?: string;
+  categories: { id: string; name: string; slug: string }[];
+  getCategoryName: (v: string) => string;
+  baseUrl: string;
+}
+
+async function JobListSection({ searchParams, token, categories, getCategoryName, baseUrl }: JobListSectionProps) {
+  const {
+    jobs,
+    total,
+    isLoggedIn,
+    savedJobs,
+    appliedJobs,
+    activeCompanyName,
+    matchedCompanies,
+    query,
+    category,
+    salary,
+    type,
+    location,
+    experience,
+    level,
+    sort,
+    companySlug,
+    page,
+    limit,
+    featured,
+  } = await getJobsListData(searchParams, token);
+
+  const activeFilterCount = [category, type, salary, experience, level, companySlug].filter(Boolean).length;
+  const totalPages = Math.ceil(total / limit) || 1;
+
   const jobListSchema = jobs.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -133,65 +214,10 @@ export default async function JobsPage({ searchParams }: RouteParams) {
     }))
   } : null;
 
-
-  // Render filter clearing link builder
-  const getClearFilterLink = () => {
-    const q = [];
-    if (query) q.push(`query=${encodeURIComponent(query)}`);
-    if (location) q.push(`location=${encodeURIComponent(location)}`);
-    return `/jobs${q.length ? '?' + q.join('&') : ''}`;
-  };
-
-  const getSortFilterLink = (sortVal: string) => {
-    const q = [`sort=${sortVal}`];
-    if (query) q.push(`query=${encodeURIComponent(query)}`);
-    if (location) q.push(`location=${encodeURIComponent(location)}`);
-    if (category) q.push(`category=${encodeURIComponent(category)}`);
-    if (companySlug) q.push(`company=${encodeURIComponent(companySlug)}`);
-    if (salary) q.push(`salary=${encodeURIComponent(salary)}`);
-    if (type) q.push(`type=${encodeURIComponent(type)}`);
-    if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
-    if (level) q.push(`level=${encodeURIComponent(level)}`);
-    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
-    return `/jobs?${q.join('&')}`;
-  };
-
-  const getPageLink = (pageVal: number) => {
-    const q = [`page=${pageVal}`];
-    if (query) q.push(`query=${encodeURIComponent(query)}`);
-    if (location) q.push(`location=${encodeURIComponent(location)}`);
-    if (category) q.push(`category=${encodeURIComponent(category)}`);
-    if (companySlug) q.push(`company=${encodeURIComponent(companySlug)}`);
-    if (salary) q.push(`salary=${encodeURIComponent(salary)}`);
-    if (type) q.push(`type=${encodeURIComponent(type)}`);
-    if (experience) q.push(`experience=${encodeURIComponent(experience)}`);
-    if (level) q.push(`level=${encodeURIComponent(level)}`);
-    if (sort) q.push(`sort=${encodeURIComponent(sort)}`);
-    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
-    return `/jobs?${q.join('&')}`;
-  };
-
-  const getFilterRemoveLink = (filterType: 'category' | 'salary' | 'experience' | 'type' | 'level' | 'company') => {
-    const q = [`sort=${sort}`];
-    if (query) q.push(`query=${encodeURIComponent(query)}`);
-    if (location) q.push(`location=${encodeURIComponent(location)}`);
-    if (category && filterType !== 'category') q.push(`category=${encodeURIComponent(category)}`);
-    if (companySlug && filterType !== 'company') q.push(`company=${encodeURIComponent(companySlug)}`);
-    if (salary && filterType !== 'salary') q.push(`salary=${encodeURIComponent(salary)}`);
-    if (type && filterType !== 'type') q.push(`type=${encodeURIComponent(type)}`);
-    if (experience && filterType !== 'experience') q.push(`experience=${encodeURIComponent(experience)}`);
-    if (level && filterType !== 'level') q.push(`level=${encodeURIComponent(level)}`);
-    if (featured) q.push(`featured=${encodeURIComponent(featured)}`);
-    return `/jobs?${q.join('&')}`;
-  };
+  const { getClearFilterLink, getSortFilterLink, getPageLink, getFilterRemoveLink } = useDetailsJob({ query, location, category, companySlug, salary, type, experience, level, sort, featured });
 
   return (
-    <main className="min-h-screen bg-slate-50 pt-[60px] pb-16">
-      {/* SEO Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+    <>
       {jobListSchema && (
         <script
           type="application/ld+json"
@@ -199,61 +225,62 @@ export default async function JobsPage({ searchParams }: RouteParams) {
         />
       )}
 
-      {/* Search form component */}
-      <JobSearchForm initialQuery={query} initialLocation={location} wards={wards} />
+      {/* Results header */}
+      <JobResultHeader query={query} total={total} sort={sort} getSortFilterLink={getSortFilterLink} SORT_OPTIONS={SORT_OPTIONS} />
 
-      {/* Main Layout Grid */}
-      <div className="max-w-[1300px] mx-auto px-4 md:px-8 mt-5">
-        {/* Breadcrumbs */}
-        <Breadcrumbs query={query} category={category} getCategoryName={getCategoryName} />
+      {/* Active filter tags */}
+      <ActiveFilter category={category} companySlug={companySlug} salary={salary} experience={experience} type={type} level={level} activeFilterCount={activeFilterCount} getCategoryName={getCategoryName} getFilterRemoveLink={getFilterRemoveLink} activeCompanyName={activeCompanyName} SALARY_OPTIONS={SALARY_OPTIONS} EXPERIENCE_OPTIONS={EXPERIENCE_OPTIONS} TYPE_OPTIONS={TYPE_OPTIONS} LEVEL_OPTIONS={LEVEL_OPTIONS} />
 
-        <div className="flex gap-5 items-start">
-          {/* LEFT SIDEBAR FILTERS */}
-          <aside className="w-[260px] flex-shrink-0 pb-6 sticky top-[143px] hidden lg:block" style={{ maxHeight: 'calc(100vh - 158px)', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#e5e7eb transparent' }}>
-            <JobSidebarFilters
-              categories={categories}
-              activeCategory={category}
-              activeSalary={salary}
-              activeExperience={experience}
-              activeType={type}
-              activeLevel={level}
-              activeFilterCount={activeFilterCount}
-            />
+      {/* MATCHED COMPANIES AT THE TOP */}
+      <JobCompany matchedCompanies={matchedCompanies} />
 
-            {/* FEATURED COMPANIES (HOT COMPANIES BY APPLICATIONS COUNT) */}
-            <CompaniesHot featuredCompanies={featuredCompanies} />
-          </aside>
+      {/* Jobs List Grid */}
+      <JobList
+        jobs={jobs as any}
+        savedJobs={savedJobs}
+        appliedJobs={appliedJobs}
+        isLoggedIn={isLoggedIn}
+        activeFilterCount={activeFilterCount}
+        getClearFilterLink={getClearFilterLink}
+        formatSalary={formatSalary}
+        getJobTypeLabel={getJobTypeLabel}
+        getExperienceLabel={getExperienceLabel}
+      />
 
-          {/* JOB LISTINGS CONTENT */}
-          <div className="flex-1 min-w-0 pb-6">
-            {/* Results header */}
-            <JobResultHeader query={query} total={total} sort={sort} getSortFilterLink={getSortFilterLink} SORT_OPTIONS={SORT_OPTIONS} />
+      {/* Pagination Controls */}
+      <JobPagination totalPages={totalPages} page={page} getPageLink={getPageLink} />
+    </>
+  );
+}
 
-            {/* Active filter tags */}
-            <ActiveFilter category={category} companySlug={companySlug} salary={salary} experience={experience} type={type} level={level} activeFilterCount={activeFilterCount} getCategoryName={getCategoryName} getFilterRemoveLink={getFilterRemoveLink} activeCompanyName={activeCompanyName} SALARY_OPTIONS={SALARY_OPTIONS} EXPERIENCE_OPTIONS={EXPERIENCE_OPTIONS} TYPE_OPTIONS={TYPE_OPTIONS} LEVEL_OPTIONS={LEVEL_OPTIONS} />
-
-            {/* MATCHED COMPANIES AT THE TOP */}
-            <JobCompany matchedCompanies={matchedCompanies} />
-
-            {/* Jobs List Grid */}
-            <JobList
-              jobs={jobs}
-              savedJobs={savedJobs}
-              appliedJobs={appliedJobs}
-              isLoggedIn={isLoggedIn}
-              activeFilterCount={activeFilterCount}
-              getClearFilterLink={getClearFilterLink}
-              formatSalary={formatSalary}
-              getJobTypeLabel={getJobTypeLabel}
-              getExperienceLabel={getExperienceLabel}
-            />
-
-            {/* Pagination Controls */}
-            <JobPagination totalPages={totalPages} page={page} getPageLink={getPageLink} />
-
-          </div>
-        </div>
+// ─── SKELETON COMPONENT ───────────────────────────────────────────────────────
+function JobCardsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center bg-white rounded-2xl border border-slate-100 p-4 animate-pulse">
+        <div className="h-5 bg-slate-200 rounded w-48" />
+        <div className="h-9 bg-slate-100 rounded-lg w-36" />
       </div>
-    </main>
+
+      <div className="space-y-3.5 animate-pulse">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="bg-white rounded-2xl border border-slate-100 p-5 flex gap-4">
+            <div className="w-24 h-24 bg-slate-100 rounded-lg flex-shrink-0 m-5 animate-pulse" />
+            <div className="flex-1 space-y-3 py-2">
+              <div className="space-y-2">
+                <div className="h-5 bg-slate-250 rounded w-1/2" />
+                <div className="h-4 bg-slate-200 rounded w-1/4" />
+              </div>
+              <div className="flex gap-2 flex-wrap pt-2">
+                <div className="h-6 bg-slate-100 rounded-lg w-20" />
+                <div className="h-6 bg-slate-100 rounded-lg w-24" />
+                <div className="h-6 bg-slate-100 rounded-lg w-16" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

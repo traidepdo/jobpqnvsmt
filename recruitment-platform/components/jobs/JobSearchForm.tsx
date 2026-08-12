@@ -2,6 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { useJobsLoading } from './JobsLoadingContext';
+
 
 interface Suggestion {
   id: string;
@@ -45,6 +47,7 @@ export default function JobSearchForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setIsPending } = useJobsLoading();
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [locationInput, setLocationInput] = useState(initialLocation);
 
@@ -58,6 +61,7 @@ export default function JobSearchForm({
   const clientCacheRef = useRef<Record<string, Suggestion[]>>({});
 
   const performSearch = (q: string, loc: string) => {
+    setIsPending(true);
     const params = new URLSearchParams(searchParams.toString());
     if (q) params.set('query', q);
     else params.delete('query');
@@ -194,6 +198,7 @@ export default function JobSearchForm({
                         key={item.id}
                         onClick={() => {
                           if (isCompany && item.slug) {
+                            setIsPending(true);
                             const params = new URLSearchParams(searchParams.toString());
                             params.set('company', item.slug);
                             params.delete('query');

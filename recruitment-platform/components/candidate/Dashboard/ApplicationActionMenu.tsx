@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { cancelApplicationAction } from '@/server/actions/candidate/application.action';
 
 interface ApplicationActionMenuProps {
   applicationId: string;
@@ -28,14 +29,12 @@ export default function ApplicationActionMenu({ applicationId, jobSlug, companyN
     e.stopPropagation();
     if (confirm('Bạn có chắc chắn muốn rút đơn ứng tuyển này?')) {
       try {
-        const res = await fetch(`/api/candidate/applications/${applicationId}`, {
-          method: 'DELETE',
-        });
-        if (res.ok) {
+        const res = await cancelApplicationAction(applicationId);
+        if (res.success) {
           alert('Đã rút đơn ứng tuyển thành công.');
           window.location.reload();
         } else {
-          alert('Không thể rút đơn ứng tuyển lúc này.');
+          alert(res.error || 'Không thể rút đơn ứng tuyển lúc này.');
         }
       } catch (err) {
         console.error(err);

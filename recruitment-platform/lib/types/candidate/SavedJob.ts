@@ -1,3 +1,4 @@
+import { SaveJobInput } from "@/server/schemas/candidate/savejob.schema"
 export interface SavedItem {
     id: string;
     createdAt: string;
@@ -15,3 +16,13 @@ export interface SavedItem {
         ward: { name: string } | null;
     };
 }
+export interface Query {
+    page?: number;
+    limit?: number;
+    query?: string;
+}
+export interface SavedJobsResponse {
+    items: SavedItem[];
+    total: number;
+}
+export type { SaveJobInput }

@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useJobsLoading } from './JobsLoadingContext';
+
 
 interface Category {
   id: string;
@@ -142,8 +144,10 @@ export default function JobSidebarFilters({
 }: JobSidebarFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setIsPending } = useJobsLoading();
 
   const setFilter = (key: string, value: string) => {
+    setIsPending(true);
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
@@ -152,6 +156,7 @@ export default function JobSidebarFilters({
   };
 
   const clearAll = () => {
+    setIsPending(true);
     const params = new URLSearchParams();
     const query = searchParams.get('query');
     const location = searchParams.get('location');

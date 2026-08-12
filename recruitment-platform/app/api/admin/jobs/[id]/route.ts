@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         },
     });
 
-    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE') {
+    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE' && updated.companyId) {
         try {
             const followers = await prisma.savedCompany.findMany({
                 where: { companyId: updated.companyId },
@@ -60,8 +60,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
                     data: followers.map(f => ({
                         userId: f.userId,
                         type: 'JOB_APPROVED',
-                        title: `Tin tuyển dụng mới từ ${updated.company.name}`,
-                        content: `Công ty ${updated.company.name} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
+                        title: `Tin tuyển dụng mới từ ${updated.company?.name || ""}`,
+                        content: `Công ty ${updated.company?.name || ""} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
                         refId: updated.slug,
                     }))
                 });
@@ -107,7 +107,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         },
     });
 
-    if (status === 'REJECTED') {
+    if (status === 'REJECTED' && existing.company?.ownerId) {
         try {
             await prisma.notification.create({
                 data: {
@@ -123,7 +123,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         }
     }
 
-    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE') {
+    if (existing.status !== 'ACTIVE' && updated.status === 'ACTIVE' && updated.companyId && updated.company) {
         try {
             const followers = await prisma.savedCompany.findMany({
                 where: { companyId: updated.companyId },
@@ -134,8 +134,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
                     data: followers.map(f => ({
                         userId: f.userId,
                         type: 'JOB_APPROVED',
-                        title: `Tin tuyển dụng mới từ ${updated.company.name}`,
-                        content: `Công ty ${updated.company.name} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
+                        title: `Tin tuyển dụng mới từ ${updated.company?.name || ""}`,
+                        content: `Công ty ${updated.company?.name || ""} mà bạn theo dõi vừa đăng tin tuyển dụng mới: "${updated.title}".`,
                         refId: updated.slug,
                     }))
                 });

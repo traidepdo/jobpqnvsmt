@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { prisma } from "@/lib/prisma";
 import CompanyFilter from '@/components/companies/CompanyFilter';
-
+import { categoryService } from '@/server/services/categoty.services';
+import { companyService } from '@/server/services/company.services';
 interface RouteParams {
     searchParams: Promise<{ search?: string; industry?: string; page?: string }>;
 }
@@ -36,70 +37,17 @@ export async function generateMetadata({ searchParams }: RouteParams) {
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 export default async function CompaniesPage({ searchParams }: RouteParams) {
     const params = await searchParams;
-    const search = params.search || '';
-    const industry = params.industry || '';
     const page = parseInt(params.page || '1');
     const limit = 9;
-    const skip = (page - 1) * limit;
+    const industry = params.industry || '';
+    const search = params.search || '';
 
-    const whereClause: any = {
-        isApproved: true,
-        isActive: true,
-    };
+    const res = await companyService.getList({ page, limit, industry, search });
+    const { companies, totalpage, total } = res;
 
-    if (industry) {
-        whereClause.jobs = {
-            some: {
-                status: 'ACTIVE',
-                category: {
-                    slug: industry,
-                },
-            },
-        };
-    }
+    const categories = await categoryService.getAllCategories();
 
-    if (search) {
-        whereClause.name = {
-            contains: search,
-            mode: 'insensitive',
-        };
-    }
-
-    // Chạy song song truy vấn dữ liệu & tổng số bản ghi trực tiếp trên Server
-    const [companies, total] = await prisma.$transaction([
-        prisma.company.findMany({
-            where: whereClause,
-            include: {
-                ward: {
-                    include: {
-                        district: {
-                            include: {
-                                province: true
-                            }
-                        }
-                    }
-                },
-                _count: {
-                    select: {
-                        jobs: {
-                            where: {
-                                status: 'ACTIVE',
-                            }
-                        }
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-            skip,
-            take: limit,
-        }),
-        prisma.company.count({ where: whereClause })
-    ]);
-    const categories = await prisma.category.findMany();
-
-    const totalPages = Math.ceil(total / limit) || 1;
+    const totalPages = totalpage;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
 
@@ -110,7 +58,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
         'name': 'Danh sách các công ty tuyển dụng tại Phú Quốc',
         'itemListElement': companies.map((company, index) => ({
             '@type': 'ListItem',
-            'position': skip + index + 1,
+            'position': index + 1,
             'url': `${baseUrl}/companies/${company.slug}`,
             'name': company.name,
         }))

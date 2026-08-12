@@ -1,7 +1,8 @@
 import { requireCandidate } from '@/lib/requireCandidate';
 import { redirect } from 'next/navigation';
-import { createSavedJob } from '@/lib/services/candidate/savedjob';
 import ClientSavedJob from '@/components/candidate/SavedJob/ClientSavedJob';
+import { SavedJobsResponse } from "@/lib/types/candidate/SavedJob";
+import { saveJobService } from '@/server/services/candidate/savejob.services';
 interface PageProps {
   searchParams: Promise<{ page?: string; limit?: string; query?: string }>;
 }
@@ -15,7 +16,7 @@ export default async function CandidateSavedPage({ searchParams }: PageProps) {
   if (auth.error || !auth.payload) {
     redirect('/login');
   }
-  const { items, total } = await createSavedJob(auth.payload.id, { page, limit, query });
+  const { items, total }: SavedJobsResponse = await saveJobService.getSavedJobs(auth.payload.id, { page, limit, query });
 
   // Chuẩn hóa Date thành String để truyền từ Server Component sang Client Component
   const initialItems = items.map(item => ({
@@ -41,6 +42,7 @@ export default async function CandidateSavedPage({ searchParams }: PageProps) {
         query,
         totalPages: Math.ceil(total / limit)
       }}
+      userId={auth.payload.id}
     />
   );
 }

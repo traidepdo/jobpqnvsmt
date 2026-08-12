@@ -50,20 +50,22 @@ export async function PATCH(
     });
 
     // Thông báo cho employer
-    await prisma.notification.create({
-        data: {
-            userId: existing.application.job.company.ownerId,
-            type: 'APPLICATION_STATUS_CHANGED',
-            title: candidateStatus === 'CONFIRMED'
-                ? '✅ Ứng viên đã xác nhận lịch phỏng vấn'
-                : '❌ Ứng viên từ chối lịch phỏng vấn',
-            content: candidateStatus === 'CONFIRMED'
-                ? `${existing.application.user.name} đã xác nhận tham gia phỏng vấn vị trí "${existing.application.job.title}".`
-                : `${existing.application.user.name} từ chối lịch phỏng vấn vị trí "${existing.application.job.title}".${declineReason ? ` Lý do: ${declineReason}` : ''}`,
-            refId: id,
-            isRead: false,
-        },
-    });
+    if (existing.application.job.company?.ownerId) {
+        await prisma.notification.create({
+            data: {
+                userId: existing.application.job.company.ownerId,
+                type: 'APPLICATION_STATUS_CHANGED',
+                title: candidateStatus === 'CONFIRMED'
+                    ? '✅ Ứng viên đã xác nhận lịch phỏng vấn'
+                    : '❌ Ứng viên từ chối lịch phỏng vấn',
+                content: candidateStatus === 'CONFIRMED'
+                    ? `${existing.application.user.name} đã xác nhận tham gia phỏng vấn vị trí "${existing.application.job.title}".`
+                    : `${existing.application.user.name} từ chối lịch phỏng vấn vị trí "${existing.application.job.title}".${declineReason ? ` Lý do: ${declineReason}` : ''}`,
+                refId: id,
+                isRead: false,
+            },
+        });
+    }
 
     return NextResponse.json({ interview });
 }

@@ -23,7 +23,7 @@ export async function GET(
         // lấy gợi ý từ django
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 800);
+            const timeoutId = setTimeout(() => controller.abort(), 3500);
 
             const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
                 method: "GET",

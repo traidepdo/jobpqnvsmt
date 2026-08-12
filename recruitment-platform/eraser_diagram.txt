@@ -1,0 +1,373 @@
+// ==========================================
+// ERASER.IO DIAGRAM CODE (EXCLUDED TAG TABLES)
+// ==========================================
+
+// ResumeTemplate Table
+Table ResumeTemplate {
+  id text [pk]
+  name text
+  slug text [unique]
+  description text
+  thumbnailUrl text
+  htmlContent text
+  cssContent text
+  category text
+  isActive boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// User Table
+Table User {
+  id text [pk]
+  name text
+  email text [unique]
+  password text
+  role text
+  avatar text
+  phone text
+  isActive boolean
+  isLocked boolean
+  tokenVersion integer
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Province Table
+Table Province {
+  id text [pk]
+  name text
+  slug text [unique]
+  createdAt timestamp
+}
+
+// District Table
+Table District {
+  id text [pk]
+  name text
+  slug text
+  provinceId text
+  createdAt timestamp
+}
+
+// Ward Table
+Table Ward {
+  id text [pk]
+  name text
+  slug text
+  districtId text
+  createdAt timestamp
+}
+
+// Company Table
+Table Company {
+  id text [pk]
+  name text
+  slug text [unique]
+  logo text
+  website text
+  description text
+  wardId text
+  addressDetail text
+  size text
+  industry text
+  coverImage text
+  images json
+  ownerId text [unique]
+  isApproved boolean
+  isActive boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Category Table
+Table Category {
+  id text [pk]
+  name text [unique]
+  slug text [unique]
+  icon text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Job Table
+Table Job {
+  id text [pk]
+  title text
+  slug text [unique]
+  description text
+  benefits text
+  requirements text
+  quantity integer
+  salaryMin integer
+  salaryMax integer
+  wardId text
+  addressDetail text
+  type text
+  experience text
+  level text
+  status text
+  rejectReason text
+  deadline timestamp
+  isVisible boolean
+  jobflash boolean
+  categoryId text
+  companyId text
+  userId text
+  quizId text
+  latitude float
+  longitude float
+  createdAt timestamp
+  updatedAt timestamp
+  viewsCount integer
+  appliesCount integer
+  searchEmbedding text
+}
+
+// JobEmbedding Table
+Table JobEmbedding {
+  jobId text [pk]
+  embedding text
+}
+
+// Application Table
+Table Application {
+  id text [pk]
+  userId text
+  jobId text
+  cvUrl text
+  resumeId text
+  coverLetter text
+  status text
+  isBookmarked boolean
+  quizScore integer
+  quizDuration integer
+  matchScore integer
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Resume Table
+Table Resume {
+  id text [pk]
+  userId text
+  fullName text
+  title text
+  isDefault boolean
+  address text
+  summary text
+  socialLinks json
+  education json
+  experience json
+  projects json
+  degree text
+  templateId text
+  languages text
+  cvData json
+  avatarUrl text
+  profileSummary text
+  profileExperience json
+  isProfile boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// SavedJob Table
+Table SavedJob {
+  id text [pk]
+  userId text
+  jobId text
+  createdAt timestamp
+}
+
+// SavedCompany Table
+Table SavedCompany {
+  id text [pk]
+  userId text
+  companyId text
+  createdAt timestamp
+}
+
+// Notification Table
+Table Notification {
+  id text [pk]
+  userId text
+  type text
+  title text
+  content text
+  refId text
+  isRead boolean
+  createdAt timestamp
+}
+
+// BlogCategory Table
+Table BlogCategory {
+  id text [pk]
+  name text
+  slug text [unique]
+  createdAt timestamp
+}
+
+// Blog Table
+Table Blog {
+  id text [pk]
+  title text
+  slug text [unique]
+  content text
+  thumbnail text
+  excerpt text
+  categoryId text
+  authorId text
+  views integer
+  isPublished boolean
+  type text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Conversation Table
+Table Conversation {
+  id text [pk]
+  applicationId text [unique]
+  employerId text
+  candidateId text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Message Table
+Table Message {
+  id text [pk]
+  conversationId text
+  senderId text
+  content text
+  createdAt timestamp
+  readAt timestamp
+}
+
+// Interview Table
+Table Interview {
+  id text [pk]
+  applicationId text [unique]
+  scheduledAt timestamp
+  type text
+  location text
+  notes text
+  status text
+  candidateStatus text
+  declineReason text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// AdminConversation Table
+Table AdminConversation {
+  id text [pk]
+  employerId text [unique]
+  claimedByAdminId text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// AdminMessage Table
+Table AdminMessage {
+  id text [pk]
+  conversationId text
+  senderId text
+  content text
+  createdAt timestamp
+  readAt timestamp
+}
+
+// GroupConversation Table
+Table GroupConversation {
+  id text [pk]
+  name text
+  employerId text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// GroupMember Table
+Table GroupMember {
+  id text [pk]
+  groupId text
+  userId text
+  createdAt timestamp
+}
+
+// GroupMessage Table
+Table GroupMessage {
+  id text [pk]
+  groupId text
+  senderId text
+  content text
+  createdAt timestamp
+}
+
+// Quiz Table
+Table Quiz {
+  id text [pk]
+  title text
+  description text
+  timeLimit integer
+  employerId text
+  categoryId text
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// Question Table
+Table Question {
+  id text [pk]
+  quizId text
+  content text
+  options json
+  correctOption integer
+}
+
+// SalaryModel Table
+Table SalaryModel {
+  id text [pk]
+  weights json
+  intercept float
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// === RELATIONSHIPS (1-1, 1-N) ===
+District.provinceId N - 1 Province.id
+Ward.districtId N - 1 District.id
+Company.ownerId 1 - 1 User.id
+Company.wardId N - 1 Ward.id
+Job.categoryId N - 1 Category.id
+Job.companyId N - 1 Company.id
+Job.userId N - 1 User.id
+Job.wardId N - 1 Ward.id
+Job.quizId N - 1 Quiz.id
+JobEmbedding.jobId 1 - 1 Job.id
+Application.userId N - 1 User.id
+Application.jobId N - 1 Job.id
+Application.resumeId N - 1 Resume.id
+Resume.templateId N - 1 ResumeTemplate.id
+Resume.userId N - 1 User.id
+SavedJob.userId N - 1 User.id
+SavedJob.jobId N - 1 Job.id
+SavedCompany.userId N - 1 User.id
+SavedCompany.companyId N - 1 Company.id
+Notification.userId N - 1 User.id
+Blog.authorId N - 1 User.id
+Blog.categoryId N - 1 BlogCategory.id
+Conversation.applicationId 1 - 1 Application.id
+Message.conversationId N - 1 Conversation.id
+Message.senderId N - 1 User.id
+Interview.applicationId 1 - 1 Application.id
+AdminMessage.conversationId N - 1 AdminConversation.id
+GroupConversation.employerId N - 1 User.id
+GroupMember.groupId N - 1 GroupConversation.id
+GroupMember.userId N - 1 User.id
+GroupMessage.groupId N - 1 GroupConversation.id
+GroupMessage.senderId N - 1 User.id
+Quiz.employerId N - 1 User.id
+Quiz.categoryId N - 1 Category.id
+Question.quizId N - 1 Quiz.id

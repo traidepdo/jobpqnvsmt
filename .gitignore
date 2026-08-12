@@ -1,7 +1,9 @@
 # Python Virtual Environment
 SeverAI/env/
+SeverAI/venv_linux/
 **/__pycache__/
 *.pyc
+.DS_Store
 
 # Local Environment variables
 .env

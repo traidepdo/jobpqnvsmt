@@ -65,7 +65,79 @@ function getSalaryMaxCondition(operator: 'lte' | 'gte', value: number) {
   };
 }
 
-export async function getFilteredJobs(params: JobSearchParams, token?: string) {
+export async function getJobsLayoutData() {
+  const now = new Date();
+  const [categories, topCompanies, wards] = await Promise.all([
+    prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: {
+          select: {
+            jobs: {
+              where: {
+                status: JobStatus.ACTIVE,
+                OR: [
+                  { deadline: null },
+                  { deadline: { gte: now } }
+                ]
+              }
+            }
+          }
+        }
+      },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.company.findMany({
+      where: { isApproved: true, isActive: true },
+      select: {
+        name: true,
+        logo: true,
+        slug: true,
+        jobs: {
+          select: {
+            id: true,
+            status: true,
+            deadline: true,
+            _count: {
+              select: { applications: true }
+            }
+          }
+        }
+      }
+    }),
+    prisma.ward.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' }
+    })
+  ]);
+
+  const featuredCompanies = topCompanies
+    .map(c => {
+      const totalApplies = c.jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0);
+      const activeJobCount = c.jobs.filter(j => j.status === JobStatus.ACTIVE && (!j.deadline || new Date(j.deadline) >= now)).length;
+      return {
+        name: c.name,
+        logo: c.logo,
+        slug: c.slug,
+        totalApplies,
+        jobCount: activeJobCount
+      };
+    })
+    .filter(c => c.jobCount > 0)
+    .sort((a, b) => {
+      if (b.totalApplies !== a.totalApplies) {
+        return b.totalApplies - a.totalApplies;
+      }
+      return b.jobCount - a.jobCount;
+    })
+    .slice(0, 6);
+
+  return { categories, featuredCompanies, wards };
+}
+
+export async function getJobsListData(params: JobSearchParams, token?: string) {
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const limit = 12;
   const skip = (page - 1) * limit;
@@ -205,8 +277,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     ...(andConditions.length > 0 && { AND: andConditions }),
   };
 
-  // Run DB Queries in parallel
-  const [rawJobs, total, categories, topCompanies, wards] = await Promise.all([
+  const [rawJobs, total] = await Promise.all([
     prisma.job.findMany({
       where,
       skip,
@@ -230,57 +301,9 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
         ward: { select: { name: true } },
       },
     }),
-    prisma.job.count({ where }),
-    prisma.category.findMany({
-      select: { id: true, name: true, slug: true, _count: { select: { jobs: { where: { status: JobStatus.ACTIVE } } } } },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.company.findMany({
-      where: { isApproved: true, isActive: true },
-      select: {
-        name: true,
-        logo: true,
-        slug: true,
-        jobs: {
-          select: {
-            id: true,
-            status: true,
-            _count: {
-              select: { applications: true }
-            }
-          }
-        }
-      }
-    }),
-    prisma.ward.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' }
-    })
+    prisma.job.count({ where })
   ]);
 
-  // Map & Sort featured companies
-  const featuredCompanies = topCompanies
-    .map(c => {
-      const totalApplies = c.jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0);
-      const activeJobCount = c.jobs.filter(j => j.status === JobStatus.ACTIVE).length;
-      return {
-        name: c.name,
-        logo: c.logo,
-        slug: c.slug,
-        totalApplies,
-        jobCount: activeJobCount
-      };
-    })
-    .filter(c => c.jobCount > 0)
-    .sort((a, b) => {
-      if (b.totalApplies !== a.totalApplies) {
-        return b.totalApplies - a.totalApplies;
-      }
-      return b.jobCount - a.jobCount;
-    })
-    .slice(0, 6);
-
-  // Apply AI Salary prediction analysis
   const model = await getLatestModel();
   const jobs = rawJobs.map(job => {
     const min = job.salaryMin;
@@ -349,6 +372,7 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     }
   }
 
+
   let matchedCompanies: any[] = [];
   if (query) {
     matchedCompanies = await prisma.company.findMany({
@@ -367,7 +391,13 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
         _count: {
           select: {
             jobs: {
-              where: { status: JobStatus.ACTIVE }
+              where: {
+                status: JobStatus.ACTIVE,
+                OR: [
+                  { deadline: null },
+                  { deadline: { gte: now } }
+                ]
+              }
             }
           }
         }
@@ -379,9 +409,6 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
   return {
     jobs,
     total,
-    categories,
-    featuredCompanies,
-    wards,
     isLoggedIn,
     savedJobs,
     appliedJobs,
@@ -399,5 +426,16 @@ export async function getFilteredJobs(params: JobSearchParams, token?: string) {
     page,
     limit,
     featured
+  };
+}
+
+export async function getFilteredJobs(params: JobSearchParams, token?: string) {
+  const [layout, list] = await Promise.all([
+    getJobsLayoutData(),
+    getJobsListData(params, token)
+  ]);
+  return {
+    ...layout,
+    ...list
   };
 }

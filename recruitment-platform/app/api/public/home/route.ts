@@ -50,7 +50,7 @@ export async function GET() {
 
         // 2. Lấy chi tiết thông tin các Categories và Companies hàng đầu
         const topCategoryIds = categoryJobCounts.map(item => item.categoryId);
-        const topCompanyIds = companyJobCounts.map(item => item.companyId);
+        const topCompanyIds = companyJobCounts.map(item => item.companyId).filter((id): id is string => Boolean(id));
 
         const [categories, initialCompanies] = await Promise.all([
             prisma.category.findMany({

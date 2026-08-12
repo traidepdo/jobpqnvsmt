@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { delectSaveJobAction, saveJobAction } from '@/server/actions/candidate/savejob.action';
 interface JobSaveButtonProps {
   jobId: string;
   initialSaved: boolean;
@@ -22,33 +22,25 @@ export default function JobSaveButton({ jobId, initialSaved, isLoggedIn }: JobSa
       router.push(`/login?callbackUrl=/jobs`);
       return;
     }
-
     setLoading(true);
     try {
       if (saved) {
-        const res = await fetch(`/api/candidate/saved-jobs?jobId=${jobId}`, { method: 'DELETE' });
-        if (res.status === 401 || res.status === 403) {
+        const res = await delectSaveJobAction(jobId);
+        if (!res.success) {
           router.push(`/login?callbackUrl=/jobs`);
           return;
         }
-        if (res.ok) {
-          setSaved(false);
-        }
+        setSaved(false);
       } else {
-        const res = await fetch('/api/candidate/saved-jobs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobId }),
-        });
-        if (res.status === 401 || res.status === 403) {
+        const res = await saveJobAction(jobId);
+        if (!res.success) {
           router.push(`/login?callbackUrl=/jobs`);
           return;
         }
-        if (res.ok) {
-          setSaved(true);
-        }
+        setSaved(true);
       }
-    } catch (e) {
+    }
+    catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
@@ -59,9 +51,8 @@ export default function JobSaveButton({ jobId, initialSaved, isLoggedIn }: JobSa
     <button
       onClick={toggleSave}
       disabled={loading}
-      className={`absolute top-3.5 right-3.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ${
-        saved ? 'text-[#00b14f] bg-[#00b14f]/10' : 'text-gray-300 hover:text-[#00b14f] hover:bg-[#00b14f]/10'
-      }`}
+      className={`absolute top-3.5 right-3.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ${saved ? 'text-[#00b14f] bg-[#00b14f]/10' : 'text-gray-300 hover:text-[#00b14f] hover:bg-[#00b14f]/10'
+        }`}
       title={saved ? 'Bỏ lưu' : 'Lưu việc làm'}
     >
       <svg className="w-3.5 h-3.5" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">

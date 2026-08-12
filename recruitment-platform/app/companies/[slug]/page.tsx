@@ -10,7 +10,8 @@ import ShareButton from '@/components/companies/ShareButton';
 import CompanyJobsList from '@/components/companies/CompanyJobsList';
 import CompanyTabs from '@/components/companies/CompanyTabs';
 import CompanyImages from '@/components/companies/CompanyImages';
-
+import { getCompanyDetail } from '@/server/services/companydetail.services';
+import { authFlow } from '@/server/services/companydetail.services';
 interface RouteParams {
     params: Promise<{ slug: string }>;
 }
@@ -49,54 +50,14 @@ export default async function CompanyDetailPage({ params }: RouteParams) {
     const { slug } = await params;
 
     // Fetch company detail directly from Database
-    const company = await prisma.company.findUnique({
-        where: { slug: slug, isApproved: true, isActive: true },
-        include: {
-            ward: {
-                include: {
-                    district: {
-                        include: {
-                            province: true
-                        }
-                    }
-                }
-            },
-            jobs: {
-                where: { status: "ACTIVE" },
-                orderBy: { createdAt: "desc" },
-                include: {
-                    category: {
-                        select: { name: true }
-                    }
-                }
-            }
-        }
-    });
-
+    const company = await getCompanyDetail(slug);
     if (!company) {
         notFound();
     }
 
     // Check auth state & follow status on server
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    let initialFollowed = false;
-    let isLoggedIn = false;
+    const { isLoggedIn, initialFollowed } = await authFlow(company.id);
 
-    if (token) {
-        try {
-            const payload = await verifyToken(token);
-            if (payload) {
-                isLoggedIn = true;
-                const existing = await prisma.savedCompany.findUnique({
-                    where: { userId_companyId: { userId: payload.id as string, companyId: company.id } }
-                });
-                initialFollowed = !!existing;
-            }
-        } catch (err) {
-            console.error("Error verifying token in Server Component:", err);
-        }
-    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
 

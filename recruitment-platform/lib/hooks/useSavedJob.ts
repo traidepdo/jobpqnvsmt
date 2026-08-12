@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { SavedItem } from '@/lib/types/candidate/SavedJob';
+import { SavedItem, SavedJobsResponse } from '@/lib/types/candidate/SavedJob';
 import { useRouter } from 'next/navigation';
+import { delectSaveJobAction } from '@/server/actions/candidate/savejob.action';
 interface Metadata {
     total: number;
     page: number;
@@ -9,7 +10,7 @@ interface Metadata {
     totalPages: number;
 }
 
-export function useSavedJob(initialItems: SavedItem[], metadata: Metadata) {
+export function useSavedJob(initialItems: SavedItem[], metadata: Metadata, userId: string) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<SavedItem[]>(initialItems);
@@ -40,8 +41,8 @@ export function useSavedJob(initialItems: SavedItem[], metadata: Metadata) {
     };
 
     const handleUnsave = async (jobId: string) => {
-        const res = await fetch(`/api/candidate/saved-jobs?jobId=${jobId}`, { method: 'DELETE' });
-        if (res.ok) {
+        const res = await delectSaveJobAction(jobId);
+        if (res.success) {
             setItems(prev => prev.filter(i => i.job.id !== jobId));
             router.refresh();
         }

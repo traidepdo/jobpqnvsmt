@@ -1,6 +1,6 @@
 import { requireCandidate } from "@/lib/requireCandidate";
-import { getNotificationsServer } from "@/lib/services/candidate/notification";
 import { NextResponse } from "next/server";
+import { getNotificationsServer } from "@/server/services/candidate/notification.services";
 
 export async function GET(request: Request) {
     const auth = await requireCandidate();

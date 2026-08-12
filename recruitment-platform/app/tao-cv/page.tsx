@@ -11,6 +11,15 @@ interface ResumeTemplate {
   category: string;
 }
 
+const TEMPLATE_IMAGES: Record<string, string> = {
+  classic: '/templates/classic.png',
+  modern: '/templates/modern.png',
+  creative: '/templates/creative.png',
+  elegant: '/templates/elegant.png',
+  futuristic: '/templates/futuristic.png',
+  minimalist: '/templates/minimalist.png',
+};
+
 export default function TaoCvPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<ResumeTemplate[]>([]);
@@ -59,35 +68,35 @@ export default function TaoCvPage() {
             <p className="text-gray-400 font-medium">Chưa có mẫu CV nào.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {templates.map(t => (
-              <div key={t.id} onClick={() => handleSelect(t)}
-                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer transition-all hover:border-[#00b14f]/50 hover:shadow-lg hover:-translate-y-0.5 flex flex-col">
-                <div className="relative h-52 bg-[#f7f8f5] overflow-hidden">
-                  {t.thumbnailUrl ? (
-                    <img src={t.thumbnailUrl} alt={t.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5">
+            {templates.map(t => {
+              const imageUrl = TEMPLATE_IMAGES[t.slug] || t.thumbnailUrl;
+              return (
+                <div key={t.id} onClick={() => handleSelect(t)}
+                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer transition-all hover:border-[#00b14f]/50 hover:shadow-lg hover:-translate-y-0.5 flex flex-col">
+                  <div className="relative h-[450px] bg-[#f7f8f5] group-hover:bg-[#00b14f]/10 transition-colors duration-300 overflow-hidden p-5">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={t.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-[#00b14f]/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="bg-white text-[#00963e] text-sm font-bold px-5 py-2.5 rounded-xl">Dùng mẫu này →</span>
+                    )}
+                    <span className="absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-wider bg-white/95 text-gray-500 px-2 py-1 rounded-lg border border-gray-100">
+                      {t.category}
+                    </span>
                   </div>
-                  <span className="absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-wider bg-white/95 text-gray-500 px-2 py-1 rounded-lg border border-gray-100">
-                    {t.category}
-                  </span>
+                  <div className="px-4 py-3">
+                    <p className="text-[13px] font-semibold text-gray-800 truncate">{t.name}</p>
+                    {t.description && <p className="text-[11px] text-gray-400 truncate mt-0.5">{t.description}</p>}
+                  </div>
                 </div>
-                <div className="px-4 py-3">
-                  <p className="text-[13px] font-semibold text-gray-800 truncate">{t.name}</p>
-                  {t.description && <p className="text-[11px] text-gray-400 truncate mt-0.5">{t.description}</p>}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,19 +1,22 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useActionState, useState } from "react";
+import { getIsBookmark, handleBookmark, updateApplicationStatus } from "@/server/actions/employer/candidateBookmark.action";
+import { getApplication } from "@/server/actions/employer/application.action";
 
 function CvPreviewModal({ applicationId, candidateName, onClose }: { applicationId: string; candidateName: string; onClose: () => void }) {
     const [resumeData, setResumeData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`/api/employer/applications`)
-            .then(res => res.json())
-            .then(data => {
-                const apps = data.applications || [];
-                const currentApp = apps.find((a: any) => a.id === applicationId);
-                if (currentApp?.resume) {
-                    setResumeData(currentApp.resume);
+        getApplication()
+            .then(res => {
+                if (res.success && res.data) {
+                    const apps = res.data || [];
+                    const currentApp = apps.find((a: any) => a.id === applicationId);
+                    if (currentApp?.resume) {
+                        setResumeData(currentApp.resume);
+                    }
                 }
                 setLoading(false);
             })
@@ -198,26 +201,26 @@ export default function EmployerCandidatesPage() {
         setExpandedId(prev => prev === id ? null : id);
     };
 
+    const [state, fetchCandidates, isPending] = useActionState(getIsBookmark, null);
+
     useEffect(() => {
-        const fetchCandidates = async () => {
-            try {
-                const res = await fetch('/api/employer/candidates');
-                const data = await res.json();
-                setCandidates(Array.isArray(data) ? data : data.candidates || []);
-            } catch (err) {
-                console.error("Lỗi lấy danh sách ứng viên:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCandidates();
-    }, []);
+        startTransition(() => {
+            fetchCandidates();
+        });
+    }, [fetchCandidates]);
+
+    useEffect(() => {
+        if (state?.success && state.data) {
+            setCandidates(state.data as Candidate[]);
+        }
+        setLoading(isPending);
+    }, [state, isPending]);
 
     const toggleBookmark = async (id: string, currentStatus: boolean) => {
         setUpdatingId(id);
         try {
-            const res = await fetch(`/api/employer/applications/${id}/bookmark`, { method: 'PATCH' });
-            if (res.ok) {
+            const res = await handleBookmark(id);
+            if (res.success) {
                 setCandidates(prev => prev.filter(c => c.id !== id));
             }
         } catch (error) {
@@ -230,12 +233,8 @@ export default function EmployerCandidatesPage() {
     const handleUpdateStatus = async (id: string, newStatus: "ACCEPTED" | "REJECTED") => {
         setUpdatingId(id);
         try {
-            const res = await fetch(`/api/employer/applications/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
-            });
-            if (res.ok) {
+            const res = await updateApplicationStatus(id, newStatus);
+            if (res.success) {
                 setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
             }
         } catch (error) {

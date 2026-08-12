@@ -35,7 +35,8 @@ export default function NotificationBell() {
     useEffect(() => {
         fetch("/api/candidate/notifications")
             .then(r => r.json())
-            .then(data => setNotifications(data.notifications ?? []));
+            .then(data => setNotifications(Array.isArray(data.notifications) ? data.notifications : []))
+            .catch(() => setNotifications([]));
     }, []);
 
     useEffect(() => {
@@ -49,7 +50,7 @@ export default function NotificationBell() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
 
     const markAsRead = async (id: string) => {
         await fetch(`/api/candidate/notifications/${id}/read`, { method: "PATCH" });

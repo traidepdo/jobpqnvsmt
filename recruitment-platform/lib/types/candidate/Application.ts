@@ -1,20 +1,37 @@
+import { z } from "zod";
+import { createApplicationSchema } from "@/server/schemas/candidate/application.schema";
+
+export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
+
+
 export interface Application {
     id: string;
-    status: string;
+    userId: string;
+    jobId: string;
+    resumeId: string | null;
+    cvUrl?: string | null;
     coverLetter: string | null;
-    createdAt: string;
-    cvUrl: string;
+    status: string;
+    quizScore?: number | null;
+    quizDuration?: number | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
     job: {
         id: string;
         title: string;
         slug: string;
         salaryMin: number | null;
         salaryMax: number | null;
-        type: string;
-        deadline: string | null;
-        company: { name: string; logo: string | null };
-        category: { name: string };
-        ward: { name: string } | null;
+        company: {
+            name: string;
+            logo: string | null;
+        } | null;
+        category: {
+            name: string;
+        };
     };
-    resume: { id: string; title: string } | null;
+    resume: {
+        id: string;
+        title: string;
+    } | null;
 }

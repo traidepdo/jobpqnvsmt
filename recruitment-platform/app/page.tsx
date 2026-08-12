@@ -1,6 +1,4 @@
 // app/page.tsx
-import React from 'react';
-import Link from 'next/link';
 import Hero from '@/components/hero';
 import JobTop from '@/components/home/Jobtop';
 import SectionWrapper from '@/components/home/SectionWrapper';
@@ -8,26 +6,15 @@ import InteractiveCareerTool from '@/components/home/InteractiveCareerTool';
 import "../styles/home.css";
 import CompanyTop from '@/components/home/CompanyTop';
 import Category from '@/components/home/Category';
+import { getdatahome } from '@/server/services/home.services'
 
 
-async function fetchHomeData() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-  try {
-    const res = await fetch(`${baseUrl}/api/public/home`, {
-      cache: 'no-store' // Đảm bảo luôn lấy data mới nhất (giống dữ liệu động cũ của bạn)
-    });
-    if (!res.ok) throw new Error('Failed to fetch data');
-    return res.json();
-  } catch (error) {
-    console.error("Fetch error:", error);
-    return { categories: [], companies: [], wards: [], isLoggedIn: false, isEmployer: false };
-  }
-}
 
 export default async function PhuQuocJobsPage() {
+
+  const data = await getdatahome();
   // Gọi API lấy dữ liệu sạch từ file Route
-  const { categories, companies, wards, isLoggedIn, isEmployer } = await fetchHomeData();
+  const { categories, companies, wards, isLoggedIn, isEmployer } = data.data;
 
   return (
     <>

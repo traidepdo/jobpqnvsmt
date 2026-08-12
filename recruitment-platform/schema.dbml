@@ -1,0 +1,397 @@
+// DBML for Eraser.io
+Table ResumeTemplate {
+  id String
+  name String
+  slug String
+  description String?
+  thumbnailUrl String?
+  htmlContent String
+  cssContent String
+  category TemplateCategory
+  isActive Boolean
+  createdAt DateTime
+  updatedAt DateTime
+  resumes Resume[]
+}
+
+Table User {
+  id String
+  name String
+  email String
+  password String
+  role Role
+  avatar String?
+  phone String?
+  isActive Boolean
+  isLocked Boolean
+  tokenVersion Int
+  createdAt DateTime
+  updatedAt DateTime
+  company Company?
+  resumes Resume[]
+  applications Application[]
+  savedJobs SavedJob[]
+  savedCompanies SavedCompany[]
+  notifications Notification[]
+  blogs Blog[]
+  employerConversations Conversation[]
+  candidateConversations Conversation[]
+  messages Message[]
+  adminConversations AdminConversation[]
+  adminMessages AdminMessage[]
+  groupConversations GroupConversation[]
+  groupMembers GroupMember[]
+  groupMessages GroupMessage[]
+  quizzes Quiz[]
+  jobs Job[]
+}
+
+Table Province {
+  id String
+  name String
+  slug String
+  createdAt DateTime
+  districts District[]
+}
+
+Table District {
+  id String
+  name String
+  slug String
+  provinceId String
+  createdAt DateTime
+  province Province
+  wards Ward[]
+}
+
+Table Ward {
+  id String
+  name String
+  slug String
+  districtId String
+  createdAt DateTime
+  district District
+  companies Company[]
+  jobs Job[]
+}
+
+Table Company {
+  id String
+  name String
+  slug String
+  logo String?
+  website String?
+  description String?
+  wardId String?
+  addressDetail String?
+  size CompanySize?
+  industry String?
+  coverImage String?
+  images Json?
+  ownerId String
+  isApproved Boolean
+  isActive Boolean
+  createdAt DateTime
+  updatedAt DateTime
+  owner User
+  ward Ward?
+  jobs Job[]
+  savedByUsers SavedCompany[]
+}
+
+Table Category {
+  id String
+  name String
+  slug String
+  icon String?
+  createdAt DateTime
+  updatedAt DateTime
+  jobs Job[]
+  quizzes Quiz[]
+}
+
+Table Tag {
+  id String
+  name String
+  slug String
+  type TagType?
+  createdAt DateTime
+  jobTags JobTag[]
+  blogTags BlogTag[]
+}
+
+Table Job {
+  id String
+  title String
+  slug String
+  description String
+  benefits String?
+  requirements String?
+  quantity Int
+  salaryMin Int?
+  salaryMax Int?
+  wardId String?
+  addressDetail String?
+  type JobType
+  experience ExperienceLevel?
+  level JobLevel?
+  status JobStatus
+  rejectReason String?
+  deadline DateTime?
+  isVisible Boolean
+  jobflash Boolean
+  categoryId String
+  companyId String?
+  userId String?
+  quizId String?
+  latitude Float?
+  longitude Float?
+  createdAt DateTime
+  updatedAt DateTime
+  category Category
+  company Company?
+  user User?
+  ward Ward?
+  quiz Quiz?
+  tags JobTag[]
+  applications Application[]
+  savedByUsers SavedJob[]
+  embedding JobEmbedding?
+  viewsCount Int
+  appliesCount Int
+  searchEmbedding Unsupported("vector(384)")?
+}
+
+Table JobEmbedding {
+  jobId String
+  embedding Unsupported("vector(768)")?
+  job Job
+}
+
+Table JobTag {
+  id String
+  jobId String
+  tagId String
+  job Job
+  tag Tag
+}
+
+Table Application {
+  id String
+  userId String
+  jobId String
+  cvUrl String?
+  resumeId String?
+  coverLetter String?
+  status ApplicationStatus
+  isBookmarked Boolean
+  quizScore Int?
+  quizDuration Int?
+  matchScore Int?
+  createdAt DateTime
+  updatedAt DateTime
+  conversation Conversation?
+  interview Interview?
+  user User
+  job Job
+  resume Resume?
+}
+
+Table Resume {
+  id String
+  userId String
+  fullName String?
+  title String
+  isDefault Boolean
+  address String?
+  summary String?
+  socialLinks Json?
+}
+
+Table SavedJob {
+  id String
+  userId String
+  jobId String
+  createdAt DateTime
+  user User
+  job Job
+}
+
+Table SavedCompany {
+  id String
+  userId String
+  companyId String
+  createdAt DateTime
+  user User
+  company Company
+}
+
+Table Notification {
+  id String
+  userId String
+  type NotificationType
+  title String
+  content String
+  refId String?
+  isRead Boolean
+  createdAt DateTime
+  user User
+}
+
+Table BlogCategory {
+  id String
+  name String
+  slug String
+  createdAt DateTime
+  blogs Blog[]
+}
+
+Table Blog {
+  id String
+  title String
+  slug String
+  content String
+  thumbnail String?
+  excerpt String?
+  categoryId String?
+  authorId String
+  views Int
+  isPublished Boolean
+  type BlogType
+  createdAt DateTime
+  updatedAt DateTime
+  author User
+  category BlogCategory?
+  tags BlogTag[]
+}
+
+Table BlogTag {
+  id String
+  blogId String
+  tagId String
+  blog Blog
+  tag Tag
+}
+
+Table Conversation {
+  id String
+  applicationId String
+  employerId String
+  candidateId String
+  createdAt DateTime
+  updatedAt DateTime
+  application Application
+  employer User
+  candidate User
+  messages Message[]
+}
+
+Table Message {
+  id String
+  conversationId String
+  senderId String
+  content String
+  createdAt DateTime
+  readAt DateTime?
+  conversation Conversation
+  sender User
+}
+
+Table Interview {
+  id String
+  applicationId String
+  scheduledAt DateTime
+  type InterviewType
+  location String
+  notes String?
+  status InterviewStatus
+  candidateStatus CandidateInterviewStatus
+  declineReason String?
+  createdAt DateTime
+  updatedAt DateTime
+  application Application
+}
+
+Table AdminConversation {
+  id String
+  employerId String
+  claimedByAdminId String?
+  createdAt DateTime
+  updatedAt DateTime
+  employer User
+  messages AdminMessage[]
+}
+
+Table AdminMessage {
+  id String
+  conversationId String
+  senderId String
+  content String
+  createdAt DateTime
+  readAt DateTime?
+  conversation AdminConversation
+  sender User
+}
+
+Table GroupConversation {
+  id String
+  name String
+  employerId String
+  createdAt DateTime
+  updatedAt DateTime
+  employer User
+  members GroupMember[]
+  messages GroupMessage[]
+}
+
+Table GroupMember {
+  id String
+  groupId String
+  userId String
+  createdAt DateTime
+  group GroupConversation
+  user User
+}
+
+Table GroupMessage {
+  id String
+  groupId String
+  senderId String
+  content String
+  createdAt DateTime
+  group GroupConversation
+  sender User
+}
+
+Table Quiz {
+  id String
+  title String
+  description String?
+  timeLimit Int
+  employerId String
+  categoryId String?
+  createdAt DateTime
+  updatedAt DateTime
+  employer User
+  category Category?
+  questions Question[]
+  jobs Job[]
+}
+
+Table Question {
+  id String
+  quizId String
+  content String
+  options Json
+  correctOption Int
+  quiz Quiz
+}
+
+Table SalaryModel {
+  id String
+  weights Json
+  intercept Float
+  createdAt DateTime
+  updatedAt DateTime
+}
+

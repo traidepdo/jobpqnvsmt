@@ -28,3 +28,13 @@ export interface CategoryBlogs {
     slug: string;
     name: string;
 }
+export interface PaginatedBlogs {
+    blogs: Blogs[];
+    metadata: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        query?: string;
+    }
+}

@@ -7,6 +7,8 @@ import JobDetailTabs from './detail/JobDetailTabs';
 import JobDetailSidebar from './detail/JobDetailSidebar';
 import JobApplyModal from './detail/JobApplyModal';
 import JobRelatedJobs from './detail/JobRelatedJobs';
+import { saveJobAction, delectSaveJobAction } from '@/server/actions/candidate/savejob.action';
+import { cancelApplicationAction } from '@/server/actions/candidate/application.action';
 
 export interface JobDetails {
   id: string;
@@ -106,36 +108,22 @@ export default function JobDetailsClient({
       router.push(`/login?callbackUrl=/jobs/${job.slug}`);
       return;
     }
-    if (user.role !== 'CANDIDATE') {
-      alert('Tài khoản của bạn không phải là tài khoản ứng viên. Vui lòng đăng nhập tài khoản ứng viên để lưu công việc.');
-      return;
-    }
     setSaveLoading(true);
     try {
       if (isSaved) {
-        const res = await fetch(`/api/candidate/saved-jobs?jobId=${job.id}`, { method: 'DELETE' });
-        if (res.status === 401 || res.status === 403) {
-          router.push(`/login?callbackUrl=/jobs/${job.slug}`);
-          return;
+        const res = await delectSaveJobAction(job.id);
+        if (!res.success) {
+          return alert(res.message);
         }
-        if (res.ok) {
-          setIsSaved(false);
-          router.refresh();
-        }
+        setIsSaved(false);
+        router.refresh();
       } else {
-        const res = await fetch('/api/candidate/saved-jobs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobId: job.id }),
-        });
-        if (res.status === 401 || res.status === 403) {
-          router.push(`/login?callbackUrl=/jobs/${job.slug}`);
-          return;
+        const res = await saveJobAction(job.id);
+        if (!res.success) {
+          return alert(res.message);
         }
-        if (res.ok) {
-          setIsSaved(true);
-          router.refresh();
-        }
+        setIsSaved(true);
+        router.refresh();
       }
     } catch (e) {
       console.error(e);
@@ -152,17 +140,14 @@ export default function JobDetailsClient({
     if (!userApplication) return;
     setApplyLoading(true);
     try {
-      const res = await fetch(`/api/candidate/applications?id=${userApplication.id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
+      const res = await cancelApplicationAction(userApplication.id);
+      if (res.success) {
         setApplications(prev => prev.filter((app: any) => app.id !== userApplication.id));
         setCancelSuccess(true);
         router.refresh();
         setTimeout(() => setCancelSuccess(false), 2000);
       } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Không thể hủy ứng tuyển. Vui lòng thử lại.');
+        alert(res.error || 'Không thể hủy ứng tuyển. Vui lòng thử lại.');
       }
     } catch (e) {
       console.error(e);

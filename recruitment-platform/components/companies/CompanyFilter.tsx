@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { Category } from '@prisma/client';
+import { Category } from '@/lib/types/category';
 
 export default function CompanyFilter({
     initialSearch,

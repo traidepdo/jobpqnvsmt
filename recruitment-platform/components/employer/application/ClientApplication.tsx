@@ -7,6 +7,7 @@ import { formatDateVi, getApplicationStatusLabel } from '@/lib/jobLabels';
 import { parseResumeJson, type EducationItem, type ExperienceItem } from '@/lib/renderResume';
 import type { Application } from '@/lib/types/employer/application';
 import { statusStyle, getStatusActions, actionBtnStyle, actionLabel } from '@/lib/jobLabelsApplication';
+import { handleBookmark as handleBookmarkAction } from '@/server/actions/employer/candidateBookmark.action';
 import EmailTemplateModal from '@/components/employer/application/EmailTemplateModal';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
@@ -306,22 +307,17 @@ export default function EmployerApplicationsPage({
     const handleBookmark = async (id: string) => {
         setUpdatingId(id);
         try {
-            const res = await fetch(`/api/employer/applications/${id}/bookmark`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-            });
+            const res = await handleBookmarkAction(id);
 
-            if (res.ok) {
-                const data = await res.json();
+            if (res.success && res.data) {
                 setApps(prev =>
                     prev.map(app =>
-                        app.id === id ? { ...app, isBookmarked: data.isBookmarked } : app
+                        app.id === id ? { ...app, isBookmarked: res.data.isBookmarked } : app
                     )
                 );
             } else {
-                const errorData = await res.json();
-                console.error("Lỗi từ server:", errorData.error);
-                alert(errorData.error || "Không thể cập nhật trạng thái ứng viên.");
+                console.error("Lỗi từ server:", res.message);
+                alert(res.message || "Không thể cập nhật trạng thái ứng viên.");
             }
         } catch (error) {
             console.error("Lỗi kết nối mạng:", error);

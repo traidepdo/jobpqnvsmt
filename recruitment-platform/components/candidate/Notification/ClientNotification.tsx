@@ -190,11 +190,11 @@ export default function ClientNotification({ initialNotifications }: { initialNo
             {selected && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:hidden animate-fadeIn">
                     {/* Backdrop Overlay */}
-                    <div 
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+                    <div
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
                         onClick={() => setSelected(null)}
                     />
-                    
+
                     {/* Modal Box */}
                     <div className="relative w-full max-w-lg z-10 animate-slideUp">
                         {renderDetailContent(selected)}

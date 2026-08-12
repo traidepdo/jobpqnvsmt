@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ExperienceItem, User } from "../types/candidate/profile";
-
+import { updateCandidateProfile } from "@/server/actions/candidate/user.action";
 
 export default function useProfile(dataprofile: { user: User; }) {
     const [bntActive, setBntActive] = useState(false);
@@ -73,21 +73,19 @@ export default function useProfile(dataprofile: { user: User; }) {
     const handleSaveProfile = async () => {
         setSaving(true);
         try {
-            const res = await fetch("/api/candidate/user", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    phone,
-                    profileSummary,
-                    profileExperience,
-                }),
+            const res = await updateCandidateProfile(user?.id || "", {
+                name,
+                phone,
+                profileSummary,
+                profileExperience,
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Cập nhật thất bại");
-            setUser(data.user);
-            showToast("Lưu thông tin hồ sơ thành công!", "success");
-            return true;
+            if (res.success) {
+                setUser(res.user);
+                showToast("Lưu thông tin hồ sơ thành công!", "success");
+                return true;
+            }
+            showToast(res.error || "Cập nhật thất bại", "error");
+            return false;
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : "Có lỗi xảy ra.", "error");
             return false;

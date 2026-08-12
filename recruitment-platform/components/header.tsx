@@ -18,6 +18,7 @@ const JOB_DROPDOWN = [
     { icon: "search", label: "Tìm việc làm", desc: "Khám phá hàng nghìn cơ hội", href: "/jobs" },
     { icon: "bookmark", label: "Việc đã lưu", desc: "Danh sách việc yêu thích", href: "/candidate/saved" },
     { icon: "trending_up", label: "Việc làm nổi bật", desc: "Hot jobs tuần này", href: "/jobs?featured=true" },
+    { icon: "bolt", label: "Job Flash Tuyển Gấp", desc: "Việc làm nhanh trong 1 thời gian ngắn", href: "/job-flash" },
 ];
 const COMPANY_DROPDOWN = [
     { icon: "search", label: "Tìm kiếm công ty", desc: "Khám phá hàng nghìn công ty", href: "/companies" },
@@ -228,16 +229,15 @@ export default function Header() {
                             {user.role === "EMPLOYER" && (
                                 <Link
                                     href="/employer/jobs/new"
-                                    target="_blank"
-                                    className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#212f3f] hover:bg-[#18222e] rounded-lg shadow-sm transition-all"
+                                    className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-lg shadow-sm transition-all"
                                 >
-                                    <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                                    <span className="material-symbols-outlined text-[14px]">bolt</span>
                                     Đăng tuyển dụng
                                 </Link>
                             )}
                             {user.role === "CANDIDATE" && (
                                 <Link
-                                    href="/register/employer"
+                                    href="/employer/jobs/new"
                                     className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#212f3f] hover:bg-[#18222e] rounded-lg shadow-sm transition-all"
                                 >
                                     <span className="material-symbols-outlined text-[14px]">add_circle</span>
@@ -270,10 +270,10 @@ export default function Header() {
                                 Đăng ký
                             </Link>
                             <Link
-                                href="/register/employer"
-                                className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-[#212f3f] hover:bg-[#18222e] rounded-lg shadow-sm transition-all"
+                                href="/employer/jobs/new"
+                                className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-lg shadow-md transition-all"
                             >
-                                <span className="material-symbols-outlined text-[15px]">business_center</span>
+                                <span className="material-symbols-outlined text-[15px]">bolt</span>
                                 Đăng tuyển dụng
                             </Link>
                         </div>

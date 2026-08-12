@@ -128,6 +128,7 @@ export default function JobList({ jobs, savedJobs, appliedJobs, isLoggedIn, acti
                                     jobId={job.id}
                                     initialSaved={saved}
                                     isLoggedIn={isLoggedIn}
+
                                 />
                             </article>
                         );

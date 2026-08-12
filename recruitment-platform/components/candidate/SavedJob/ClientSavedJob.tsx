@@ -17,12 +17,14 @@ interface Metadata {
 
 export default function ClientSavedJob({
     initialItems,
-    metadata
+    metadata,
+    userId
 }: {
     initialItems: SavedItem[];
     metadata: Metadata;
+    userId: string;
 }) {
-    const { items, searchQuery, setSearchQuery, handleSearch, handlePageChange, handleUnsave, getPageNumbers, router } = useSavedJob(initialItems, metadata);
+    const { items, searchQuery, setSearchQuery, handleSearch, handlePageChange, handleUnsave, getPageNumbers, router } = useSavedJob(initialItems, metadata, userId);
 
     return (
         <div className="w-full space-y-8 animate-fadeIn">

@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { unfollowCompany } from '@/lib/services/candidate/followedcompany';
 import { FollowedCompanyItem } from '@/lib/types/candidate/FollowCompany';
 import { formatDateVi } from '@/lib/jobLabels';
+import { folowCampany } from '@/server/services/candidate/flcampany.services';
+import { unfollowCompany } from '@/server/actions/candidate/flcampany.action';
 
 export default function ClientFollowCompany({
     initialItems,

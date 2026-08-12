@@ -87,8 +87,8 @@ export async function GET(req: Request) {
         topJobs: topJobs.map(j => ({
             id: j.id,
             title: j.title,
-            company: j.company.name,
-            logo: j.company.logo,
+            company: j.company?.name || "",
+            logo: j.company?.logo || null,
             count: j._count.applications,
         })),
     });

@@ -104,8 +104,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     const total = allSortedIds.length;
     const totalPages = Math.ceil(total / limit) || 1;
 
-    // Lấy slice các ID cho trang hiện tại
-    const paginatedIds = allSortedIds.slice(skip, skip + limit);
+    const paginatedIds = allSortedIds.slice(skip, skip + limit).filter((id): id is string => Boolean(id));
 
     // 3. Truy vấn thông tin chi tiết của các công ty trong trang hiện tại
     const companies = await prisma.company.findMany({

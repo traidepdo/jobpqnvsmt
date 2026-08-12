@@ -28,7 +28,14 @@ export async function GET() {
   ] = await Promise.all([
     // Tin đang tuyển
     prisma.job.count({
-      where: { companyId, status: 'ACTIVE' },
+      where: {
+        companyId,
+        status: 'ACTIVE',
+        OR: [
+          { deadline: null },
+          { deadline: { gte: now } }
+        ]
+      },
     }),
 
     // Tổng đơn ứng tuyển

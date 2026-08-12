@@ -3,19 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { formatSalary } from '@/lib/jobLabels';
-
-interface JobItem {
-    id: string;
-    title: string;
-    slug: string;
-    salaryMin: number | null;
-    salaryMax: number | null;
-    experience: string | null;
-    deadline: Date | string | null;
-    category: {
-        name: string;
-    };
-}
+import { JobItem } from '@/lib/types/companydetail';
 
 interface CompanyJobsListProps {
     jobs: JobItem[];
@@ -79,11 +67,10 @@ export default function CompanyJobsList({ jobs }: CompanyJobsListProps) {
                     <span className="text-xs font-semibold text-slate-500 mr-1">Ngành nghề:</span>
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            selectedCategory === 'all'
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedCategory === 'all'
                                 ? 'bg-[#00b14f] text-white'
                                 : 'bg-slate-100 text-slate-650 hover:bg-slate-200'
-                        }`}
+                            }`}
                     >
                         Tất cả ({jobs.length})
                     </button>
@@ -93,11 +80,10 @@ export default function CompanyJobsList({ jobs }: CompanyJobsListProps) {
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                    selectedCategory === cat
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedCategory === cat
                                         ? 'bg-[#00b14f] text-white'
                                         : 'bg-slate-100 text-slate-650 hover:bg-slate-200'
-                                }`}
+                                    }`}
                             >
                                 {cat} ({count})
                             </button>
@@ -126,13 +112,13 @@ export default function CompanyJobsList({ jobs }: CompanyJobsListProps) {
             ) : (
                 <div className="space-y-3.5">
                     {visibleJobs.map((job) => (
-                        <article 
-                            key={job.id} 
+                        <article
+                            key={job.id}
                             className="p-5 border border-gray-100 rounded-2xl bg-white hover:border-[#00b14f]/40 hover:shadow-md active:scale-[0.99] transition-all duration-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative group"
                         >
                             <div className="min-w-0 flex-1">
-                                <Link 
-                                    href={`/jobs/${job.slug}`} 
+                                <Link
+                                    href={`/jobs/${job.slug}`}
                                     className="font-bold text-gray-850 hover:text-[#00b14f] text-sm md:text-base block truncate mb-2 transition-colors"
                                 >
                                     {job.title}
@@ -158,7 +144,7 @@ export default function CompanyJobsList({ jobs }: CompanyJobsListProps) {
                                     <span className="material-symbols-outlined text-[14px] text-gray-450">calendar_today</span>
                                     Hạn nộp: {job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}
                                 </span>
-                                <Link 
+                                <Link
                                     href={`/jobs/${job.slug}`}
                                     className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-[#00b14f]/10 hover:bg-[#00b14f] text-[#00b14f] hover:text-white flex items-center justify-center"
                                     aria-label={`Xem chi tiết tin tuyển dụng ${job.title}`}

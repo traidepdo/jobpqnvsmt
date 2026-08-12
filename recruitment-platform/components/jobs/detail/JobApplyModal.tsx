@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { JobDetails } from '@/components/jobs/JobDetailsClient';
+import { createApplicationAction } from '@/server/actions/candidate/application.action';
 
 interface JobApplyModalProps {
   isOpen: boolean;
@@ -100,17 +101,10 @@ export default function JobApplyModal({
         }
       }
 
-      const res = await fetch('/api/candidate/applications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await createApplicationAction(payload as any);
 
-      if (res.ok) {
-        const resData = await res.json();
-        if (resData.application) {
-          onApplySuccess(resData.application);
-        }
+      if (res.success) {
+        onApplySuccess(payload);
         setApplySuccess(true);
         setTimeout(() => {
           setApplySuccess(false);
@@ -125,8 +119,7 @@ export default function JobApplyModal({
           onClose();
         }, 2500);
       } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Không thể nộp hồ sơ. Vui lòng thử lại.');
+        alert(res.message || 'Không thể nộp hồ sơ. Vui lòng thử lại.');
       }
     } catch (e: any) {
       alert(e.message || 'Đã xảy ra lỗi khi nộp hồ sơ.');

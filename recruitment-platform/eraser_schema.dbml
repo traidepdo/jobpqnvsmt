@@ -1,0 +1,353 @@
+// === DBML SCHEMA OF YOUR RECRUITMENT PLATFORM ===
+
+Table ResumeTemplate {
+  id varchar [pk]
+  name varchar
+  slug varchar [unique]
+  description varchar
+  thumbnailUrl varchar
+  htmlContent varchar
+  cssContent varchar
+  category templatecategory
+  isActive boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table User {
+  id varchar [pk]
+  name varchar
+  email varchar [unique]
+  password varchar
+  role role
+  avatar varchar
+  phone varchar
+  isActive boolean
+  isLocked boolean
+  tokenVersion integer
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Province {
+  id varchar [pk]
+  name varchar
+  slug varchar [unique]
+  createdAt timestamp
+}
+
+Table District {
+  id varchar [pk]
+  name varchar
+  slug varchar
+  provinceId varchar
+  createdAt timestamp
+}
+
+Table Ward {
+  id varchar [pk]
+  name varchar
+  slug varchar
+  districtId varchar
+  createdAt timestamp
+}
+
+Table Company {
+  id varchar [pk]
+  name varchar
+  slug varchar [unique]
+  logo varchar
+  website varchar
+  description varchar
+  wardId varchar
+  addressDetail varchar
+  size companysize
+  industry varchar
+  coverImage varchar
+  images json
+  ownerId varchar [unique]
+  isApproved boolean
+  isActive boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Category {
+  id varchar [pk]
+  name varchar [unique]
+  slug varchar [unique]
+  icon varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Tag {
+  id varchar [pk]
+  name varchar [unique]
+  slug varchar [unique]
+  type tagtype
+  createdAt timestamp
+}
+
+Table Job {
+  id varchar [pk]
+  title varchar
+  slug varchar [unique]
+  description varchar
+  benefits varchar
+  requirements varchar
+  quantity integer
+  salaryMin integer
+  salaryMax integer
+  wardId varchar
+  addressDetail varchar
+  type jobtype
+  experience experiencelevel
+  level joblevel
+  status jobstatus
+  rejectReason varchar
+  deadline timestamp
+  isVisible boolean
+  jobflash boolean
+  categoryId varchar
+  companyId varchar
+  userId varchar
+  quizId varchar
+  latitude float
+  longitude float
+  createdAt timestamp
+  updatedAt timestamp
+  viewsCount integer
+  appliesCount integer
+  searchEmbedding varchar
+}
+
+Table JobEmbedding {
+  jobId varchar [pk]
+  embedding varchar
+}
+
+Table JobTag {
+  id varchar [pk]
+  jobId varchar
+  tagId varchar
+}
+
+Table Application {
+  id varchar [pk]
+  userId varchar
+  jobId varchar
+  cvUrl varchar
+  resumeId varchar
+  coverLetter varchar
+  status applicationstatus
+  isBookmarked boolean
+  quizScore integer
+  quizDuration integer
+  matchScore integer
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Resume {
+  id varchar [pk]
+  userId varchar
+  fullName varchar
+  title varchar
+  isDefault boolean
+  address varchar
+  summary varchar
+  socialLinks json
+}
+
+Table SavedJob {
+  id varchar [pk]
+  userId varchar
+  jobId varchar
+  createdAt timestamp
+}
+
+Table SavedCompany {
+  id varchar [pk]
+  userId varchar
+  companyId varchar
+  createdAt timestamp
+}
+
+Table Notification {
+  id varchar [pk]
+  userId varchar
+  type notificationtype
+  title varchar
+  content varchar
+  refId varchar
+  isRead boolean
+  createdAt timestamp
+}
+
+Table BlogCategory {
+  id varchar [pk]
+  name varchar
+  slug varchar [unique]
+  createdAt timestamp
+}
+
+Table Blog {
+  id varchar [pk]
+  title varchar
+  slug varchar [unique]
+  content varchar
+  thumbnail varchar
+  excerpt varchar
+  categoryId varchar
+  authorId varchar
+  views integer
+  isPublished boolean
+  type blogtype
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table BlogTag {
+  id varchar [pk]
+  blogId varchar
+  tagId varchar
+}
+
+Table Conversation {
+  id varchar [pk]
+  applicationId varchar [unique]
+  employerId varchar
+  candidateId varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Message {
+  id varchar [pk]
+  conversationId varchar
+  senderId varchar
+  content varchar
+  createdAt timestamp
+  readAt timestamp
+}
+
+Table Interview {
+  id varchar [pk]
+  applicationId varchar [unique]
+  scheduledAt timestamp
+  type interviewtype
+  location varchar
+  notes varchar
+  status interviewstatus
+  candidateStatus candidateinterviewstatus
+  declineReason varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table AdminConversation {
+  id varchar [pk]
+  employerId varchar [unique]
+  claimedByAdminId varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table AdminMessage {
+  id varchar [pk]
+  conversationId varchar
+  senderId varchar
+  content varchar
+  createdAt timestamp
+  readAt timestamp
+}
+
+Table GroupConversation {
+  id varchar [pk]
+  name varchar
+  employerId varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table GroupMember {
+  id varchar [pk]
+  groupId varchar
+  userId varchar
+  createdAt timestamp
+}
+
+Table GroupMessage {
+  id varchar [pk]
+  groupId varchar
+  senderId varchar
+  content varchar
+  createdAt timestamp
+}
+
+Table Quiz {
+  id varchar [pk]
+  title varchar
+  description varchar
+  timeLimit integer
+  employerId varchar
+  categoryId varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Question {
+  id varchar [pk]
+  quizId varchar
+  content varchar
+  options json
+  correctOption integer
+}
+
+Table SalaryModel {
+  id varchar [pk]
+  weights json
+  intercept float
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// === RELATIONSHIPS ===
+Ref: District.provinceId > Province.id
+Ref: Ward.districtId > District.id
+Ref: Company.ownerId - User.id
+Ref: Company.wardId > Ward.id
+Ref: Job.categoryId > Category.id
+Ref: Job.companyId > Company.id
+Ref: Job.userId > User.id
+Ref: Job.wardId > Ward.id
+Ref: Job.quizId > Quiz.id
+Ref: JobEmbedding.jobId - Job.id
+Ref: JobTag.jobId > Job.id
+Ref: JobTag.tagId > Tag.id
+Ref: Application.userId > User.id
+Ref: Application.jobId > Job.id
+Ref: Application.resumeId > Resume.id
+Ref: SavedJob.userId > User.id
+Ref: SavedJob.jobId > Job.id
+Ref: SavedCompany.userId > User.id
+Ref: SavedCompany.companyId > Company.id
+Ref: Notification.userId > User.id
+Ref: Blog.authorId > User.id
+Ref: Blog.categoryId > BlogCategory.id
+Ref: BlogTag.blogId > Blog.id
+Ref: BlogTag.tagId > Tag.id
+Ref: Conversation.applicationId - Application.id
+Ref: Message.conversationId > Conversation.id
+Ref: Message.senderId > User.id
+Ref: Interview.applicationId - Application.id
+Ref: AdminMessage.conversationId > AdminConversation.id
+Ref: GroupConversation.employerId > User.id
+Ref: GroupMember.groupId > GroupConversation.id
+Ref: GroupMember.userId > User.id
+Ref: GroupMessage.groupId > GroupConversation.id
+Ref: GroupMessage.senderId > User.id
+Ref: Quiz.employerId > User.id
+Ref: Quiz.categoryId > Category.id
+Ref: Question.quizId > Quiz.id

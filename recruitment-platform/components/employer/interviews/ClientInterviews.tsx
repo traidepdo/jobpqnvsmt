@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApprovedApplication, Interview, InterviewStatus, CandidateInterviewStatus, Job } from '@/lib/types/employer/interviews';
+import { getApplication } from '@/server/actions/employer/application.action';
 import { STATUS_CFG, CANDIDATE_CFG } from '@/lib/jobLabelsInterviews';
 
 const formatDateTime = (dateStr: string) => {
@@ -48,11 +49,11 @@ export default function EmployerInterviewsPage({
         setLoading(true);
         try {
             const [appsRes, ivRes] = await Promise.all([
-                fetch('/api/employer/applications?status=ACCEPTED').then(r => r.json()),
+                getApplication({ status: 'ACCEPTED' as any }),
                 fetch('/api/employer/interviews').then(r => r.json()),
             ]);
 
-            const allApps: any[] = appsRes.applications ?? [];
+            const allApps: any[] = appsRes.success ? (appsRes.data ?? []) : [];
             const allInterviews: Interview[] = ivRes.interviews ?? [];
 
             const existingInterviewAppIds = new Set(

@@ -1,3 +1,7 @@
+import { EmployerApplicationSchema } from '@/server/schemas/employer/application.schema'
+
+export type ApplicationParams = EmployerApplicationSchema
+
 export interface Application {
     id: string;
     status: string;

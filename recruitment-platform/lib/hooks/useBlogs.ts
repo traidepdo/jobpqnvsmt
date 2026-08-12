@@ -35,5 +35,11 @@ export default function useBlogs({ blogs, metadata, categories }: ClientBlogsPro
         }
         router.push(`/blogs?${queryParams.toString()}`);
     };
-    return { blogData, searchValue, setSearchValue, handleSearch, handlePageChange, category };
+    const top1blog = (blogs: Blogs[]) => {
+        if (!blogs || blogs.length === 0) return undefined;
+        const maxViews = Math.max(...blogs.map((blog) => blog.views));
+        return blogs.find((blog) => blog.views === maxViews);
+    }
+
+    return { blogData, searchValue, setSearchValue, handleSearch, handlePageChange, category, top1blog };
 }

@@ -1,64 +1,22 @@
-// app/blogs/[slug]/page.tsx
-import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import HtmlViewer from './_components/HtmlViewer';
+import { getBlogPostDetailServer, getBlogPostMetadataServer } from '@/server/services/blog/blogdetail.services';
 
 interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
-    const post = await prisma.blog.findUnique({
-        where: { slug, isPublished: true },
-        select: { title: true, excerpt: true, thumbnail: true },
-    });
-    if (!post) return {};
-    return {
-        title: post.title,
-        description: post.excerpt || undefined,
-        openGraph: { images: post.thumbnail ? [post.thumbnail] : [] },
-    };
-}
-
-function parseToc(htmlContent: string) {
-    const headings: { id: string; text: string }[] = [];
-    let counter = 0;
-    
-    // Match h2 tags (case-insensitive) and inject unique IDs
-    const updatedContent = htmlContent.replace(/<h2([^>]*)>(.*?)<\/h2>/gi, (match, attrs, contentText) => {
-        // Strip any nested HTML tags from the header text for the link label
-        const plainText = contentText.replace(/<[^>]+>/g, '').trim();
-        counter++;
-        const id = `muc-luc-${counter}`;
-        headings.push({ id, text: plainText });
-        return `<h2${attrs} id="${id}">${contentText}</h2>`;
-    });
-
-    return { toc: headings, content: updatedContent };
+    return getBlogPostMetadataServer(slug);
 }
 
 export default async function BlogPostPage({ params }: Props) {
     const { slug } = await params;
 
-    // Check if post exists and is published
-    const postExists = await prisma.blog.findUnique({
-        where: { slug, isPublished: true },
-    });
+    const data = await getBlogPostDetailServer(slug);
+    if (!data) notFound();
 
-    if (!postExists) notFound();
-
-    // Increment views
-    const post = await prisma.blog.update({
-        where: { id: postExists.id },
-        data: { views: { increment: 1 } },
-        include: {
-            author: { select: { name: true } },
-            category: { select: { name: true, slug: true } },
-            tags: { include: { tag: { select: { name: true, slug: true } } } },
-        },
-    });
-
-    const { toc, content } = parseToc(post.content);
+    const { post, toc, content } = data;
 
     // ── Landing page: delegate sang client component để tránh hydration mismatch
     if (post.type === 'HTML_PAGE') {
@@ -130,7 +88,8 @@ export default async function BlogPostPage({ params }: Props) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 html {
                     scroll-behavior: smooth;
                     scroll-padding-top: 80px;

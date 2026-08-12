@@ -50,7 +50,7 @@ export default async function CvApplications() {
                                 <div className="flex items-center gap-3 px-5 py-4">
                                     <Link href={`/jobs/${app.job.slug}`} className="flex-shrink-0">
                                         <img
-                                            src={app.job.company.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=48'}
+                                            src={app.job.company?.logo || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=48'}
                                             alt=""
                                             className="w-12 h-12 rounded-xl object-contain border border-slate-200 shadow-sm bg-white p-1"
                                         />
@@ -60,7 +60,7 @@ export default async function CvApplications() {
                                             {app.job.title}
                                         </Link>
                                         <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
-                                            {app.job.company.name} <span className="text-slate-300">•</span> {formatDateVi(app.createdAt)}
+                                            {app.job.company?.name || ""} <span className="text-slate-300">•</span> {formatDateVi(app.createdAt)}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export default async function CvApplications() {
                                         <ApplicationActionMenu
                                             applicationId={app.id}
                                             jobSlug={app.job.slug}
-                                            companyName={app.job.company.name}
+                                            companyName={app.job.company?.name || ""}
                                         />
                                     </div>
                                 </div>

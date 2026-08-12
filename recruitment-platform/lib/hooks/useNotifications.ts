@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Notification } from "@/lib/types/candidate/Notification";
-import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/lib/services/candidate/notification";
-
+import { markAllNotificationAsReadAction, markNotificationAsReadAction } from "@/server/actions/candidate/notification.action";
+import { getNotificationsServer } from "@/server/services/candidate/notification.services";
 export function useNotifications(initialNotifications: Notification[]) {
     const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
     const [selected, setSelected] = useState<Notification | null>(null);
@@ -26,9 +26,9 @@ export function useNotifications(initialNotifications: Notification[]) {
         setLoading(true);
 
         const timer = setTimeout(() => {
-            getNotifications(searchQuery)
+            getNotificationsServer(searchQuery)
                 .then(data => {
-                    setNotifications(data);
+                    setNotifications(data.notifications);
                     setLoading(false);
                 })
                 .catch(() => setLoading(false));
@@ -38,7 +38,7 @@ export function useNotifications(initialNotifications: Notification[]) {
     }, [searchQuery]);
 
     const markAsRead = async (id: string) => {
-        const success = await markNotificationAsRead(id);
+        const success = await markNotificationAsReadAction(id);
         if (success) {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
             setSelected(prev => prev?.id === id ? { ...prev, isRead: true } : prev);
@@ -46,7 +46,7 @@ export function useNotifications(initialNotifications: Notification[]) {
     };
 
     const markAllAsRead = async () => {
-        const success = await markAllNotificationsAsRead();
+        const success = await markAllNotificationAsReadAction();
         if (success) {
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             if (selected) setSelected(prev => prev ? { ...prev, isRead: true } : null);

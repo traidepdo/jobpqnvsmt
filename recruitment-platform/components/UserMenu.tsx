@@ -193,6 +193,16 @@ export default function UserMenu({ user }: UserMenuProps) {
                                 </span>
                                 Công ty theo dõi
                             </Link>
+                            <Link
+                                href="/job-flash?my_jobs=true"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-amber-600">
+                                    bolt
+                                </span>
+                                Quản lý tin Flash của tôi
+                            </Link>
                         </>
                     ) : user.role === 'EMPLOYER' ? (
                         <>
@@ -202,9 +212,19 @@ export default function UserMenu({ user }: UserMenuProps) {
                                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-colors font-medium"
                             >
                                 <span className="material-symbols-outlined text-[20px] text-gray-500">
-                                    business
+                                    dashboard
                                 </span>
-                                Quản lý công ty
+                                Dashboard
+                            </Link>
+                            <Link
+                                href="/job-flash?my_jobs=true"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px] text-amber-600">
+                                    bolt
+                                </span>
+                                Quản lý tin Flash của tôi
                             </Link>
                             <Link
                                 href={"/employer/company"}

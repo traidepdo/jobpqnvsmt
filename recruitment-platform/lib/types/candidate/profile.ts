@@ -1,9 +1,6 @@
-export interface ExperienceItem {
-    company: string;
-    position: string;
-    duration: string;
-    description: string;
-}
+import { ExperienceItemInput, UpdateCandidateProfileInput } from "@/server/schemas/candidate/user.schema";
+
+export type ExperienceItem = ExperienceItemInput;
 
 export interface User {
     id: string;
@@ -14,3 +11,5 @@ export interface User {
     profileSummary?: string;
     profileExperience?: ExperienceItem[];
 }
+
+export type { ExperienceItemInput, UpdateCandidateProfileInput };
