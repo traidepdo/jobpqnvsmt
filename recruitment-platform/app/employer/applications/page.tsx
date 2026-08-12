@@ -2,6 +2,8 @@ import { requireEmployer } from '@/lib/requireEmployer';
 import { redirect } from 'next/navigation';
 import EmployerApplicationsClient from '@/components/employer/application/ClientApplication';
 import { getApplications } from '@/lib/services/employer/Application';
+export const dynamic = 'force-dynamic';
+
 export default async function EmployerApplicationsPage({ searchParams }: { searchParams: Promise<{ page?: string, search?: string, category?: string, status?: string, isVisible?: string, jobId?: string, query?: string }> }) {
   const auth = await requireEmployer();
   if (auth.error || !auth.payload?.id) {

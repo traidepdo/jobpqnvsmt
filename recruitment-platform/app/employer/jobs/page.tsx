@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import EmployerJobsClient from "@/components/employer/job/ClientJob";
 import { getJobs, getCategories } from "@/lib/services/employer/Job";
 
+export const dynamic = 'force-dynamic';
+
 export default async function EmployerJobsPage({ searchParams }: { searchParams: Promise<{ page?: string; limit?: string, status?: string, isVisible?: string, search?: string, category?: string }> }) {
   const auth = await requireEmployer();
   if (auth.error || !auth.payload?.id) {

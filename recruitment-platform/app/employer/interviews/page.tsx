@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { GetDataAccepted, getInterviews, getjob } from "@/lib/services/employer/Interviews";
 import ClientInterviews from "@/components/employer/interviews/ClientInterviews";
 
+export const dynamic = 'force-dynamic';
+
 export default async function EmployerInterviewsPage() {
     const auth = await requireEmployer();
 
