@@ -213,7 +213,7 @@ export default async function JobViewPage({ params }: PageProps) {
     ]
   };
 
-  // 1. Fetch AI vector similarity recommendations from SeverAI (Render)
+  // 1. Strictly Fetch AI vector/NLP recommendations directly from SeverAI Django Backend
   let relatedJobs: any[] = [];
   try {
     const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
@@ -227,13 +227,7 @@ export default async function JobViewPage({ params }: PageProps) {
       if (recIds.length > 0) {
         const dbJobs = await prisma.job.findMany({
           where: {
-            id: { in: recIds },
-            isVisible: true,
-            status: 'ACTIVE',
-            OR: [
-              { deadline: null },
-              { deadline: { gte: new Date() } }
-            ]
+            id: { in: recIds }
           },
           include: {
             company: { select: companyPublicSelect },
@@ -243,62 +237,11 @@ export default async function JobViewPage({ params }: PageProps) {
         });
         relatedJobs = recIds.map((id: string) => dbJobs.find(j => j.id === id)).filter(Boolean);
       }
+    } else {
+      console.error("SeverAI response not OK:", aiRes.status, await aiRes.text());
     }
   } catch (err) {
     console.error("Error fetching SeverAI recommendations:", err);
-  }
-
-  // 2. Fallback: Query active, unexpired jobs in same category directly from DB
-  if (relatedJobs.length === 0) {
-    try {
-      const now = new Date();
-      if (jobRaw.categoryId) {
-        relatedJobs = await prisma.job.findMany({
-          where: {
-            categoryId: jobRaw.categoryId,
-            id: { not: jobRaw.id },
-            isVisible: true,
-            status: 'ACTIVE',
-            OR: [
-              { deadline: null },
-              { deadline: { gte: now } }
-            ]
-          },
-          take: 4,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            company: { select: companyPublicSelect },
-            category: { select: { name: true } },
-            ward: { select: { name: true } }
-          }
-        });
-      }
-
-      if (relatedJobs.length < 4) {
-        const existingIds = new Set([jobRaw.id, ...relatedJobs.map(j => j.id)]);
-        const extraJobs = await prisma.job.findMany({
-          where: {
-            id: { notIn: Array.from(existingIds) },
-            isVisible: true,
-            status: 'ACTIVE',
-            OR: [
-              { deadline: null },
-              { deadline: { gte: now } }
-            ]
-          },
-          take: 4 - relatedJobs.length,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            company: { select: companyPublicSelect },
-            category: { select: { name: true } },
-            ward: { select: { name: true } }
-          }
-        });
-        relatedJobs = [...relatedJobs, ...extraJobs];
-      }
-    } catch (err) {
-      console.error("Error fetching fallback active jobs:", err);
-    }
   }
 
   const relatedJobsSchema = relatedJobs.length > 0 ? {
