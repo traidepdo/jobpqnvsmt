@@ -30,16 +30,20 @@ export async function POST(req: Request) {
       parts: [{ text: message }]
     });
 
-    const systemInstruction = "Bạn là trợ lý tư vấn tuyển dụng và hỗ trợ việc làm Phú Quốc Jobs thông minh, thân thiện. Hãy trả lời ngắn gọn, súc tích bằng tiếng Việt, xưng 'tôi' hoặc 'mình' và gọi khách hàng là 'bạn'.";
+    const systemPrompt = "Bạn là trợ lý tư vấn tuyển dụng và hỗ trợ việc làm Phú Quốc Jobs thông minh, thân thiện. Hãy trả lời ngắn gọn, súc tích bằng tiếng Việt, xưng 'tôi' hoặc 'mình' và gọi khách hàng là 'bạn'.";
+    
+    const formattedContents = [
+      {
+        role: "user",
+        parts: [{ text: `${systemPrompt}\n\nCâu hỏi từ ứng viên: ${message}` }]
+      }
+    ];
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents,
-        systemInstruction: {
-          parts: [{ text: systemInstruction }]
-        }
+        contents: formattedContents
       })
     });
 
