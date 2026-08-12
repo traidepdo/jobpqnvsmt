@@ -5,6 +5,7 @@ from .models import Job
 _model = None
 
 def get_embedding_model():
+    global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
         print("Loading SentenceTransformer model (keepitreal/vietnamese-sbert)...")
