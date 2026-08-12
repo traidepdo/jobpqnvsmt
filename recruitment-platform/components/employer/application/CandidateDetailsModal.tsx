@@ -38,12 +38,19 @@ export default function CandidateDetailsModal({
                     onEvaluate(data.score);
                 }
             } else {
-                const errorData = await res.json();
-                alert(errorData.error || 'Lỗi khi chấm điểm CV.');
+                const errText = await res.text();
+                let errMsg = 'Lỗi khi chấm điểm CV.';
+                try {
+                    const errorData = JSON.parse(errText);
+                    errMsg = errorData.error || errMsg;
+                } catch {
+                    if (errText) errMsg = `Lỗi (${res.status}): ${errText.slice(0, 100)}`;
+                }
+                alert(errMsg);
             }
-        } catch (e) {
-            console.error(e);
-            alert('Không thể kết nối đến máy chủ.');
+        } catch (e: any) {
+            console.error("Evaluate error:", e);
+            alert(`Lỗi kết nối: ${e.message || 'Không thể kết nối đến máy chủ.'}`);
         } finally {
             setEvaluating(false);
         }
