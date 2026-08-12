@@ -216,7 +216,7 @@ export default async function JobViewPage({ params }: PageProps) {
   // Fetch AI vector recommendations from SeverAI API with DB fallback
   let relatedJobs: any[] = [];
   try {
-    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     const aiRes = await fetch(`${djangoUrl}/api/jobs/${jobRaw.id}/recommend/`, {
       headers: {
         'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || ''}`,

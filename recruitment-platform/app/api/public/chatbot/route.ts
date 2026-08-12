@@ -5,7 +5,7 @@ import { companyPublicSelect } from "@/lib/prismaSafe";
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") || "";
-    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     let djangoResponse;
 
     if (contentType.includes("multipart/form-data")) {
