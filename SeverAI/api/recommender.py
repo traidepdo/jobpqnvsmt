@@ -3,48 +3,34 @@ from .models import Job
 
 TECH_KEYWORDS = {'it', 'developer', 'dev', 'frontend', 'backend', 'fullstack', 'react', 'nextjs', 'node', 'python', 'lập trình', 'tester', 'qa', 'qc', 'devops', 'software', 'phần mềm', 'ux/ui', 'designer', 'thiết kế', 'nhập liệu'}
 
-def get_related_jobs(job_id, top_n=5):
-    """
-    Get top_n related jobs for a given job_id using pgvector cosine similarity.
-    Prioritizes active non-seed jobs in the same category first, then falls back to other categories with keyword domain matching.
-    """
-    # 1. Fetch the target job
+def get_related_jobs(job_id, top_n=4):
     try:
         job = Job.objects.get(id=job_id)
-        category_id = job.categoryid
-    except Job.DoesNotExist:
-        return []
-
-    # 2. Get the target job's embedding. If not exists, create it.
-    from .embeddings import get_embedding
-    target_embedding = None
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT embedding FROM job_embeddings WHERE job_id = %s", [job_id])
-        row = cursor.fetchone()
-        if row:
-            val = row[0]
-            if isinstance(val, str):
-                target_embedding = val
-            elif isinstance(val, list):
-                target_embedding = '[' + ','.join(map(str, val)) + ']'
-            else:
-                target_embedding = str(val)
-
-    # Nếu không có embedding thì tạo mới
-    if not target_embedding:
-        try:
-            combined_text = f"Tiêu đề: {job.title}\nVị trí: {job.title}\nMô tả: {job.description or ''}\nYêu cầu: {job.requirements or ''}\nQuyền lợi: {job.benefits or ''}"
-            vector_list = get_embedding(combined_text)
-            target_embedding = '[' + ','.join(map(str, vector_list)) + ']'
+        # Prioritize jobs in same category first
+        same_cat_jobs = list(Job.objects.filter(
+            categoryid=job.categoryid,
+            isvisible=True,
+            status='ACTIVE'
+        ).exclude(id=job_id).order_by('-createdat')[:top_n])
+        
+        results = same_cat_jobs
+        if len(results) < top_n:
+            existing_ids = {j.id for j in results}
+            existing_ids.add(job_id)
+            other_jobs = list(Job.objects.filter(
+                isvisible=True,
+                status='ACTIVE'
+            ).exclude(id__in=existing_ids).order_by('-createdat')[:top_n - len(results)])
+            results.extend(other_jobs)
             
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO job_embeddings (job_id, embedding) VALUES (%s, %s::vector) ON CONFLICT (job_id) DO UPDATE SET embedding = EXCLUDED.embedding",
-                    [job_id, target_embedding]
-                )
-        except Exception as e:
-            print(f"Error generating target embedding: {e}")
-            return []
+        return [{
+            'id': j.id,
+            'title': j.title,
+            'slug': j.slug
+        } for j in results]
+    except Exception as e:
+        print(f"Error in get_related_jobs: {e}")
+        return []
 
     related_jobs = []
     seen_ids = {job_id}
