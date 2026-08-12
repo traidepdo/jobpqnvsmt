@@ -217,7 +217,9 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
             if 'candidates' in resp_data and resp_data['candidates']:
                 candidate = resp_data['candidates'][0]
                 if 'content' in candidate and 'parts' in candidate['content'] and candidate['content']['parts']:
-                    raw_text = candidate['content']['parts'][0]['text']
+                    raw_text = candidate['content']['parts'][0]['text'].strip()
+                    if raw_text.startswith("```"):
+                        raw_text = raw_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
                     try:
                         parsed_result = json.loads(raw_text)
                         return parsed_result
