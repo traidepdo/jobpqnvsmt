@@ -9,4 +9,7 @@ pandas
 google-genai
 requests
 python-dotenv
+celery
+redis
+dj-database-url
 gunicorn
