@@ -39,11 +39,12 @@ export async function POST(req: NextRequest) {
 
     if (!djangoResponse.ok) {
       const errText = await djangoResponse.text();
-      let errorMessage = "Lỗi xử lý từ AI Service";
+      let errorMessage = `Máy chủ SeverAI phản hồi lỗi (${djangoResponse.status}): ${errText}`;
       try {
         const errJson = JSON.parse(errText);
-        errorMessage = errJson.error || errorMessage;
+        if (errJson.error) errorMessage = errJson.error;
       } catch (e) {}
+      console.error("[Chatbot CV AI Error]:", errorMessage);
       return NextResponse.json({ error: errorMessage }, { status: djangoResponse.status });
     }
 
