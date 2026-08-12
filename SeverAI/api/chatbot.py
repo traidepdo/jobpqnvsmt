@@ -39,10 +39,11 @@ def parse_db_resume(resume_id):
         if resume.languages:
             parts.append(f"Ngoại ngữ: {resume.languages}")
             
-        # Parse experience (usually JSON array of dicts)
-        if resume.experience and isinstance(resume.experience, list):
+        # Parse experience (usually JSON array of dicts or strings)
+        if resume.experience:
             parts.append("\nKinh nghiệm làm việc:")
-            for exp in resume.experience:
+            exp_list = resume.experience if isinstance(resume.experience, list) else [resume.experience]
+            for exp in exp_list:
                 if isinstance(exp, dict):
                     company = exp.get('company', '')
                     position = exp.get('position', '')
@@ -50,31 +51,46 @@ def parse_db_resume(resume_id):
                     start = exp.get('startYear', '')
                     end = exp.get('endYear', '')
                     parts.append(f"- {position} tại {company} ({start} - {end}): {desc}")
+                else:
+                    parts.append(f"- {str(exp)}")
                 
         # Parse education
-        if resume.education and isinstance(resume.education, list):
+        if resume.education:
             parts.append("\nHọc vấn:")
-            for edu in resume.education:
+            edu_list = resume.education if isinstance(resume.education, list) else [resume.education]
+            for edu in edu_list:
                 if isinstance(edu, dict):
                     school = edu.get('school', '')
                     degree = edu.get('degree', '')
                     field = edu.get('field', '')
                     parts.append(f"- Trường {school}, Bằng {degree} ngành {field}")
+                else:
+                    parts.append(f"- {str(edu)}")
                 
         # Parse projects
-        if resume.projects and isinstance(resume.projects, list):
+        if resume.projects:
             parts.append("\nDự án:")
-            for proj in resume.projects:
+            proj_list = resume.projects if isinstance(resume.projects, list) else [resume.projects]
+            for proj in proj_list:
                 if isinstance(proj, dict):
                     name = proj.get('name', '')
                     pos = proj.get('position', '')
                     desc = proj.get('description', '')
                     parts.append(f"- Dự án {name} (Vai trò: {pos}): {desc}")
-                
-        return "\n".join(parts)
+                else:
+                    parts.append(f"- {str(proj)}")
+                    
+        # Parse cvData fallback if text is sparse
+        if resume.cvdata:
+            parts.append(f"\nDữ liệu CV bổ sung: {json.dumps(resume.cvdata, ensure_ascii=False)}")
+
+        res_text = "\n".join(parts).strip()
+        if not res_text:
+            res_text = f"Hồ sơ ứng viên {resume.title or resume.id}"
+        return res_text
     except Exception as err:
         print(f"Error parsing resume {resume_id}: {err}")
-        return ""
+        return f"Hồ sơ ứng viên ID {resume_id}"
 
 from .embeddings import get_embedding, ensure_job_embeddings
 
