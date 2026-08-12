@@ -101,12 +101,18 @@ export async function getdatahome() {
             }))
             .sort((a, b) => b._count.jobs - a._count.jobs);
 
-        // 3. Kiểm tra Token & Phân quyền user từ Cookie
-        const cookieStore = await cookies();
-        const token = cookieStore.get('token')?.value;
-        const payload = token ? await verifyToken(token) : null;
-        const isLoggedIn = !!payload;
-        const isEmployer = payload?.role === 'EMPLOYER';
+        // 3. Kiểm tra Token & Phân quyền user từ Cookie (an toàn với SSR)
+        let isLoggedIn = false;
+        let isEmployer = false;
+        try {
+            const cookieStore = await cookies();
+            const token = cookieStore.get('token')?.value;
+            const payload = token ? await verifyToken(token) : null;
+            isLoggedIn = !!payload;
+            isEmployer = payload?.role === 'EMPLOYER';
+        } catch {
+            // Trường hợp render tĩnh không có cookies()
+        }
 
         // 4. Trả về toàn bộ data dưới dạng JSON
         return {
