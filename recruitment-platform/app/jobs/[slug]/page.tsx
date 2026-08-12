@@ -13,8 +13,16 @@ interface JobResponse {
   description: string;
 }
 
+export const dynamic = 'force-dynamic';
+
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 const getdatametadata = cache(async (slug: string): Promise<JobResponse> => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   const data = await fetch(`${baseUrl}/api/public/jobs/metadata/${slug}`);
   if (!data.ok) {
     return { title: "Không tìm thấy công việc | Phú Quốc Jobs", description: "Công việc này đã đóng hoặc không tồn tại." };
@@ -48,7 +56,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 const dataJob = cache(async (slug: string): Promise<JobDetail | null> => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   const data = await fetch(`${baseUrl}/api/public/jobs/${slug}`, { cache: 'no-store' });
   if (!data.ok) {
     return null;
@@ -65,7 +73,7 @@ interface RelatedJob {
 }
 
 const getRelatedJobs = cache(async (slug: string): Promise<RelatedJob[]> => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   try {
     const data = await fetch(`${baseUrl}/api/public/jobs/${slug}/recommend`);
     if (!data.ok) {
@@ -80,7 +88,7 @@ const getRelatedJobs = cache(async (slug: string): Promise<RelatedJob[]> => {
 })
 
 const getJobState = cache(async (slug: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   const cookieStore = await cookies();
   const cookieString = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
   const data = await fetch(`${baseUrl}/api/public/jobs/${slug}/state`, {
