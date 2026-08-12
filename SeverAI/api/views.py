@@ -82,8 +82,12 @@ def chatbot_recommend_api(request):
         return JsonResponse({'error': 'Không thể đọc được nội dung từ CV.'}, status=400)
 
     # 3. Call AI matching logic
-    recommendations_result = get_gemini_recommendations(cv_text)
-    return JsonResponse(recommendations_result)
+    try:
+        recommendations_result = get_gemini_recommendations(cv_text)
+        return JsonResponse(recommendations_result)
+    except Exception as err:
+        print(f"Error in chatbot_recommend_api: {err}")
+        return JsonResponse({'error': f'Lỗi phân tích AI: {str(err)}'}, status=500)
 
 @csrf_exempt
 @internal_api_key_required

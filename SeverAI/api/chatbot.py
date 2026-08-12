@@ -125,7 +125,27 @@ def get_gemini_recommendations(cv_text, top_n=3):
                     'similarity_score': score
                 })
     except Exception as e:
-        print(f"Error matching CV with jobs in DB: {e}")
+        print(f"Error matching CV with jobs in DB using pgvector: {e}")
+
+    # Fallback to standard Django ORM query if pgvector embeddings are missing or failed
+    if not candidate_jobs:
+        try:
+            active_jobs = Job.objects.filter(isvisible=True, status='ACTIVE')[:12]
+            for j in active_jobs:
+                candidate_jobs.append({
+                    'id': j.id,
+                    'title': j.title,
+                    'description': j.description or '',
+                    'requirements': j.requirements or '',
+                    'benefits': j.benefits or '',
+                    'slug': j.slug,
+                    'type': j.type,
+                    'salarymin': j.salarymin,
+                    'salarymax': j.salarymax,
+                    'similarity_score': 0.8
+                })
+        except Exception as err:
+            print(f"Fallback ORM query error: {err}")
 
     # If no active jobs found or no candidates
     if not candidate_jobs:
