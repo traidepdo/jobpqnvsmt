@@ -16,12 +16,12 @@ export async function POST(req: Request) {
 
     if (!djangoResponse.ok) {
       const errText = await djangoResponse.text();
-      let errorMessage = "Lỗi xử lý từ AI Service";
+      let errorMessage = "Hệ thống AI đang khởi động lại hoặc tạm thời gián đoạn. Vui lòng thử lại sau giây lát!";
       try {
         const errJson = JSON.parse(errText);
         errorMessage = errJson.error || errorMessage;
       } catch (e) {}
-      return NextResponse.json({ error: errorMessage }, { status: djangoResponse.status });
+      return NextResponse.json({ response: errorMessage }, { status: 200 });
     }
 
     const data = await djangoResponse.json();
