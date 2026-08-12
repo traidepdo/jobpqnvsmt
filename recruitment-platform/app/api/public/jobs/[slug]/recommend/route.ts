@@ -25,7 +25,8 @@ export async function GET(
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-            const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/recommend/`, {
+            const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+            const response = await fetch(`${djangoUrl}/api/jobs/${job.id}/recommend/`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
