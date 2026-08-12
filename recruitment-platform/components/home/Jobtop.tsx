@@ -28,7 +28,7 @@ export default function JobTop() {
         async function fetchJobs() {
             try {
                 setLoading(true);
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/home/jobtop`);
+                const res = await fetch('/api/home/jobtop');
                 if (!res.ok) {
                     throw new Error('Failed to fetch job top');
                 }
