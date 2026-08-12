@@ -218,12 +218,12 @@ export default async function JobViewPage({ params }: PageProps) {
   try {
     const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     const aiRes = await fetch(`${djangoUrl}/api/jobs/${jobRaw.id}/recommend/`, {
-      next: { revalidate: 60 }
+      cache: 'no-store'
     });
     if (aiRes.ok) {
       const data = await aiRes.json();
-      const recs = data.recommendations || data || [];
-      const recIds = Array.isArray(recs) ? recs.map((r: any) => r.id).filter(Boolean) : [];
+      const recs = Array.isArray(data) ? data : (data.recommendations || []);
+      const recIds = recs.map((r: any) => r.id).filter(Boolean);
       if (recIds.length > 0) {
         const dbJobs = await prisma.job.findMany({
           where: {
