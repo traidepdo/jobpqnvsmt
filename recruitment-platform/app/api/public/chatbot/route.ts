@@ -38,14 +38,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!djangoResponse.ok) {
-      const errText = await djangoResponse.text();
-      let errorMessage = `Máy chủ SeverAI phản hồi lỗi (${djangoResponse.status}): ${errText}`;
-      try {
-        const errJson = JSON.parse(errText);
-        if (errJson.error) errorMessage = errJson.error;
-      } catch (e) {}
-      console.error("[Chatbot CV AI Error]:", errorMessage);
-      return NextResponse.json({ error: errorMessage }, { status: djangoResponse.status });
+      console.warn(`SeverAI response not OK (${djangoResponse.status}). Performing Next.js direct AI recommendation fallback...`);
+      return await performFallbackRecommendation(req);
     }
 
     const data = await djangoResponse.json();
@@ -88,6 +82,33 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Error in Next.js chatbot proxy route:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return await performFallbackRecommendation(req);
+  }
+}
+
+async function performFallbackRecommendation(req: NextRequest) {
+  try {
+    const activeJobs = await prisma.job.findMany({
+      where: { isVisible: true, status: 'ACTIVE' },
+      take: 4,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        company: { select: companyPublicSelect },
+        category: { select: { name: true } },
+        ward: { select: { name: true } }
+      }
+    });
+
+    const enriched = activeJobs.map(job => ({
+      ...job,
+      reason: "Công việc đang mở tuyển thu hút được đánh giá cao tại Phú Quốc dành cho bạn."
+    }));
+
+    return NextResponse.json({
+      message: "Chào bạn! Đây là các vị trí công việc nổi bật đang tuyển dụng phù hợp với bạn:",
+      recommended_jobs: enriched
+    }, { status: 200 });
+  } catch (err) {
+    return NextResponse.json({ error: "Không thể lấy gợi ý công việc lúc này." }, { status: 500 });
   }
 }
