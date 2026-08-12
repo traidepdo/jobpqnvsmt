@@ -8,14 +8,20 @@ declare global {
 }
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL!;
-  
-  if (typeof window === 'undefined') {
-    neonConfig.webSocketConstructor = ws;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return new PrismaClient();
   }
 
-  const adapter = new PrismaNeon({ connectionString });
-  return new PrismaClient({ adapter });
+  try {
+    if (typeof window === 'undefined') {
+      neonConfig.webSocketConstructor = ws;
+    }
+    const adapter = new PrismaNeon({ connectionString });
+    return new PrismaClient({ adapter });
+  } catch {
+    return new PrismaClient();
+  }
 }
 
 const basePrisma = global.__prisma ?? createPrismaClient();
