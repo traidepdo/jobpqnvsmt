@@ -213,29 +213,68 @@ export default async function JobViewPage({ params }: PageProps) {
     ]
   };
 
-  // Fetch related jobs directly from DB
+  // Fetch AI vector recommendations from SeverAI API with DB fallback
   let relatedJobs: any[] = [];
   try {
-    relatedJobs = await prisma.job.findMany({
-      where: {
-        categoryId: jobRaw.categoryId,
-        id: { not: jobRaw.id },
-        isVisible: true,
-        status: 'ACTIVE',
-        OR: [
-          { deadline: null },
-          { deadline: { gte: new Date() } }
-        ]
+    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+    const aiRes = await fetch(`${djangoUrl}/api/jobs/${jobRaw.id}/recommend/`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.INTERNAL_API_KEY || ''}`,
       },
-      take: 4,
-      include: {
-        company: { select: companyPublicSelect },
-        category: { select: { name: true } },
-        ward: { select: { name: true } }
-      }
+      next: { revalidate: 60 }
     });
+    if (aiRes.ok) {
+      const data = await aiRes.json();
+      const recs = data.recommendations || [];
+      const recIds = recs.map((r: any) => r.id);
+      if (recIds.length > 0) {
+        const dbJobs = await prisma.job.findMany({
+          where: {
+            id: { in: recIds },
+            isVisible: true,
+            status: 'ACTIVE',
+            OR: [
+              { deadline: null },
+              { deadline: { gte: new Date() } }
+            ]
+          },
+          include: {
+            company: { select: companyPublicSelect },
+            category: { select: { name: true } },
+            ward: { select: { name: true } }
+          }
+        });
+        relatedJobs = recIds.map((id: string) => dbJobs.find(j => j.id === id)).filter(Boolean);
+      }
+    }
   } catch {
-    // fallback empty
+    // AI offline fallback
+  }
+
+  // Fallback: Query same category active unexpired jobs if AI returned empty
+  if (relatedJobs.length === 0) {
+    try {
+      relatedJobs = await prisma.job.findMany({
+        where: {
+          categoryId: jobRaw.categoryId,
+          id: { not: jobRaw.id },
+          isVisible: true,
+          status: 'ACTIVE',
+          OR: [
+            { deadline: null },
+            { deadline: { gte: new Date() } }
+          ]
+        },
+        take: 4,
+        include: {
+          company: { select: companyPublicSelect },
+          category: { select: { name: true } },
+          ward: { select: { name: true } }
+        }
+      });
+    } catch {
+      // fallback empty
+    }
   }
 
   const relatedJobsSchema = relatedJobs.length > 0 ? {
