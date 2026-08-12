@@ -1,13 +1,12 @@
 import os
-from sentence_transformers import SentenceTransformer
 from django.db import connection
 from .models import Job
 
 _model = None
 
 def get_embedding_model():
-    global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         print("Loading SentenceTransformer model (keepitreal/vietnamese-sbert)...")
         # dựa trên encoder layer của bert 
         _model = SentenceTransformer('keepitreal/vietnamese-sbert')

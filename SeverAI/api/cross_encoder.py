@@ -1,5 +1,4 @@
 import math
-from sentence_transformers import CrossEncoder
 
 # Lazy load model to avoid blocking Django server startup
 _model = None
@@ -7,6 +6,7 @@ _model = None
 def get_model():
     global _model
     if _model is None:
+        from sentence_transformers import CrossEncoder
         print("Loading Cross-Encoder model (itdainb/PhoRanker)...")
         # PhoRanker has a max sequence limit of 258. Setting max_length=256 avoids out of bounds errors.
         _model = CrossEncoder('itdainb/PhoRanker', max_length=256)
