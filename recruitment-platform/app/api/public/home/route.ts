@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { companyCardSelect } from "@/lib/prismaSafe";
 import { verifyToken } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         // 1. Fetch song song dữ liệu từ Database (sử dụng groupBy để đếm và lọc trực tiếp trên DB)
