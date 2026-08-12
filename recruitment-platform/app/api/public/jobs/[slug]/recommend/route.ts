@@ -23,9 +23,9 @@ export async function GET(
         // lấy gợi ý từ django
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500);
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-            const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+            const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
             const response = await fetch(`${djangoUrl}/api/jobs/${job.id}/recommend/`, {
                 method: "GET",
                 headers: {
@@ -33,7 +33,7 @@ export async function GET(
                     "Authorization": `Bearer ${process.env.INTERNAL_API_KEY || ""}`,
                 },
                 signal: controller.signal,
-                next: { revalidate: 60 } // Cache recommendations for 60s
+                cache: 'no-store'
             });
 
             clearTimeout(timeoutId);
