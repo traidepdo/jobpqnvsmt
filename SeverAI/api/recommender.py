@@ -1,6 +1,5 @@
 from django.db import connection
 from .models import Job
-from .embeddings import get_embedding
 
 TECH_KEYWORDS = {'it', 'developer', 'dev', 'frontend', 'backend', 'fullstack', 'react', 'nextjs', 'node', 'python', 'lập trình', 'tester', 'qa', 'qc', 'devops', 'software', 'phần mềm', 'ux/ui', 'designer', 'thiết kế', 'nhập liệu'}
 
@@ -17,6 +16,7 @@ def get_related_jobs(job_id, top_n=5):
         return []
 
     # 2. Get the target job's embedding. If not exists, create it.
+    from .embeddings import get_embedding
     target_embedding = None
     with connection.cursor() as cursor:
         cursor.execute("SELECT embedding FROM job_embeddings WHERE job_id = %s", [job_id])
