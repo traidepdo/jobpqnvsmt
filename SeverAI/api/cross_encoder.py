@@ -42,6 +42,13 @@ def calculate_match_score(cv_text: str, job_text: str) -> int:
         score = int(round(probability * 100))
         final_score = max(0, min(100, score))
         print(f"[AI Cross-Encoder] Calculation successful. Raw score: {raw_score:.4f} -> Probability: {probability:.4f} -> Final score: {final_score}%")
+
+        # Free memory immediately to fit in Render 512MB RAM
+        global _model
+        _model = None
+        import gc
+        gc.collect()
+
         return final_score
     except Exception as e:
         print(f"[AI Cross-Encoder] Error computing PhoRanker match score: {e}")

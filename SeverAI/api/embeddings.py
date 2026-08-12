@@ -21,6 +21,13 @@ def get_embedding(text: str):
     # Normalize whitespace
     clean_text = " ".join(text.split())
     embedding = model.encode(clean_text)
+    
+    # Free memory immediately to prevent Render 512MB RAM OOM
+    global _model
+    _model = None
+    import gc
+    gc.collect()
+
     return embedding.tolist()
 
 def ensure_job_embeddings():
