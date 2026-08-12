@@ -201,8 +201,8 @@ export default async function JobViewPage({ params }: PageProps) {
       {
         '@type': 'ListItem',
         'position': 3,
-        'name': job.category.name,
-        'item': `${baseUrl}/jobs?category=${encodeURIComponent(job.category.name)}`,
+        'name': job.category?.name || 'Tất cả ngành nghề',
+        'item': `${baseUrl}/jobs?category=${encodeURIComponent(job.category?.name || '')}`,
       },
       {
         '@type': 'ListItem',
@@ -212,6 +212,8 @@ export default async function JobViewPage({ params }: PageProps) {
       }
     ]
   };
+
+  const relatedJobs: RelatedJob[] = [];
 
   const relatedJobsSchema = relatedJobs.length > 0 ? {
     '@context': 'https://schema.org',
