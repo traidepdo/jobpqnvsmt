@@ -16,6 +16,8 @@ import useDetailsJob from '@/lib/hooks/useDetailsJob';
 import { JobsLoadingProvider } from '@/components/jobs/JobsLoadingContext';
 import JobListWrapper from '@/components/jobs/JobListWrapper';
 
+export const dynamic = 'force-dynamic';
+
 interface RouteParams {
   searchParams: Promise<{
     query?: string;
