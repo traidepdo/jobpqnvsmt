@@ -220,7 +220,12 @@ export default async function JobViewPage({ params }: PageProps) {
       where: {
         categoryId: jobRaw.categoryId,
         id: { not: jobRaw.id },
-        isVisible: true
+        isVisible: true,
+        status: 'ACTIVE',
+        OR: [
+          { deadline: null },
+          { deadline: { gte: new Date() } }
+        ]
       },
       take: 4,
       include: {
