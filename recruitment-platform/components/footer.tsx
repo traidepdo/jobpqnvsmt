@@ -205,9 +205,9 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-green-200/40">
                 <p>© {currentYear} JobHub. Tất cả quyền được bảo lưu.</p>
                 <div className="flex items-center gap-5">
-                    <Link href="/privacy" className="hover:text-white transition-colors">Chính sách bảo mật</Link>
-                    <Link href="/terms" className="hover:text-white transition-colors">Điều khoản sử dụng</Link>
-                    <Link href="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
+                    <Link href="/#privacy" className="hover:text-white transition-colors">Chính sách bảo mật</Link>
+                    <Link href="/#terms" className="hover:text-white transition-colors">Điều khoản sử dụng</Link>
+                    <Link href="/" className="hover:text-white transition-colors">Sitemap</Link>
                 </div>
             </div>
         </footer>
