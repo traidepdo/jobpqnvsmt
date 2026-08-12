@@ -199,7 +199,7 @@ export default function JobDetailsClient({
         </div>
 
         {/* Related Jobs */}
-        <JobRelatedJobs relatedJobs={relatedJobs} />
+        <JobRelatedJobs jobId={job.id} slug={job.slug} initialJobs={relatedJobs} />
       </div>
 
       {/* Cancel Success Modal */}
