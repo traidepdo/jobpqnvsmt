@@ -213,7 +213,25 @@ export default async function JobViewPage({ params }: PageProps) {
     ]
   };
 
-  const relatedJobs: RelatedJob[] = [];
+  // Fetch related jobs directly from DB
+  let relatedJobs: any[] = [];
+  try {
+    relatedJobs = await prisma.job.findMany({
+      where: {
+        categoryId: jobRaw.categoryId,
+        id: { not: jobRaw.id },
+        isVisible: true
+      },
+      take: 4,
+      include: {
+        company: { select: companyPublicSelect },
+        category: { select: { name: true } },
+        ward: { select: { name: true } }
+      }
+    });
+  } catch {
+    // fallback empty
+  }
 
   const relatedJobsSchema = relatedJobs.length > 0 ? {
     '@context': 'https://schema.org',
