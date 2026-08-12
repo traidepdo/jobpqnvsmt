@@ -10,7 +10,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || undefined;
 
-    const notifications = await getNotificationsServer(user.id, search);
+    const result = await getNotificationsServer(user.id, search);
 
-    return NextResponse.json({ notifications });
+    return NextResponse.json({
+        notifications: result.notifications,
+        unReadCount: result.unReadCount,
+    });
 }

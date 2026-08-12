@@ -55,14 +55,16 @@ export default function NotificationBell() {
     const markAsRead = async (id: string) => {
         await fetch(`/api/candidate/notifications/${id}/read`, { method: "PATCH" });
         setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, read: true } : n)
+            prev.map(n => n.id === id ? { ...n, isRead: true } : n)
         );
-        setSelected(prev => prev?.id === id ? { ...prev, read: true } : prev);
+        setSelected(prev => prev?.id === id ? { ...prev, isRead: true } : prev);
+        window.dispatchEvent(new CustomEvent('notifications:read'));
     };
 
     const markAllAsRead = async () => {
         await fetch("/api/candidate/notifications/read-all", { method: "PATCH" });
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        window.dispatchEvent(new CustomEvent('notifications:read'));
     };
 
     const openNotification = (n: Notification) => {

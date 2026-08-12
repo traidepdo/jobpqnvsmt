@@ -38,6 +38,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadSupport, setUnreadSupport] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Auto handle sidebar state based on screen size on mount and resize
@@ -61,13 +62,36 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
       .catch(() => { });
   };
 
+  const loadUnreadNotifications = () => {
+    fetch('/api/employer/notifications')
+      .then(r => r.json())
+      .then(d => {
+        const total = typeof d.unReadCount === 'number'
+          ? d.unReadCount
+          : (Array.isArray(d.notifications) ? d.notifications.filter((n: { isRead: boolean }) => !n.isRead).length : 0);
+        setUnreadNotifications(total);
+      })
+      .catch(() => { });
+  };
+
   useEffect(() => {
     loadUnreadSupport();
+    loadUnreadNotifications();
     const interval = setInterval(
-      loadUnreadSupport,
+      () => {
+        loadUnreadSupport();
+        loadUnreadNotifications();
+      },
       pathname.startsWith('/employer/support') ? 3000 : 15000
     );
-    return () => clearInterval(interval);
+
+    const onNotifRead = () => loadUnreadNotifications();
+    window.addEventListener('notifications:read', onNotifRead);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notifications:read', onNotifRead);
+    };
   }, [pathname]);
 
   const loadUnread = () => {
@@ -213,6 +237,7 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
                 pathname !== '/employer/jobs/new');
             const isMessages = item.href === '/employer/messages';
             const isSupport = item.href === '/employer/support';
+            const isNotifications = item.href === '/employer/notifications';
 
             return (
               <Link
@@ -250,6 +275,11 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
                       {unreadSupport > 9 ? '9+' : unreadSupport}
                     </span>
                   )}
+                  {!sidebarOpen && isNotifications && unreadNotifications > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center shadow-sm">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  )}
                 </div>
 
                 {/* Label */}
@@ -269,6 +299,12 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
                   <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center transition-all duration-300
                     ${active ? 'bg-blue-100 text-[#0052CC]' : 'bg-rose-500 text-white'}`}>
                     {unreadSupport > 99 ? '99+' : unreadSupport}
+                  </span>
+                )}
+                {sidebarOpen && isNotifications && unreadNotifications > 0 && (
+                  <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center transition-all duration-300
+                    ${active ? 'bg-blue-100 text-[#0052CC]' : 'bg-rose-500 text-white'}`}>
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </span>
                 )}
               </Link>

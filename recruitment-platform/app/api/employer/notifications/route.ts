@@ -32,7 +32,9 @@ export async function GET() {
             },
         });
 
-        return NextResponse.json({ notifications });
+        const unReadCount = notifications.filter(n => !n.isRead).length;
+
+        return NextResponse.json({ notifications, unReadCount });
     } catch (error) {
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

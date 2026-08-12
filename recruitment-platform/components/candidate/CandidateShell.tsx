@@ -85,7 +85,9 @@ export default function CandidateShell({
     fetch('/api/candidate/notifications')
       .then(r => r.json())
       .then(d => {
-        const total = (d.notifications ?? []).filter((n: { isRead: boolean }) => !n.isRead).length;
+        const total = typeof d.unReadCount === 'number'
+          ? d.unReadCount
+          : (Array.isArray(d.notifications) ? d.notifications.filter((n: { isRead: boolean }) => !n.isRead).length : 0);
         setUnreadNotifications(total);
       })
       .catch(() => { });
@@ -99,13 +101,16 @@ export default function CandidateShell({
       loadUnreadNotifications();
     }, 10000);
 
-    // Lắng nghe event từ messages page khi user đọc tin
+    // Lắng nghe event từ messages page và notifications page khi user đọc tin
     const onRead = () => loadUnread();
+    const onNotifRead = () => loadUnreadNotifications();
     window.addEventListener('messages:read', onRead);
+    window.addEventListener('notifications:read', onNotifRead);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('messages:read', onRead);
+      window.removeEventListener('notifications:read', onNotifRead);
     };
   }, []);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Notification } from "@/lib/types/candidate/Notification";
 import { markAllNotificationAsReadAction, markNotificationAsReadAction } from "@/server/actions/candidate/notification.action";
-import { getNotificationsServer } from "@/server/services/candidate/notification.services";
+
 export function useNotifications(initialNotifications: Notification[]) {
     const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
     const [selected, setSelected] = useState<Notification | null>(null);
@@ -26,9 +26,13 @@ export function useNotifications(initialNotifications: Notification[]) {
         setLoading(true);
 
         const timer = setTimeout(() => {
-            getNotificationsServer(searchQuery)
+            const url = searchQuery
+                ? `/api/candidate/notifications?search=${encodeURIComponent(searchQuery)}`
+                : '/api/candidate/notifications';
+            fetch(url)
+                .then(r => r.json())
                 .then(data => {
-                    setNotifications(data.notifications);
+                    setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
                     setLoading(false);
                 })
                 .catch(() => setLoading(false));
@@ -38,10 +42,11 @@ export function useNotifications(initialNotifications: Notification[]) {
     }, [searchQuery]);
 
     const markAsRead = async (id: string) => {
-        const success = await markNotificationAsReadAction(id);
-        if (success) {
+        const res = await markNotificationAsReadAction(id);
+        if (res && (res as any).status === 200) {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
             setSelected(prev => prev?.id === id ? { ...prev, isRead: true } : prev);
+            window.dispatchEvent(new CustomEvent('notifications:read'));
         }
     };
 
@@ -50,6 +55,7 @@ export function useNotifications(initialNotifications: Notification[]) {
         if (success) {
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             if (selected) setSelected(prev => prev ? { ...prev, isRead: true } : null);
+            window.dispatchEvent(new CustomEvent('notifications:read'));
         }
     };
 
