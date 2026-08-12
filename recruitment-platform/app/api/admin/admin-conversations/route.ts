@@ -29,7 +29,7 @@ export async function GET() {
         },
     });
 
-    const mapped = conversations.map(c => ({
+    const mapped = conversations.map((c: any) => ({
         ...c,
         isNew: !c.claimedByAdminId,
         isMine: c.claimedByAdminId === result.payload.id,
