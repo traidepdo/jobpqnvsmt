@@ -4,7 +4,7 @@ import { requireEmployer } from '@/lib/requireEmployer';
 
 export async function GET() {
   const auth = await requireEmployer();
-  if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 });
+  if (auth.error) return auth.error;
 
   const companyId = auth.company.id;
   const companyName = auth.company.name;

@@ -130,10 +130,14 @@ export default function EmployerDashboardPage() {
   useEffect(() => {
     fetch('/api/employer/stats')
       .then(r => {
-        if (!r.ok) throw new Error('Unauthorized or server error');
+        if (r.status === 401 || r.status === 403) {
+          window.location.href = '/employer/login';
+          return null;
+        }
+        if (!r.ok) throw new Error('Server error');
         return r.json();
       })
-      .then(setData)
+      .then(d => { if (d) setData(d); })
       .catch(err => {
         console.error(err);
         setData(null);
