@@ -62,16 +62,18 @@ def parse_db_resume(resume_id):
                     parts.append(f"- Trường {school}, Bằng {degree} ngành {field}")
                 
         # Parse projects
-        if resume.projects:
+        if resume.projects and isinstance(resume.projects, list):
             parts.append("\nDự án:")
             for proj in resume.projects:
-                name = proj.get('name', '')
-                pos = proj.get('position', '')
-                desc = proj.get('description', '')
-                parts.append(f"- Dự án {name} (Vai trò: {pos}): {desc}")
+                if isinstance(proj, dict):
+                    name = proj.get('name', '')
+                    pos = proj.get('position', '')
+                    desc = proj.get('description', '')
+                    parts.append(f"- Dự án {name} (Vai trò: {pos}): {desc}")
                 
         return "\n".join(parts)
-    except Resume.DoesNotExist:
+    except Exception as err:
+        print(f"Error parsing resume {resume_id}: {err}")
         return ""
 
 from .embeddings import get_embedding, ensure_job_embeddings
