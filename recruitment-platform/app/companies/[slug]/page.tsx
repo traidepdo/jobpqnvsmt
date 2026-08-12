@@ -12,6 +12,8 @@ import CompanyTabs from '@/components/companies/CompanyTabs';
 import CompanyImages from '@/components/companies/CompanyImages';
 import { getCompanyDetail } from '@/server/services/companydetail.services';
 import { authFlow } from '@/server/services/companydetail.services';
+export const dynamic = 'force-dynamic';
+
 interface RouteParams {
     params: Promise<{ slug: string }>;
 }
