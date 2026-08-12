@@ -10,6 +10,8 @@ import { getdatahome } from '@/server/services/home.services'
 
 
 
+export const dynamic = 'force-dynamic';
+
 export default async function PhuQuocJobsPage() {
 
   const data = await getdatahome();
