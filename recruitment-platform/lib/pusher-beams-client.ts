@@ -4,9 +4,11 @@ let beamsClient: any = null;
 
 export const getBeamsClient = () => {
   if (typeof window === 'undefined') return null;
+  const instanceId = process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID;
+  if (!instanceId) return null;
   if (!beamsClient) {
     beamsClient = new PusherPushNotifications.Client({
-      instanceId: process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID || '',
+      instanceId,
     });
   }
   return beamsClient;
