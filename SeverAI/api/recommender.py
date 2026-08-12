@@ -4,32 +4,59 @@ from .models import Job
 TECH_KEYWORDS = {'it', 'developer', 'dev', 'frontend', 'backend', 'fullstack', 'react', 'nextjs', 'node', 'python', 'lập trình', 'tester', 'qa', 'qc', 'devops', 'software', 'phần mềm', 'ux/ui', 'designer', 'thiết kế', 'nhập liệu'}
 
 def get_related_jobs(job_id, top_n=4):
+    """
+    Intelligent AI Recommendation Engine (Content-Based Matching & Keyword Domain Similarity)
+    """
     try:
-        job = Job.objects.get(id=job_id)
-        # Prioritize jobs in same category first
-        same_cat_jobs = list(Job.objects.filter(
-            categoryid=job.categoryid,
+        target_job = Job.objects.get(id=job_id)
+        
+        # Query active & visible candidate jobs
+        candidates = Job.objects.filter(
             isvisible=True,
             status='ACTIVE'
-        ).exclude(id=job_id).order_by('-createdat')[:top_n])
-        
-        results = same_cat_jobs
-        if len(results) < top_n:
-            existing_ids = {j.id for j in results}
-            existing_ids.add(job_id)
-            other_jobs = list(Job.objects.filter(
-                isvisible=True,
-                status='ACTIVE'
-            ).exclude(id__in=existing_ids).order_by('-createdat')[:top_n - len(results)])
-            results.extend(other_jobs)
-            
+        ).exclude(id=job_id)
+
+        target_text = f"{target_job.title} {target_job.description or ''} {target_job.requirements or ''}".lower()
+        target_words = set(target_text.split())
+
+        scored_jobs = []
+        for cand in candidates:
+            cand_text = f"{cand.title} {cand.description or ''} {cand.requirements or ''}".lower()
+            cand_words = set(cand_text.split())
+
+            # 1. Title match boost
+            title_score = 0
+            target_title_words = set(target_job.title.lower().split())
+            cand_title_words = set(cand.title.lower().split())
+            title_overlap = len(target_title_words.intersection(cand_title_words))
+            if title_overlap > 0:
+                title_score += title_overlap * 3.0
+
+            # 2. Category match boost
+            cat_score = 2.0 if cand.categoryid == target_job.categoryid else 0.0
+
+            # 3. Content word overlap (Jaccard similarity)
+            intersection = len(target_words.intersection(cand_words))
+            union = len(target_words.union(cand_words)) or 1
+            content_similarity = (intersection / union) * 5.0
+
+            total_score = title_score + cat_score + content_similarity
+
+            scored_jobs.append((total_score, cand))
+
+        # Sort by total AI score descending
+        scored_jobs.sort(key=lambda x: x[0], reverse=True)
+
+        results = [job for score, job in scored_jobs[:top_n]]
+
         return [{
             'id': j.id,
             'title': j.title,
             'slug': j.slug
         } for j in results]
+
     except Exception as e:
-        print(f"Error in get_related_jobs: {e}")
+        print(f"Error in SeverAI intelligent recommender: {e}")
         return []
 
     related_jobs = []
