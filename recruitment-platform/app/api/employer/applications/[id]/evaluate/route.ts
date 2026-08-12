@@ -29,7 +29,7 @@ export async function POST(
     const signedCvUrl = application.cvUrl ? signCloudinaryCvUrl(application.cvUrl) : null;
 
     // 2. Call Django AI Server to evaluate
-    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
+    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     const response = await fetch(`${djangoUrl}/api/evaluate-cv/`, {
       method: 'POST',
       headers: {
@@ -43,9 +43,15 @@ export async function POST(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errText = await response.text();
+      let detailMsg = `Máy chủ AI phản hồi lỗi (${response.status}): ${errText}`;
+      try {
+        const jsonErr = JSON.parse(errText);
+        if (jsonErr.error) detailMsg = jsonErr.error;
+      } catch {}
+      console.error("[Evaluate CV AI Error]:", detailMsg);
       return NextResponse.json(
-        { error: errorData.error || 'Không thể kết nối máy chủ AI để chấm điểm CV.' },
+        { error: detailMsg },
         { status: response.status }
       );
     }
