@@ -213,22 +213,43 @@ export default async function JobViewPage({ params }: PageProps) {
     ]
   };
 
-  // Query related jobs directly from DB for fast & reliable rendering
+  // Query related jobs prioritizing same category first, fallback to overall latest
   let relatedJobs: any[] = [];
   try {
-    relatedJobs = await prisma.job.findMany({
-      where: {
-        id: { not: jobRaw.id },
-        isVisible: true
-      },
-      take: 4,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        company: { select: companyPublicSelect },
-        category: { select: { name: true } },
-        ward: { select: { name: true } }
-      }
-    });
+    if (jobRaw.categoryId) {
+      relatedJobs = await prisma.job.findMany({
+        where: {
+          categoryId: jobRaw.categoryId,
+          id: { not: jobRaw.id },
+          isVisible: true
+        },
+        take: 4,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          company: { select: companyPublicSelect },
+          category: { select: { name: true } },
+          ward: { select: { name: true } }
+        }
+      });
+    }
+
+    if (relatedJobs.length < 4) {
+      const existingIds = new Set([jobRaw.id, ...relatedJobs.map(j => j.id)]);
+      const extraJobs = await prisma.job.findMany({
+        where: {
+          id: { notIn: Array.from(existingIds) },
+          isVisible: true
+        },
+        take: 4 - relatedJobs.length,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          company: { select: companyPublicSelect },
+          category: { select: { name: true } },
+          ward: { select: { name: true } }
+        }
+      });
+      relatedJobs = [...relatedJobs, ...extraJobs];
+    }
   } catch (err) {
     console.error("Error fetching related jobs:", err);
   }
