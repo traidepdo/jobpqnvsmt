@@ -40,24 +40,26 @@ def parse_db_resume(resume_id):
             parts.append(f"Ngoại ngữ: {resume.languages}")
             
         # Parse experience (usually JSON array of dicts)
-        if resume.experience:
+        if resume.experience and isinstance(resume.experience, list):
             parts.append("\nKinh nghiệm làm việc:")
             for exp in resume.experience:
-                company = exp.get('company', '')
-                position = exp.get('position', '')
-                desc = exp.get('description', '')
-                start = exp.get('startYear', '')
-                end = exp.get('endYear', '')
-                parts.append(f"- {position} tại {company} ({start} - {end}): {desc}")
+                if isinstance(exp, dict):
+                    company = exp.get('company', '')
+                    position = exp.get('position', '')
+                    desc = exp.get('description', '')
+                    start = exp.get('startYear', '')
+                    end = exp.get('endYear', '')
+                    parts.append(f"- {position} tại {company} ({start} - {end}): {desc}")
                 
         # Parse education
-        if resume.education:
+        if resume.education and isinstance(resume.education, list):
             parts.append("\nHọc vấn:")
             for edu in resume.education:
-                school = edu.get('school', '')
-                degree = edu.get('degree', '')
-                field = edu.get('field', '')
-                parts.append(f"- Trường {school}, Bằng {degree} ngành {field}")
+                if isinstance(edu, dict):
+                    school = edu.get('school', '')
+                    degree = edu.get('degree', '')
+                    field = edu.get('field', '')
+                    parts.append(f"- Trường {school}, Bằng {degree} ngành {field}")
                 
         # Parse projects
         if resume.projects:
