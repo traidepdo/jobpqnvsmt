@@ -38,11 +38,11 @@ export default function Footer() {
         {
             title: 'Tài nguyên',
             links: [
-                { label: 'Blog & Tin tức', href: '/blog' },
-                { label: 'Hướng dẫn viết CV', href: '/blog?category=cv-tips' },
-                { label: 'Kỹ năng phỏng vấn', href: '/blog?category=interview' },
-                { label: 'Thị trường lao động', href: '/blog?category=market' },
-                { label: 'Liên hệ', href: '/contact' },
+                { label: 'Blog & Tin tức', href: '/blogs' },
+                { label: 'Hướng dẫn viết CV', href: '/blogs' },
+                { label: 'Kỹ năng phỏng vấn', href: '/blogs' },
+                { label: 'Thị trường lao động', href: '/blogs' },
+                { label: 'Liên hệ', href: '/#contact' },
             ],
         },
     ];
