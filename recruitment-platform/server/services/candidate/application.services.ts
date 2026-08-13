@@ -157,31 +157,29 @@ export const ApplicationService = {
             throw new Error('Đơn ứng tuyển đã được xử lý, không thể hủy');
         }
 
-        return prisma.$transaction(async (tx) => {
-            // Lấy danh sách conversationIds thuộc về ứng tuyển này
-            const conversations = await tx.conversation.findMany({
-                where: { applicationId: id },
-                select: { id: true }
+        // Lấy danh sách conversationIds thuộc về ứng tuyển này
+        const conversations = await prisma.conversation.findMany({
+            where: { applicationId: id },
+            select: { id: true }
+        });
+
+        const conversationIds = conversations.map(c => c.id);
+
+        if (conversationIds.length > 0) {
+            // Xóa tất cả tin nhắn thuộc các hội thoại này
+            await prisma.message.deleteMany({
+                where: { conversationId: { in: conversationIds } },
             });
 
-            const conversationIds = conversations.map(c => c.id);
-
-            if (conversationIds.length > 0) {
-                // Xóa tất cả tin nhắn thuộc các hội thoại này
-                await tx.message.deleteMany({
-                    where: { conversationId: { in: conversationIds } },
-                });
-
-                // Xóa tất cả cuộc hội thoại này
-                await tx.conversation.deleteMany({
-                    where: { id: { in: conversationIds } },
-                });
-            }
-
-            // Xóa đơn ứng tuyển
-            return tx.application.delete({
-                where: { id },
+            // Xóa tất cả cuộc hội thoại này
+            await prisma.conversation.deleteMany({
+                where: { id: { in: conversationIds } },
             });
+        }
+
+        // Xóa đơn ứng tuyển
+        return prisma.application.delete({
+            where: { id },
         });
     }
 };
