@@ -304,7 +304,17 @@ export async function getJobsListData(params: JobSearchParams, token?: string) {
     prisma.job.count({ where })
   ]);
 
-  const model = await getLatestModel();
+  const categoryIds = Array.from(new Set(rawJobs.map(j => j.categoryId).filter(Boolean)));
+  const categoryModelMap: Record<string, any> = {};
+  await Promise.all(
+    categoryIds.map(async (catId) => {
+      if (catId) {
+        categoryModelMap[catId] = await getLatestModel(catId);
+      }
+    })
+  );
+  const globalModel = await getLatestModel(null);
+
   const jobs = rawJobs.map(job => {
     const min = job.salaryMin;
     const max = job.salaryMax;
@@ -326,6 +336,7 @@ export async function getJobsListData(params: JobSearchParams, token?: string) {
         actualSalary = actualSalary / 1000000;
       }
 
+      const model = (job.categoryId && categoryModelMap[job.categoryId]) || globalModel;
       const predicted = predictSalary({
         experience: job.experience,
         level: job.level,

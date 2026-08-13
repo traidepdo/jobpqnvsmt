@@ -85,33 +85,33 @@ export const ApplicationService = {
             }
         }
 
-        return prisma.$transaction(async (tx) => {
-            const app = await tx.application.create({
-                data: {
-                    userId,
-                    jobId,
-                    resumeId: resumeId || null,
-                    cvUrl: cvUrl || null,
-                    coverLetter: coverLetter || null,
-                    quizScore,
-                    quizDuration: finalDuration,
-                },
-                include: {
-                    job: {
-                        select: {
-                            title: true,
-                            company: { select: { name: true, ownerId: true } },
-                        },
+        const app = await prisma.application.create({
+            data: {
+                userId,
+                jobId,
+                resumeId: resumeId || null,
+                cvUrl: cvUrl || null,
+                coverLetter: coverLetter || null,
+                quizScore,
+                quizDuration: finalDuration,
+            },
+            include: {
+                job: {
+                    select: {
+                        title: true,
+                        company: { select: { name: true, ownerId: true } },
                     },
                 },
-            });
+            },
+        });
 
-            await tx.job.update({
+        try {
+            await prisma.job.update({
                 where: { id: jobId },
                 data: { appliesCount: { increment: 1 } },
             });
 
-            await tx.notification.create({
+            await prisma.notification.create({
                 data: {
                     userId,
                     type: 'APPLICATION_RECEIVED',
@@ -124,7 +124,7 @@ export const ApplicationService = {
             });
 
             if (app.job.company?.ownerId) {
-                await tx.notification.create({
+                await prisma.notification.create({
                     data: {
                         userId: app.job.company.ownerId,
                         type: 'APPLICATION_RECEIVED',
@@ -136,9 +136,11 @@ export const ApplicationService = {
                     },
                 });
             }
+        } catch (postErr) {
+            console.error("Error creating notifications or updating appliesCount:", postErr);
+        }
 
-            return app;
-        });
+        return app;
     },
 
     async delete(id: string, userId: string) {
