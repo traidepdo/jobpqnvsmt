@@ -33,49 +33,46 @@ export async function POST(req: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await prisma.$transaction(async (tx) => {
-            const newUser = await tx.user.create({
-                data: {
-                    name,
-                    email,
-                    password: hashedPassword,
-                    role: 'EMPLOYER',
-                },
-            });
-            const company = await tx.company.create({
-                data: {
-                    name: companyName,
-                    slug: slugify(companyName),
-                    website: companyWebsite || null,
-                    description: companyDescription || null,
-                    size: companySize && ['SMALL', 'MEDIUM', 'LARGE', 'ENTERPRISE'].includes(companySize)
-                        ? companySize
-                        : null,
-                    industry: industry || null,
-                    ownerId: newUser.id,
-                    isApproved: false,
-                },
-            });
-
-            // Gửi thông báo cho Admin
-            const admins = await tx.user.findMany({
-                where: { role: 'ADMIN' },
-                select: { id: true }
-            });
-            if (admins.length > 0) {
-                await tx.notification.createMany({
-                    data: admins.map(admin => ({
-                        userId: admin.id,
-                        type: 'SYSTEM',
-                        title: 'Doanh nghiệp đăng ký mới',
-                        content: `Doanh nghiệp "${companyName}" đăng ký tài khoản nhà tuyển dụng mới (đại diện: ${name}) và đang chờ phê duyệt.`,
-                        refId: company.id,
-                    }))
-                });
-            }
-
-            return newUser;
+        const newUser = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: 'EMPLOYER',
+            },
         });
+        const company = await prisma.company.create({
+            data: {
+                name: companyName,
+                slug: slugify(companyName),
+                website: companyWebsite || null,
+                description: companyDescription || null,
+                size: companySize && ['SMALL', 'MEDIUM', 'LARGE', 'ENTERPRISE'].includes(companySize)
+                    ? companySize
+                    : null,
+                industry: industry || null,
+                ownerId: newUser.id,
+                isApproved: false,
+            },
+        });
+        const user = newUser;
+
+        // Gửi thông báo cho Admin
+        const admins = await prisma.user.findMany({
+            where: { role: 'ADMIN' },
+            select: { id: true }
+        });
+        if (admins.length > 0) {
+            await prisma.notification.createMany({
+                data: admins.map(admin => ({
+                    userId: admin.id,
+                    type: 'SYSTEM',
+                    title: 'Doanh nghiệp đăng ký mới',
+                    content: `Doanh nghiệp "${companyName}" đăng ký tài khoản nhà tuyển dụng mới (đại diện: ${name}) và đang chờ phê duyệt.`,
+                    refId: company.id,
+                }))
+            });
+        }
 
         return NextResponse.json(
             { message: 'Đăng ký doanh nghiệp thành công! Vui lòng chờ admin duyệt.', user },

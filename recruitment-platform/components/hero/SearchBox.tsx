@@ -146,7 +146,7 @@ export function SearchBox({ wards = [] }: SearchBoxProps) {
       } finally {
         setLoading(false);
       }
-    }, 500);
+    }, 250);
 
     return () => {
       clearTimeout(delayDebounceFn);

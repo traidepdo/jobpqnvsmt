@@ -59,33 +59,31 @@ export async function PUT(
 
     let updated;
     if (isDefault) {
-      updated = await prisma.$transaction(async (tx) => {
-        await tx.resume.updateMany({
-          where: { userId: auth.payload.id },
-          data: { isDefault: false },
-        });
-        return tx.resume.update({
-          where: { id },
-          data: {
-            fullName: finalFullName !== undefined ? finalFullName : existing.fullName,
-            title: title ? title.trim() : existing.title,
-            address: address !== undefined ? address : existing.address,
-            summary: summary !== undefined ? summary : existing.summary,
-            education: education !== undefined ? (education ?? undefined) : (existing.education as any),
-            experience: experience !== undefined ? (experience ?? undefined) : (existing.experience as any),
-            projects: projects !== undefined ? (projects ?? undefined) : (existing.projects as any),
-            degree: degree !== undefined ? degree : existing.degree,
-            languages: languages !== undefined ? languages : existing.languages,
-            socialLinks: socialLinks !== undefined ? (socialLinks ?? undefined) : (existing.socialLinks as any),
-            templateId: templateId !== undefined ? templateId : existing.templateId,
-            avatarUrl,
-            cvData: cleanCvData !== undefined ? cleanCvData : (existing.cvData as any),
-            isDefault: true,
-          },
-          include: {
-            template: { select: { id: true, name: true, slug: true } },
-          },
-        });
+      await prisma.resume.updateMany({
+        where: { userId: auth.payload.id },
+        data: { isDefault: false },
+      });
+      updated = await prisma.resume.update({
+        where: { id },
+        data: {
+          fullName: finalFullName !== undefined ? finalFullName : existing.fullName,
+          title: title ? title.trim() : existing.title,
+          address: address !== undefined ? address : existing.address,
+          summary: summary !== undefined ? summary : existing.summary,
+          education: education !== undefined ? (education ?? undefined) : (existing.education as any),
+          experience: experience !== undefined ? (experience ?? undefined) : (existing.experience as any),
+          projects: projects !== undefined ? (projects ?? undefined) : (existing.projects as any),
+          degree: degree !== undefined ? degree : existing.degree,
+          languages: languages !== undefined ? languages : existing.languages,
+          socialLinks: socialLinks !== undefined ? (socialLinks ?? undefined) : (existing.socialLinks as any),
+          templateId: templateId !== undefined ? templateId : existing.templateId,
+          avatarUrl,
+          cvData: cleanCvData !== undefined ? cleanCvData : (existing.cvData as any),
+          isDefault: true,
+        },
+        include: {
+          template: { select: { id: true, name: true, slug: true } },
+        },
       });
     } else {
       updated = await prisma.resume.update({

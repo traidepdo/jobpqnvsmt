@@ -102,37 +102,37 @@ export async function PATCH(
     return NextResponse.json({ error: 'Không tìm thấy đơn ứng tuyển' }, { status: 404 });
   }
 
-  // Cập nhật status + tạo conversation trong 1 transaction
-  const [updatedApp, conversation] = await prisma.$transaction(async (tx) => {
-    const updated = await tx.application.update({
-      where: { id },
-      data: { status: 'ACCEPTED' },
-    });
+  // Cập nhật status + tạo conversation
+  const updatedApp = await prisma.application.update({
+    where: { id },
+    data: { status: 'ACCEPTED' },
+  });
 
-    const conv = await tx.conversation.upsert({
-      where: { applicationId: id },
-      create: {
-        applicationId: id,
-        employerId: auth.payload.id,
-        candidateId: application.userId,
-      },
-      update: {},
-    });
+  const conversation = await prisma.conversation.upsert({
+    where: { applicationId: id },
+    create: {
+      applicationId: id,
+      employerId: auth.payload.id,
+      candidateId: application.userId,
+    },
+    update: {},
+  });
 
-    // Thông báo cho candidate
-    await tx.notification.create({
+  // Thông báo cho candidate
+  try {
+    await prisma.notification.create({
       data: {
         userId: application.userId,
         type: 'APPLICATION_STATUS_CHANGED',
         title: '🎉 Đơn ứng tuyển được chấp nhận!',
         content: `Bạn đã được chấp nhận vào vị trí "${application.job.title}". Nhắn tin với nhà tuyển dụng để trao đổi thêm.`,
-        refId: conv.id,
+        refId: conversation.id,
         isRead: false,
       },
     });
-
-    return [updated, conv];
-  });
+  } catch (notifErr) {
+    console.error("Error creating notification on CV accept:", notifErr);
+  }
 
   return NextResponse.json({
     success: true,

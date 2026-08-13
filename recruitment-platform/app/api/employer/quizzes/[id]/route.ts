@@ -81,34 +81,31 @@ export async function PUT(
       }
     }
 
-    // Perform transaction: update quiz details, delete old questions, create new questions
-    const updatedQuiz = await prisma.$transaction(async (tx) => {
-      // Delete old questions
-      await tx.question.deleteMany({
-        where: { quizId: id },
-      });
+    // Delete old questions
+    await prisma.question.deleteMany({
+      where: { quizId: id },
+    });
 
-      // Update quiz and recreate questions
-      return await tx.quiz.update({
-        where: { id },
-        data: {
-          title: title.trim(),
-          description: description || null,
-          timeLimit: typeof timeLimit === 'number' ? timeLimit : 15,
-          categoryId: categoryId || null,
-          questions: {
-            create: questions.map((q: any) => ({
-              content: q.content.trim(),
-              options: q.options,
-              correctOption: q.correctOption,
-            })),
-          },
+    // Update quiz and recreate questions
+    const updatedQuiz = await prisma.quiz.update({
+      where: { id },
+      data: {
+        title: title.trim(),
+        description: description || null,
+        timeLimit: typeof timeLimit === 'number' ? timeLimit : 15,
+        categoryId: categoryId || null,
+        questions: {
+          create: questions.map((q: any) => ({
+            content: q.content.trim(),
+            options: q.options,
+            correctOption: q.correctOption,
+          })),
         },
-        include: {
-          questions: true,
-          category: { select: { id: true, name: true } },
-        },
-      });
+      },
+      include: {
+        questions: true,
+        category: { select: { id: true, name: true } },
+      },
     });
 
     return NextResponse.json({ quiz: updatedQuiz });

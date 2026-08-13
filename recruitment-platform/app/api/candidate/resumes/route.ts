@@ -57,33 +57,31 @@ export async function POST(req: Request) {
 
     let resume;
     if (isDefault) {
-      resume = await prisma.$transaction(async (tx) => {
-        await tx.resume.updateMany({
-          where: { userId: auth.payload.id },
-          data: { isDefault: false },
-        });
-        return tx.resume.create({
-          data: {
-            userId: auth.payload.id,
-            fullName: finalFullName,
-            title: title.trim(),
-            address: address || null,
-            summary: summary || null,
-            education: education ?? undefined,
-            experience: experience ?? undefined,
-            projects: projects ?? undefined,
-            degree: degree || null,
-            languages: languages || null,
-            socialLinks: socialLinks ?? undefined,
-            templateId: templateId || null,
-            avatarUrl,
-            cvData: cleanCvData ?? undefined,
-            isDefault: true,
-          },
-          include: {
-            template: { select: { id: true, name: true, slug: true } },
-          },
-        });
+      await prisma.resume.updateMany({
+        where: { userId: auth.payload.id },
+        data: { isDefault: false },
+      });
+      resume = await prisma.resume.create({
+        data: {
+          userId: auth.payload.id,
+          fullName: finalFullName,
+          title: title.trim(),
+          address: address || null,
+          summary: summary || null,
+          education: education ?? undefined,
+          experience: experience ?? undefined,
+          projects: projects ?? undefined,
+          degree: degree || null,
+          languages: languages || null,
+          socialLinks: socialLinks ?? undefined,
+          templateId: templateId || null,
+          avatarUrl,
+          cvData: cleanCvData ?? undefined,
+          isDefault: true,
+        },
+        include: {
+          template: { select: { id: true, name: true, slug: true } },
+        },
       });
     } else {
       resume = await prisma.resume.create({
