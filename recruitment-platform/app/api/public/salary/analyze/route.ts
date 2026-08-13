@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { experience, level, type, categoryId, wardId, salaryMin, salaryMax } = body;
 
-    const model = await getLatestModel();
+    const model = await getLatestModel(categoryId);
     const predictedSalary = predictSalary({ experience, level, type, categoryId, wardId }, model);
 
     const min = salaryMin ? parseFloat(salaryMin) : null;

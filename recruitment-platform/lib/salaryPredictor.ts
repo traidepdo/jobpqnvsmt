@@ -5,48 +5,44 @@ import * as tf from '@tensorflow/tfjs';
 // Set tensorflow backend for scikitjs
 setBackend(tf);
 
-export async function trainSalaryModel() {
-  const jobs = await prisma.job.findMany({
-    where: {
-      salaryMin: { not: null },
-      salaryMax: { not: null },
-    },
-    select: {
-      salaryMin: true,
-      salaryMax: true,
-      experience: true,
-      level: true,
-      type: true,
-      categoryId: true,
-      wardId: true,
-    }
-  });
+interface JobFeatureData {
+  salaryMin: number | null;
+  salaryMax: number | null;
+  experience: string | null;
+  level: string | null;
+  type: string | null;
+  categoryId: string | null;
+  wardId: string | null;
+}
 
-  // Seed default weights if there are too few jobs
-  if (jobs.length < 5) {
-    const defaultWeights = {
-      experience_NO_EXPERIENCE: 0.0,
-      experience_UNDER_1_YEAR: 1.5,
-      experience_ONE_TO_THREE_YEARS: 3.0,
-      experience_THREE_TO_FIVE_YEARS: 6.0,
-      experience_OVER_FIVE_YEARS: 9.0,
-      level_INTERN: 0.0,
-      level_FRESHER: 1.5,
-      level_JUNIOR: 3.0,
-      level_MID: 5.0,
-      level_SENIOR: 8.0,
-      level_LEAD: 11.0,
-      level_MANAGER: 14.0,
-      level_DIRECTOR: 18.0,
-      type_FULL_TIME: 2.0,
-      type_PART_TIME: -3.0,
-      type_INTERNSHIP: -5.0,
-      type_REMOTE: 1.0,
-      type_CONTRACT: 2.0,
-    };
+const DEFAULT_WEIGHTS: Record<string, number> = {
+  experience_NO_EXPERIENCE: 0.0,
+  experience_UNDER_1_YEAR: 1.5,
+  experience_ONE_TO_THREE_YEARS: 3.0,
+  experience_THREE_TO_FIVE_YEARS: 6.0,
+  experience_OVER_FIVE_YEARS: 9.0,
+  level_INTERN: 0.0,
+  level_FRESHER: 1.5,
+  level_JUNIOR: 3.0,
+  level_MID: 5.0,
+  level_SENIOR: 8.0,
+  level_LEAD: 11.0,
+  level_MANAGER: 14.0,
+  level_DIRECTOR: 18.0,
+  type_FULL_TIME: 2.0,
+  type_PART_TIME: -3.0,
+  type_INTERNSHIP: -5.0,
+  type_REMOTE: 1.0,
+  type_CONTRACT: 2.0,
+};
+
+async function trainSingleModel(jobs: JobFeatureData[], categoryId: string | null) {
+  if (jobs.length < 3) {
+    // Seed default model if not enough jobs in this category
     await prisma.salaryModel.create({
       data: {
-        weights: defaultWeights,
+        categoryId,
+        weights: DEFAULT_WEIGHTS,
         intercept: 10.0,
       }
     });
@@ -100,36 +96,108 @@ export async function trainSalaryModel() {
     y.push(avgSalary);
   }
 
-  // Use scikitjs RidgeRegression
-  const ridge = new RidgeRegression({ alpha: 0.5 });
-  await ridge.fit(X, y);
-
-  const coefArray = ridge.coef.arraySync() as number[];
-  const interceptVal = ridge.intercept as number;
-
-  const weightsObj: Record<string, number> = {};
-  for (let i = 0; i < featureNames.length; i++) {
-    weightsObj[featureNames[i]] = coefArray[i] || 0;
+  if (X.length < 3) {
+    await prisma.salaryModel.create({
+      data: {
+        categoryId,
+        weights: DEFAULT_WEIGHTS,
+        intercept: 10.0,
+      }
+    });
+    return;
   }
 
-  await prisma.salaryModel.create({
-    data: {
-      weights: weightsObj,
-      intercept: interceptVal,
+  try {
+    const ridge = new RidgeRegression({ alpha: 0.5 });
+    await ridge.fit(X, y);
+
+    const coefArray = ridge.coef.arraySync() as number[];
+    const interceptVal = ridge.intercept as number;
+
+    const weightsObj: Record<string, number> = {};
+    for (let i = 0; i < featureNames.length; i++) {
+      weightsObj[featureNames[i]] = coefArray[i] || 0;
     }
-  });
+
+    await prisma.salaryModel.create({
+      data: {
+        categoryId,
+        weights: weightsObj,
+        intercept: interceptVal,
+      }
+    });
+  } catch (err) {
+    console.error(`Error training regression model for category [${categoryId}]:`, err);
+    await prisma.salaryModel.create({
+      data: {
+        categoryId,
+        weights: DEFAULT_WEIGHTS,
+        intercept: 10.0,
+      }
+    });
+  }
 }
 
-export async function getLatestModel(): Promise<{ weights: Record<string, number>; intercept: number }> {
-  let model = await prisma.salaryModel.findFirst({
-    orderBy: { createdAt: 'desc' },
+export async function trainSalaryModel() {
+  const allJobs = await prisma.job.findMany({
+    where: {
+      salaryMin: { not: null },
+      salaryMax: { not: null },
+    },
+    select: {
+      salaryMin: true,
+      salaryMax: true,
+      experience: true,
+      level: true,
+      type: true,
+      categoryId: true,
+      wardId: true,
+    }
   });
+
+  // 1. Train global model (categoryId = null)
+  await trainSingleModel(allJobs, null);
+
+  // 2. Train per-category models
+  const categories = await prisma.category.findMany({ select: { id: true } });
+  for (const cat of categories) {
+    const categoryJobs = allJobs.filter(j => j.categoryId === cat.id);
+    await trainSingleModel(categoryJobs, cat.id);
+  }
+}
+
+export async function getLatestModel(categoryId?: string | null): Promise<{ weights: Record<string, number>; intercept: number }> {
+  let model = null;
+
+  if (categoryId) {
+    model = await prisma.salaryModel.findFirst({
+      where: { categoryId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // Fallback to global model (categoryId === null) if category model not found
+  if (!model) {
+    model = await prisma.salaryModel.findFirst({
+      where: { categoryId: null },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
   if (!model) {
     await trainSalaryModel();
-    model = await prisma.salaryModel.findFirst({
-      orderBy: { createdAt: 'desc' },
-    });
+    if (categoryId) {
+      model = await prisma.salaryModel.findFirst({
+        where: { categoryId },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+    if (!model) {
+      model = await prisma.salaryModel.findFirst({
+        where: { categoryId: null },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
   } else {
     const ageInMs = Date.now() - new Date(model.createdAt).getTime();
     const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
@@ -140,21 +208,7 @@ export async function getLatestModel(): Promise<{ weights: Record<string, number
 
   if (!model) {
     return {
-      weights: {
-        experience_NO_EXPERIENCE: 0.0,
-        experience_UNDER_1_YEAR: 1.5,
-        experience_ONE_TO_THREE_YEARS: 3.0,
-        experience_THREE_TO_FIVE_YEARS: 6.0,
-        experience_OVER_FIVE_YEARS: 9.0,
-        level_INTERN: 0.0,
-        level_FRESHER: 1.5,
-        level_JUNIOR: 3.0,
-        level_MID: 5.0,
-        level_SENIOR: 8.0,
-        level_LEAD: 11.0,
-        level_MANAGER: 14.0,
-        level_DIRECTOR: 18.0,
-      },
+      weights: DEFAULT_WEIGHTS,
       intercept: 10.0
     };
   }

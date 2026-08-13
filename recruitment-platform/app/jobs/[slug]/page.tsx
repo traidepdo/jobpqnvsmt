@@ -82,7 +82,7 @@ export default async function JobViewPage({ params }: PageProps) {
     // Guest view
   }
 
-  const model = getLatestModel();
+  const model = await getLatestModel(job.categoryId);
 
   // 3. Compute Salary Analysis directly on the server
   let salaryAnalysis = null;

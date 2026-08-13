@@ -636,11 +636,12 @@ model Question {
 }
 
 model SalaryModel {
-  id        String   @id @default(cuid())
-  weights   Json // Map of feature -> coefficient
-  intercept Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String    @id @default(cuid())
+  categoryId String?   // Optional category ID for per-category regression model
+  weights    Json      // Map of feature -> coefficient
+  intercept  Float
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@map("salary_models")
 }
