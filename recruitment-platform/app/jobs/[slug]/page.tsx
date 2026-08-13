@@ -1,30 +1,22 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { getLatestModel, predictSalary } from '@/lib/salaryPredictor';
+import { getLatestModel } from '@/lib/salaryPredictor';
+import { useSalaryAnalysis } from '@/lib/hooks/useSalaryAnalysis';
 import JobDetailsClient, { JobDetails } from '@/components/jobs/JobDetailsClient';
 import { verifyToken } from '@/lib/auth';
+import { jobsDetailService } from '@/server/services/jobs/detail.services';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
-interface JobResponse {
-  title: string;
-  description: string;
-}
-
-import { prisma } from '@/lib/prisma';
-import { companyPublicSelect } from '@/lib/prismaSafe';
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   try {
-    const job = await prisma.job.findUnique({
-      where: { slug },
-      select: { title: true, description: true }
-    });
+    const job = await jobsDetailService.getJobMetadata(slug);
     if (job) {
       return { title: `${job.title} | Phú Quốc Jobs`, description: job.description?.slice(0, 160) || '' };
     }
@@ -37,22 +29,15 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function JobViewPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // Direct DB Query (No HTTP internal loop)
-  const jobRaw = await prisma.job.findUnique({
-    where: { slug },
-    include: {
-      company: { select: companyPublicSelect },
-      category: { select: { name: true, slug: true } },
-      ward: { select: { name: true, slug: true } },
-      _count: { select: { applications: true } }
-    }
-  });
+  // Query DB via Service Layer
+  // lấy chi tiết công việc theo slug
+  const jobRaw = await jobsDetailService.getJobDetail(slug);
 
   if (!jobRaw) {
     notFound();
   }
 
-  const job = jobRaw as unknown as JobDetail;
+  const job = jobRaw as unknown as JobDetails;
 
   let userResumes: { id: string; title: string, isDefault: boolean }[] = [];
   let initialSaved = false;
@@ -65,82 +50,25 @@ export default async function JobViewPage({ params }: PageProps) {
     const token = cookieStore.get('token')?.value;
     if (token) {
       const payload = await verifyToken(token);
-      if (payload) {
+      if (payload && payload.id) {
         isAuthenticated = true;
         user = payload;
-        const [resumes, savedRecord, applications] = await Promise.all([
-          prisma.resume.findMany({ where: { userId: payload.id as string } }),
-          prisma.savedJob.findUnique({ where: { userId_jobId: { userId: payload.id as string, jobId: jobRaw.id } } }),
-          prisma.application.findMany({ where: { userId: payload.id as string, jobId: jobRaw.id } })
-        ]);
-        userResumes = resumes.map(r => ({ id: r.id, title: r.title || 'CV', isDefault: r.isDefault }));
-        initialSaved = !!savedRecord;
-        initialApplications = applications.map(a => ({ id: a.id, jobId: a.jobId, status: a.status }));
+        // lấy thông tin trạng thái của user với công việc này
+        const userState = await jobsDetailService.getUserJobState(jobRaw.id, payload.id as string);
+        userResumes = userState.userResumes;
+        initialSaved = userState.initialSaved;
+        initialApplications = userState.initialApplications;
       }
     }
   } catch {
     // Guest view
   }
 
-  const model = await getLatestModel(job.categoryId);
+  // lấy model dự đoán lương phù hợp với công việc này theo category 
+  const model = await getLatestModel(jobRaw.categoryId);
 
-  // 3. Compute Salary Analysis directly on the server
-  let salaryAnalysis = null;
-  try {
-    const predictedSalary = predictSalary({
-      experience: job.experience,
-      level: job.level,
-      type: job.type,
-      categoryId: job.categoryId,
-      wardId: job.wardId
-    }, model);
-
-    const min = job.salaryMin;
-    const max = job.salaryMax;
-
-    let actualSalary: number | null = null;
-    if (min !== null && max !== null) {
-      actualSalary = (min + max) / 2;
-    } else if (min !== null) {
-      actualSalary = min;
-    } else if (max !== null) {
-      actualSalary = max;
-    }
-
-    let status: 'good' | 'average' | 'bad' = 'average';
-    let percentageDiff = 0;
-    let comparisonMessage = 'Mức lương cạnh tranh, tương đương với mặt bằng chung thị trường.';
-
-    if (actualSalary !== null) {
-      let actualSalaryScaled = actualSalary;
-      if (actualSalaryScaled > 100000) {
-        actualSalaryScaled = actualSalaryScaled / 1000000;
-      }
-      percentageDiff = Math.round(((actualSalaryScaled - predictedSalary) / predictedSalary) * 100);
-
-      if (actualSalaryScaled >= 1.15 * predictedSalary) {
-        status = 'good';
-        comparisonMessage = `Mức lương này rất tốt so với thị trường (Cao hơn khoảng ${Math.abs(percentageDiff)}% so với vị trí tương tự).`;
-      } else if (actualSalaryScaled < 0.9 * predictedSalary) {
-        status = 'bad';
-        comparisonMessage = `Mức lương này thấp hơn mức trung bình của thị trường (Thấp hơn khoảng ${Math.abs(percentageDiff)}% so với vị trí tương tự).`;
-      } else {
-        status = 'average';
-        comparisonMessage = `Mức lương cạnh tranh, ngang bằng với mặt bằng chung thị trường (Chênh lệch khoảng ${percentageDiff}%).`;
-      }
-    }
-
-    salaryAnalysis = {
-      predictedSalary: Math.round(predictedSalary * 10) / 10,
-      actualSalary,
-      status,
-      percentageDiff,
-      comparisonMessage,
-    };
-  } catch (err) {
-    console.error("Error computing salary analysis in Server Component:", err);
-  }
-
+  // Tính toán phân tích lương thông qua hook / helper
+  const salaryAnalysis = useSalaryAnalysis(job, jobRaw.categoryId, jobRaw.wardId, model);
 
   // 5. Build JSON-LD schemas
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://phuquocjobs.vn';
@@ -213,7 +141,7 @@ export default async function JobViewPage({ params }: PageProps) {
     ]
   };
 
-  // 1. Strictly Fetch AI vector/NLP recommendations directly from SeverAI Django Backend
+  // Fetch AI vector/NLP recommendations directly from SeverAI Django Backend
   let relatedJobs: any[] = [];
   try {
     const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
@@ -226,17 +154,7 @@ export default async function JobViewPage({ params }: PageProps) {
       const recs = Array.isArray(data) ? data : (data.recommendations || []);
       const recIds = recs.map((r: any) => r.id).filter(Boolean);
       if (recIds.length > 0) {
-        const dbJobs = await prisma.job.findMany({
-          where: {
-            id: { in: recIds }
-          },
-          include: {
-            company: { select: companyPublicSelect },
-            category: { select: { name: true } },
-            ward: { select: { name: true } }
-          }
-        });
-        relatedJobs = recIds.map((id: string) => dbJobs.find(j => j.id === id)).filter(Boolean);
+        relatedJobs = await jobsDetailService.getRelatedJobsByIds(recIds);
       }
     } else {
       console.error("SeverAI response not OK:", aiRes.status, await aiRes.text());
@@ -249,7 +167,7 @@ export default async function JobViewPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     'name': 'Việc làm liên quan',
-    'itemListElement': relatedJobs.map((item: RelatedJob, index: number) => ({
+    'itemListElement': relatedJobs.map((item: any, index: number) => ({
       '@type': 'ListItem',
       'position': index + 1,
       'url': `${baseUrl}/jobs/${item.slug}`,

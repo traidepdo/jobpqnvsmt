@@ -200,8 +200,9 @@ async function JobListSection({ searchParams, token, categories, getCategoryName
     limit,
     featured,
   } = await getJobsListData(searchParams, token);
-
+// so luong job trong category
   const activeFilterCount = [category, type, salary, experience, level, companySlug].filter(Boolean).length;
+//  so luong trang
   const totalPages = Math.ceil(total / limit) || 1;
 
   const jobListSchema = jobs.length > 0 ? {
