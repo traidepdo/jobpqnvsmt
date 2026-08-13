@@ -211,11 +211,17 @@ def trigger_moderation_api(request):
         return JsonResponse({'error': 'Missing job_id.'}, status=400)
         
     from .tasks import moderate_job_task
-    task = moderate_job_task.delay(job_id)
+    try:
+        task = moderate_job_task.delay(job_id)
+        task_id = task.id
+    except Exception as err:
+        print(f"[Auto Moderation Warning]: Redis/Celery not running ({err}). Executing sync moderation fallback...")
+        moderate_job_task(job_id)
+        task_id = "sync_moderated"
     
     return JsonResponse({
         'message': 'Job is being processed',
-        'task_id': task.id
+        'task_id': task_id
     }, status=202)
 
 @csrf_exempt
