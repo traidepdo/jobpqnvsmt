@@ -39,8 +39,8 @@ export async function createApplicationAction(params: Omit<CreateApplicationInpu
             console.error("Application validation error:", validate.error.format());
             return { success: false, message: validate.error.issues[0]?.message || "Dữ liệu không hợp lệ" };
         }
-        await ApplicationService.create(validate.data);
-        return { success: true, message: "Ứng tuyển thành công" };
+        const app = await ApplicationService.create(validate.data);
+        return { success: true, message: "Ứng tuyển thành công", application: { id: app.id, jobId: app.jobId, status: app.status } };
     } catch (e: any) {
         console.error(e);
         return { success: false, message: e.message };

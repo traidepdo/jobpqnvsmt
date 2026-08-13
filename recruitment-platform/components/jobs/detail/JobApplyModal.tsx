@@ -104,7 +104,7 @@ export default function JobApplyModal({
       const res = await createApplicationAction(payload as any);
 
       if (res.success) {
-        onApplySuccess(payload);
+        onApplySuccess(res.application || { jobId: job.id, status: 'PENDING' });
         setApplySuccess(true);
         setTimeout(() => {
           setApplySuccess(false);

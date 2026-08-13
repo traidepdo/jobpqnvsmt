@@ -158,7 +158,13 @@ export default function JobDetailsClient({
   };
 
   const handleApplySuccess = (newApplication: any) => {
-    setApplications(prev => [newApplication, ...prev]);
+    const appItem = {
+      id: newApplication?.id || `temp-${Date.now()}`,
+      jobId: job.id,
+      status: newApplication?.status || 'PENDING',
+      ...newApplication,
+    };
+    setApplications(prev => [appItem, ...prev]);
     router.refresh();
   };
 
