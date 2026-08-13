@@ -218,7 +218,8 @@ export default async function JobViewPage({ params }: PageProps) {
   try {
     const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     const aiRes = await fetch(`${djangoUrl}/api/jobs/${jobRaw.id}/recommend/`, {
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: AbortSignal.timeout(1500),
     });
     if (aiRes.ok) {
       const data = await aiRes.json();

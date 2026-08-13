@@ -166,7 +166,16 @@ export async function trainSalaryModel() {
   }
 }
 
+const modelCache = new Map<string, { data: { weights: Record<string, number>; intercept: number }; timestamp: number }>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
+
 export async function getLatestModel(categoryId?: string | null): Promise<{ weights: Record<string, number>; intercept: number }> {
+  const cacheKey = categoryId || '__global__';
+  const cached = modelCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   let model = null;
 
   if (categoryId) {
@@ -206,17 +215,16 @@ export async function getLatestModel(categoryId?: string | null): Promise<{ weig
     }
   }
 
-  if (!model) {
-    return {
-      weights: DEFAULT_WEIGHTS,
-      intercept: 10.0
-    };
-  }
-
-  return {
+  const result = !model ? {
+    weights: DEFAULT_WEIGHTS,
+    intercept: 10.0
+  } : {
     weights: model.weights as Record<string, number>,
     intercept: model.intercept,
   };
+
+  modelCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  return result;
 }
 
 export function predictSalary(
