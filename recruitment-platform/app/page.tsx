@@ -16,7 +16,7 @@ export default async function PhuQuocJobsPage() {
 
   const data = await getdatahome();
   // Gọi API lấy dữ liệu sạch từ file Route
-  const { categories, companies, wards, isLoggedIn, isEmployer } = data.data;
+  const { categories, companies, wards, stats, isLoggedIn, isEmployer } = data.data;
 
   return (
     <>
@@ -26,7 +26,7 @@ export default async function PhuQuocJobsPage() {
       <div className="min-h-screen text-gray-900 overflow-x-hidden" style={{ fontFamily: "'Be Vietnam Pro', sans-serif", background: '#f0fdf4' }}>
 
         {/* HERO SECTION */}
-        <Hero wards={wards} />
+        <Hero wards={wards} stats={stats} />
 
         {/* CATEGORIES SECTION */}
         <SectionWrapper>

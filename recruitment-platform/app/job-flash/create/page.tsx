@@ -198,28 +198,28 @@ export default function JobFlashCreate() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                Lương tối thiểu (VNĐ)
+                                Lương tối thiểu (VNĐ hoặc Triệu)
                             </label>
                             <input
                                 type="number"
                                 name="salaryMin"
                                 value={formData.salaryMin}
                                 onChange={handleChange}
-                                placeholder="Ví dụ: 7000000"
+                                placeholder="Ví dụ: 7 hoặc 7000000"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 outline-none transition-all"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                Lương tối đa (VNĐ)
+                                Lương tối đa (VNĐ hoặc Triệu)
                             </label>
                             <input
                                 type="number"
                                 name="salaryMax"
                                 value={formData.salaryMax}
                                 onChange={handleChange}
-                                placeholder="Ví dụ: 12000000"
+                                placeholder="Ví dụ: 12 hoặc 12000000"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 outline-none transition-all"
                             />
                         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Interview } from '@/lib/types/candidate/interviews';
-import { STATUS_CFG, CANDIDATE_CFG } from '@/lib/interviewLabels';
+import { STATUS_CFG, CANDIDATE_CFG, RESULT_CFG } from '@/lib/interviewLabels';
 import { useInterviews } from '@/lib/hooks/useInterviews';
 
 // ── Modal từ chối ─────────────────────────────────────────────
@@ -54,6 +54,7 @@ function DeclineModal({ onConfirm, onClose }: { onConfirm: (reason: string) => v
 function DetailsModal({ interview, onClose, formatDateTime }: { interview: Interview; onClose: () => void; formatDateTime: (d: string) => string }) {
     const sCfg = STATUS_CFG[interview.status];
     const cCfg = CANDIDATE_CFG[interview.candidateStatus];
+    const rCfg = RESULT_CFG[interview.result || 'PENDING'];
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 animate-slideUp">
@@ -77,7 +78,7 @@ function DetailsModal({ interview, onClose, formatDateTime }: { interview: Inter
                         <p className="text-xs text-slate-500 mt-1">{interview.application.job.company.name}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-100 py-3.5 text-xs">
+                    <div className="grid grid-cols-3 gap-3 border-t border-b border-slate-100 py-3.5 text-xs">
                         <div>
                             <span className="text-slate-400 block mb-1">Trạng thái lịch</span>
                             <span className="inline-block px-2.5 py-0.5 rounded-lg border font-bold text-[10px]"
@@ -90,6 +91,13 @@ function DetailsModal({ interview, onClose, formatDateTime }: { interview: Inter
                             <span className="inline-block px-2.5 py-0.5 rounded-lg font-bold text-[10px]"
                                 style={{ color: cCfg.color, background: cCfg.bg }}>
                                 {cCfg.label}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-slate-400 block mb-1">Kết quả phỏng vấn</span>
+                            <span className="inline-block px-2.5 py-0.5 rounded-lg border font-bold text-[10px]"
+                                style={{ color: rCfg.color, background: rCfg.bg, borderColor: rCfg.border }}>
+                                {rCfg.label}
                             </span>
                         </div>
                     </div>
@@ -158,7 +166,14 @@ function DetailsModal({ interview, onClose, formatDateTime }: { interview: Inter
 export default function CandidateInterviewsPage({ interviewsData }: { interviewsData: Interview[] }) {
     const { formatDateTime, formatCountdown, interviews, loading, respondingId, declineModal, setDeclineModal, setRespondingId, setInterviews, setLoading, respond } = useInterviews(interviewsData);
     const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
-    
+    const [filterTab, setFilterTab] = useState<string>('ALL');
+
+    // Search, Filter & Sort states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedIndustry, setSelectedIndustry] = useState('');
+    const [filterDate, setFilterDate] = useState('');
+    const [sortBy, setSortBy] = useState<'DATE_ASC' | 'DATE_DESC' | 'TITLE_ASC'>('DATE_ASC');
+
     useEffect(() => {
         if (interviewsData) {
             setInterviews(interviewsData);
@@ -166,9 +181,74 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
         }
     }, [interviewsData]);
 
-    const upcoming = interviews.filter(i => i.status === 'SCHEDULED' && i.candidateStatus !== 'DECLINED');
-    const others = interviews.filter(i => i.status !== 'SCHEDULED' || i.candidateStatus === 'DECLINED');
-    const pendingCount = interviews.filter(i => i.candidateStatus === 'PENDING' && i.status === 'SCHEDULED').length;
+    // Unique list of industries/categories for select dropdown
+    const industryList = Array.from(
+        new Set(
+            interviews
+                .map(i => i.application.job.category?.name || i.application.job.company.industry)
+                .filter(Boolean) as string[]
+        )
+    );
+
+    const activeList = interviews.filter(iv => {
+        // 1. Filter by Tab (Status)
+        if (filterTab !== 'ALL') {
+            if (filterTab === 'PENDING' || filterTab === 'CONFIRMED' || filterTab === 'DECLINED') {
+                if (iv.candidateStatus !== filterTab) return false;
+            } else if (filterTab === 'PASSED' || filterTab === 'FAILED') {
+                if (iv.result !== filterTab) return false;
+            } else if (filterTab === 'SCHEDULED' || filterTab === 'COMPLETED' || filterTab === 'CANCELLED') {
+                if (iv.status !== filterTab) return false;
+            }
+        }
+
+        // 2. Search by Name (job title or company name)
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            const matchTitle = iv.application.job.title.toLowerCase().includes(q);
+            const matchCompany = iv.application.job.company.name.toLowerCase().includes(q);
+            if (!matchTitle && !matchCompany) return false;
+        }
+
+        // 3. Filter by Industry / Category
+        if (selectedIndustry) {
+            const cat = iv.application.job.category?.name;
+            const ind = iv.application.job.company.industry;
+            if (cat !== selectedIndustry && ind !== selectedIndustry) return false;
+        }
+
+        // 4. Filter by Date (YYYY-MM-DD)
+        if (filterDate) {
+            const ivDate = new Date(iv.scheduledAt).toISOString().split('T')[0];
+            if (ivDate !== filterDate) return false;
+        }
+
+        return true;
+    }).sort((a, b) => {
+        if (sortBy === 'DATE_ASC') {
+            return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+        }
+        if (sortBy === 'DATE_DESC') {
+            return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+        }
+        if (sortBy === 'TITLE_ASC') {
+            return a.application.job.title.localeCompare(b.application.job.title);
+        }
+        return 0;
+    });
+
+    const upcoming = activeList.filter(i => (i.status === 'SCHEDULED' || i.candidateStatus === 'PENDING') && i.candidateStatus !== 'DECLINED');
+    const others = activeList.filter(i => !((i.status === 'SCHEDULED' || i.candidateStatus === 'PENDING') && i.candidateStatus !== 'DECLINED'));
+    const pendingCount = interviews.filter(i => i.candidateStatus === 'PENDING').length;
+
+    const hasActiveFilters = searchQuery || selectedIndustry || filterDate || sortBy !== 'DATE_ASC';
+
+    const clearFilters = () => {
+        setSearchQuery('');
+        setSelectedIndustry('');
+        setFilterDate('');
+        setSortBy('DATE_ASC');
+    };
 
     return (
         <div className="w-full space-y-6 animate-fadeIn pb-10">
@@ -200,23 +280,176 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-12 translate-x-12" />
             </div>
 
+            {/* ── Unified Filter & Search Control Panel ── */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden transition-all space-y-0">
+                {/* Top Section: Search + Filters + Sort */}
+                <div className="p-3.5 sm:p-4 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5">
+                        {/* Search Input (5 cols) */}
+                        <div className="lg:col-span-5 relative">
+                            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Tìm theo vị trí, tên công ty..."
+                                className="w-full h-10 pl-10 pr-9 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50/70 focus:bg-white text-slate-700 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/15 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 cursor-pointer flex items-center justify-center"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Industry Dropdown (3 cols) */}
+                        <div className="lg:col-span-3 relative">
+                            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">work</span>
+                            <select
+                                value={selectedIndustry}
+                                onChange={e => setSelectedIndustry(e.target.value)}
+                                className="w-full h-10 pl-9 pr-8 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50/70 focus:bg-white text-slate-700 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/15 transition-all appearance-none cursor-pointer"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'right 10px center',
+                                    backgroundSize: '14px'
+                                }}
+                            >
+                                <option value="">Tất cả ngành nghề</option>
+                                {industryList.map(ind => (
+                                    <option key={ind} value={ind}>{ind}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Date Picker (2 cols) */}
+                        <div className="lg:col-span-2 relative">
+                            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">calendar_today</span>
+                            <input
+                                type="date"
+                                value={filterDate}
+                                onChange={e => setFilterDate(e.target.value)}
+                                className="w-full h-10 pl-9 pr-2 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50/70 focus:bg-white text-slate-700 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/15 transition-all cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Sort Select (2 cols) */}
+                        <div className="lg:col-span-2 relative">
+                            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">sort</span>
+                            <select
+                                value={sortBy}
+                                onChange={e => setSortBy(e.target.value as any)}
+                                className="w-full h-10 pl-9 pr-8 text-xs font-semibold border border-slate-200 rounded-xl bg-slate-50/70 focus:bg-white text-slate-700 outline-none focus:border-[#00b14f] focus:ring-2 focus:ring-[#00b14f]/15 transition-all appearance-none cursor-pointer"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'right 10px center',
+                                    backgroundSize: '14px'
+                                }}
+                            >
+                                <option value="DATE_ASC">Mới nhất (Gần nhất)</option>
+                                <option value="DATE_DESC">Xa nhất</option>
+                                <option value="TITLE_ASC">Tên (A - Z)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Active Filter Chips / Reset */}
+                    {hasActiveFilters && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-slate-400 font-bold text-[11px]">Đang lọc ({activeList.length}):</span>
+                                {searchQuery && (
+                                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-[#00b14f] border border-emerald-200/60 px-2.5 py-0.5 rounded-lg text-[11px] font-bold">
+                                        Từ khóa: "{searchQuery}"
+                                        <button onClick={() => setSearchQuery('')} className="hover:text-emerald-700 cursor-pointer flex items-center">
+                                            <span className="material-symbols-outlined text-[13px]">close</span>
+                                        </button>
+                                    </span>
+                                )}
+                                {selectedIndustry && (
+                                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200/60 px-2.5 py-0.5 rounded-lg text-[11px] font-bold">
+                                        Ngành: "{selectedIndustry}"
+                                        <button onClick={() => setSelectedIndustry('')} className="hover:text-blue-700 cursor-pointer flex items-center">
+                                            <span className="material-symbols-outlined text-[13px]">close</span>
+                                        </button>
+                                    </span>
+                                )}
+                                {filterDate && (
+                                    <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-600 border border-purple-200/60 px-2.5 py-0.5 rounded-lg text-[11px] font-bold">
+                                        Ngày: {filterDate}
+                                        <button onClick={() => setFilterDate('')} className="hover:text-purple-700 cursor-pointer flex items-center">
+                                            <span className="material-symbols-outlined text-[13px]">close</span>
+                                        </button>
+                                    </span>
+                                )}
+                            </div>
+                            <button
+                                onClick={clearFilters}
+                                className="text-[11px] font-bold text-rose-500 hover:text-rose-600 hover:underline inline-flex items-center gap-1 cursor-pointer ml-auto"
+                            >
+                                <span className="material-symbols-outlined text-[14px]">restart_alt</span>
+                                Đặt lại mặc định
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom Section: Status Navigation Tabs */}
+                <div className="p-2 sm:p-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {[
+                        { key: 'ALL', label: 'Tất cả', icon: 'list_alt', count: interviews.length },
+                        { key: 'PENDING', label: 'Chờ xác nhận', icon: 'hourglass_empty', count: interviews.filter(i => i.candidateStatus === 'PENDING' && i.status === 'SCHEDULED').length },
+                        { key: 'CONFIRMED', label: 'Đã xác nhận', icon: 'thumb_up', count: interviews.filter(i => i.candidateStatus === 'CONFIRMED').length },
+                        { key: 'PASSED', label: 'Đậu phỏng vấn', icon: 'verified', count: interviews.filter(i => i.result === 'PASSED').length },
+                        { key: 'FAILED', label: 'Rớt phỏng vấn', icon: 'cancel', count: interviews.filter(i => i.result === 'FAILED').length },
+                        { key: 'DECLINED', label: 'Đã từ chối', icon: 'thumb_down', count: interviews.filter(i => i.candidateStatus === 'DECLINED').length },
+                    ].map(tab => {
+                        const isActive = filterTab === tab.key;
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => setFilterTab(tab.key)}
+                                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                                    isActive
+                                        ? 'bg-[#00b14f] text-white shadow-md shadow-[#00b14f]/25 scale-[1.02]'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-white hover:shadow-sm'
+                                }`}
+                            >
+                                <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                                <span>{tab.label}</span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-600'
+                                }`}>
+                                    {tab.count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             {loading ? (
                 <div className="flex justify-center py-20">
                     <div className="w-8 h-8 border-[3px] border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
                 </div>
-            ) : interviews.length === 0 ? (
+            ) : activeList.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-100 p-12 text-center shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
                     <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">event_busy</span>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Chưa có lịch phỏng vấn nào</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Không tìm thấy lịch phỏng vấn</h3>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto mb-5">
-                        Hãy tiếp tục ứng tuyển các công việc phù hợp để nhận lời mời phỏng vấn từ nhà tuyển dụng.
+                        Không có lịch phỏng vấn nào phù hợp với bộ lọc được chọn.
                     </p>
-                    <Link 
-                        href="/jobs" 
-                        className="inline-flex items-center px-5 py-2 bg-[#00b14f] hover:bg-[#009940] text-white font-bold rounded-lg text-xs transition-all active:scale-95"
+                    <button 
+                        onClick={() => setFilterTab('ALL')}
+                        className="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition-all cursor-pointer"
                     >
-                        Tìm việc làm ngay
-                    </Link>
+                        Xem tất cả lịch hẹn
+                    </button>
                 </div>
             ) : (
                 <div className="space-y-6">
@@ -371,6 +604,7 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                                 {others.map(iv => {
                                     const sCfg = STATUS_CFG[iv.status];
                                     const cCfg = CANDIDATE_CFG[iv.candidateStatus];
+                                    const rCfg = RESULT_CFG[iv.result || 'PENDING'];
                                     return (
                                         <div key={iv.id} className="bg-white rounded-xl border border-slate-100 p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-[0_2px_8px_rgba(0,0,0,0.01)] transition-all">
                                             <div className="flex items-center gap-3.5 flex-1 min-w-0">
@@ -388,15 +622,27 @@ export default function CandidateInterviewsPage({ interviewsData }: { interviews
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2.5 flex-shrink-0 self-end sm:self-auto">
+                                            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg border"
                                                     style={{ color: sCfg.color, background: sCfg.bg, borderColor: sCfg.border }}>
                                                     {sCfg.label}
                                                 </span>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
-                                                    style={{ color: cCfg.color, background: cCfg.bg }}>
-                                                    {cCfg.label}
-                                                </span>
+                                                {iv.candidateStatus === 'DECLINED' ? (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
+                                                        style={{ color: cCfg.color, background: cCfg.bg }}>
+                                                        {cCfg.label}
+                                                    </span>
+                                                ) : iv.result !== 'PENDING' ? (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg border"
+                                                        style={{ color: rCfg.color, background: rCfg.bg, borderColor: rCfg.border }}>
+                                                        {rCfg.label}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
+                                                        style={{ color: cCfg.color, background: cCfg.bg }}>
+                                                        {cCfg.label}
+                                                    </span>
+                                                )}
                                                 <button
                                                     onClick={() => setSelectedInterview(iv)}
                                                     className="px-2.5 py-1.5 border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"

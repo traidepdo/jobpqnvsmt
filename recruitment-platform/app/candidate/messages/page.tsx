@@ -97,15 +97,22 @@ function CandidateMessagesPageContent() {
     const searchParams = useSearchParams();
     const activeId = searchParams.get('id');
     const activeType = searchParams.get('type') || 'direct';
+    const initialText = searchParams.get('text');
 
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [groupConvs, setGroupConvs] = useState<GroupConversation[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState(initialText || '');
     const [sending, setSending] = useState(false);
     const [loadingConvs, setLoadingConvs] = useState(true);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialText) {
+            setInput(initialText);
+        }
+    }, [initialText]);
 
     // UI state
     const [activeTab, setActiveTab] = useState<'direct' | 'group'>('direct');

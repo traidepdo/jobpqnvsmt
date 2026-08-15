@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 type InterviewType = 'ONLINE' | 'OFFLINE';
 type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 type CandidateInterviewStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
+type InterviewResult = 'PENDING' | 'PASSED' | 'FAILED';
 
 interface CandidateInfo {
     id: string;
@@ -31,6 +32,7 @@ interface InterviewDetail {
     notes: string | null;
     status: InterviewStatus;
     candidateStatus: CandidateInterviewStatus;
+    result: InterviewResult;
     declineReason: string | null;
 }
 
@@ -51,6 +53,12 @@ const CANDIDATE_CFG: Record<CandidateInterviewStatus, { label: string; bg: strin
     PENDING: { label: 'Chờ xác nhận', bg: 'bg-amber-50/70 text-amber-700 border-amber-100', text: '', icon: 'hourglass_empty' },
     CONFIRMED: { label: 'Đã xác nhận', bg: 'bg-emerald-50/70 text-emerald-700 border-emerald-100', text: '', icon: 'thumb_up' },
     DECLINED: { label: 'Từ chối', bg: 'bg-rose-50/70 text-rose-700 border-rose-100', text: '', icon: 'thumb_down' },
+};
+
+const RESULT_CFG: Record<InterviewResult, { label: string; bg: string; text: string; icon: string }> = {
+    PENDING: { label: 'Chưa chấm', bg: 'bg-purple-50/70 text-purple-700 border-purple-100', text: '', icon: 'hourglass_top' },
+    PASSED: { label: 'ĐẬU PHỎNG VẤN', bg: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-extrabold', text: '', icon: 'verified' },
+    FAILED: { label: 'RỚT PHỎNG VẤN', bg: 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold', text: '', icon: 'cancel' },
 };
 
 const formatDateTime = (dateStr: string) => {
@@ -145,17 +153,45 @@ export default function InterviewDetailPage() {
 
     const handleUpdateStatus = async (status: InterviewStatus) => {
         if (!application?.interview) return;
-        setUpdatingStatus(true); setSuccessMsg('');
+        setUpdatingStatus(true); setSuccessMsg(''); setError('');
         const res = await fetch(`/api/employer/interviews/${application.interview.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status }),
         });
+        const d = await res.json();
         if (res.ok) {
             setSuccessMsg(status === 'COMPLETED' ? 'Đã đánh dấu hoàn thành!' : 'Đã hủy lịch phỏng vấn!');
             await load();
+        } else {
+            setError(d.error ?? 'Đã xảy ra lỗi');
         }
         setUpdatingStatus(false);
+    };
+
+    const handleGradeInterview = async (result: 'PASSED' | 'FAILED') => {
+        if (!application?.interview) return;
+        if (application.interview.candidateStatus !== 'CONFIRMED') {
+            setError('Ứng viên chưa xác nhận tham gia lịch phỏng vấn. Bạn chỉ có thể chấm kết quả sau khi ứng viên đã xác nhận.');
+            return;
+        }
+        setUpdatingStatus(true); setSuccessMsg(''); setError('');
+        try {
+            const res = await fetch(`/api/employer/interviews/${application.interview.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ result }),
+            });
+            const d = await res.json();
+            if (!res.ok) {
+                setError(d.error ?? 'Lỗi khi chấm phỏng vấn');
+            } else {
+                setSuccessMsg(result === 'PASSED' ? '🎉 Đã chấm ĐẬU phỏng vấn! Hồ sơ đã tự động cập nhật thành Đã nhận.' : '📢 Đã chấm RỚT phỏng vấn. Hồ sơ đã cập nhật thành Từ chối.');
+                await load();
+            }
+        } finally {
+            setUpdatingStatus(false);
+        }
     };
 
     if (loading) return (
@@ -169,6 +205,8 @@ export default function InterviewDetailPage() {
 
     const iv = application.interview;
     const hasScheduled = iv?.status === 'SCHEDULED';
+    const isConfirmed = iv?.candidateStatus === 'CONFIRMED';
+    const resultCfg = iv?.result ? RESULT_CFG[iv.result] : RESULT_CFG.PENDING;
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 px-4 py-6 text-slate-800 animate-fadeIn">
@@ -246,6 +284,19 @@ export default function InterviewDetailPage() {
                 </div>
             )}
 
+            {/* Warning banner when candidate hasn't confirmed */}
+            {iv && !isConfirmed && (
+                <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-start gap-3 text-xs text-amber-900 animate-slideUp shadow-sm">
+                    <span className="material-symbols-outlined text-amber-600 text-xl flex-shrink-0 mt-0.5">warning</span>
+                    <div className="space-y-0.5">
+                        <p className="font-extrabold text-amber-900 text-xs">Ứng viên chưa xác nhận tham gia lịch phỏng vấn</p>
+                        <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                            Chức năng chấm điểm phỏng vấn (**Đậu** / **Rớt**) tạm thời bị khóa. Bạn chỉ có thể thực hiện chấm kết quả sau khi ứng viên bấm nút xác nhận tham gia.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Main Schedule Container */}
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                 {/* Section Header */}
@@ -258,7 +309,7 @@ export default function InterviewDetailPage() {
                     </div>
 
                     {iv && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${STATUS_CFG[iv.status].bg} ${STATUS_CFG[iv.status].text}`}>
                                 <span className="material-symbols-outlined text-[12px]">{STATUS_CFG[iv.status].icon}</span>
                                 {STATUS_CFG[iv.status].label}
@@ -266,6 +317,10 @@ export default function InterviewDetailPage() {
                             <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${CANDIDATE_CFG[iv.candidateStatus].bg} ${CANDIDATE_CFG[iv.candidateStatus].text}`}>
                                 <span className="material-symbols-outlined text-[12px]">{CANDIDATE_CFG[iv.candidateStatus].icon}</span>
                                 {CANDIDATE_CFG[iv.candidateStatus].label}
+                            </span>
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${resultCfg.bg}`}>
+                                <span className="material-symbols-outlined text-[12px]">{resultCfg.icon}</span>
+                                {resultCfg.label}
                             </span>
                         </div>
                     )}
@@ -335,6 +390,54 @@ export default function InterviewDetailPage() {
                             </div>
                         )}
 
+                        {/* Evaluation & Grading Section */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-50 via-indigo-50/20 to-slate-50 border border-slate-200/80 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-indigo-600 text-lg">fact_check</span>
+                                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Chấm kết quả phỏng vấn</h3>
+                                </div>
+                                {iv.result !== 'PENDING' && (
+                                    <span className={`text-[10px] font-black px-3 py-1 rounded-xl border flex items-center gap-1 ${resultCfg.bg}`}>
+                                        <span className="material-symbols-outlined text-[13px]">{resultCfg.icon}</span>
+                                        {resultCfg.label}
+                                    </span>
+                                )}
+                            </div>
+
+                            {!isConfirmed ? (
+                                <p className="text-xs text-slate-400 font-medium italic">
+                                    🔒 Chỉ có thể chấm phỏng vấn khi ứng viên đã xác nhận tham gia lịch hẹn.
+                                </p>
+                            ) : (
+                                <div className="flex flex-wrap items-center gap-3 pt-1">
+                                    <button
+                                        onClick={() => handleGradeInterview('PASSED')}
+                                        disabled={updatingStatus}
+                                        className={`flex-1 h-11 px-4 inline-flex items-center justify-center gap-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm active:scale-97 disabled:opacity-50
+                                            ${iv.result === 'PASSED'
+                                                ? 'bg-emerald-600 text-white shadow-emerald-600/20 shadow-md ring-2 ring-emerald-600/30'
+                                                : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">verified</span>
+                                        {iv.result === 'PASSED' ? 'Đã chấm: ĐẬU' : 'Chấm ĐẬU Phỏng Vấn'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleGradeInterview('FAILED')}
+                                        disabled={updatingStatus}
+                                        className={`flex-1 h-11 px-4 inline-flex items-center justify-center gap-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm active:scale-97 disabled:opacity-50
+                                            ${iv.result === 'FAILED'
+                                                ? 'bg-rose-600 text-white shadow-rose-600/20 shadow-md ring-2 ring-rose-600/30'
+                                                : 'bg-rose-500 hover:bg-rose-600 text-white'}`}
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">cancel</span>
+                                        {iv.result === 'FAILED' ? 'Đã chấm: RỚT' : 'Chấm RỚT Phỏng Vấn'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Top-level Action Buttons */}
                         {hasScheduled && (
                             <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
@@ -344,14 +447,6 @@ export default function InterviewDetailPage() {
                                 >
                                     <span className="material-symbols-outlined text-[16px]">edit</span>
                                     Sửa lịch phỏng vấn
-                                </button>
-                                <button
-                                    onClick={() => handleUpdateStatus('COMPLETED')}
-                                    disabled={updatingStatus}
-                                    className="h-10 px-4 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-xl cursor-pointer transition-all duration-200 shadow-sm disabled:opacity-50"
-                                >
-                                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                                    Hoàn thành
                                 </button>
                                 <button
                                     onClick={() => handleUpdateStatus('CANCELLED')}

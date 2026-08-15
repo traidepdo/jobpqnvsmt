@@ -1,5 +1,6 @@
 export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 export type CandidateInterviewStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
+export type InterviewResult = 'PENDING' | 'PASSED' | 'FAILED';
 
 export interface ApprovedApplication {
     applicationId: string;
@@ -22,6 +23,7 @@ export interface Interview {
     notes: string | null;
     status: InterviewStatus;
     candidateStatus: CandidateInterviewStatus;
+    result: InterviewResult;
     declineReason: string | null;
     application: {
         id: string;

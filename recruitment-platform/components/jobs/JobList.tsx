@@ -43,11 +43,11 @@ export default function JobList({ jobs, savedJobs, appliedJobs, isLoggedIn, acti
                                 <div className="p-5 flex gap-4">
                                     {/* Logo */}
                                     <div className="w-25 h-25 border border-slate-100 bg-slate-50 flex items-center justify-center flex-shrink-0 overflow-hidden m-5 outline outline-[#00b14f]/90 outline-[1px] p-[3px] rounded-lg">
-                                        {job.company.logo ? (
-                                            <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover rounded-lg" />
+                                        {job.company?.logo ? (
+                                            <img src={job.company.logo} alt={job.company?.name || 'Company'} className="w-full h-full object-cover rounded-lg" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-[#00b14f]/10 to-[#00b14f]/20 flex items-center justify-center">
-                                                <span className="text-[#00b14f] font-black text-xl">{job.company.name.charAt(0)}</span>
+                                                <span className="text-[#00b14f] font-black text-xl">{(job.company?.name || 'C').charAt(0)}</span>
                                             </div>
                                         )}
                                     </div>
@@ -66,7 +66,7 @@ export default function JobList({ jobs, savedJobs, appliedJobs, isLoggedIn, acti
                                         </div>
 
                                         <p className="text-xs font-semibold text-[#00b14f] mb-3 hover:underline">
-                                            <Link href={`/jobs?company=${job.company.slug}`}>{job.company.name}</Link>
+                                            <Link href={job.company?.slug ? `/jobs?company=${job.company.slug}` : '#'}>{job.company?.name || 'Công ty'}</Link>
                                         </p>
 
                                         <div className="flex flex-wrap items-center gap-2">

@@ -103,6 +103,12 @@ export default function JobDetailHeader({
                 <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
                   {job.category.name}
                 </span>
+                {job.jobflash && (
+                  <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">bolt</span>
+                    JOB FLASH
+                  </span>
+                )}
                 <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                   {getJobTypeLabel(job.type)}
                 </span>

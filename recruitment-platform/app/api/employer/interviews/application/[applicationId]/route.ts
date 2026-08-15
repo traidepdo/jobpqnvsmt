@@ -63,6 +63,7 @@ export async function GET(
                     notes: raw.interview.notes,
                     status: raw.interview.status,
                     candidateStatus: raw.interview.candidateStatus,
+                    result: raw.interview.result ?? 'PENDING',
                     declineReason: raw.interview.declineReason,
                 }
                 : null,

@@ -3,13 +3,33 @@
 import { useState, useTransition, useMemo } from "react";
 import { JobFlash } from "@/lib/services/job-flash/apiflash";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Props {
     initialJobs: JobFlash[];
-    currentUserId?: string; // Giả định ID của người dùng hiện tại đang đăng nhập
+    currentUserId?: string;
+}
+
+export function formatJobSalary(min?: number | null, max?: number | null) {
+    if (!min && !max) return "Thỏa thuận";
+
+    const formatVal = (val: number) => {
+        if (val >= 1000000) {
+            const inM = val / 1000000;
+            return `${inM % 1 === 0 ? inM.toFixed(0) : inM.toFixed(1)} triệu`;
+        }
+        if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
+        return `${val} triệu`;
+    };
+
+    if (min && max) return `${formatVal(min)} - ${formatVal(max)}`;
+    if (min) return `Từ ${formatVal(min)}`;
+    if (max) return `Đến ${formatVal(max)}`;
+    return "Thỏa thuận";
 }
 
 export default function JobFlashClient({ initialJobs, currentUserId = "user_demo_employer" }: Props) {
+    const router = useRouter();
     const [jobs, setJobs] = useState<JobFlash[]>(initialJobs);
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -18,12 +38,6 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
     const [selectedOnlyMine, setSelectedOnlyMine] = useState(false);
     const [isPending, startTransition] = useTransition();
 
-    // Modal Đăng tin tuyển dụng nhanh State
-    const [newTitle, setNewTitle] = useState("");
-    const [newCategory, setNewCategory] = useState("Công nghệ thông tin");
-    const [newSalaryMin, setNewSalaryMin] = useState("");
-    const [newSalaryMax, setNewSalaryMax] = useState("");
-    const [newExperience, setNewExperience] = useState("Không yêu cầu KN");
     const [applyNotice, setApplyNotice] = useState<string | null>(null);
 
     // Categories
@@ -32,6 +46,12 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
         jobs.forEach((j) => set.add(j.category.name));
         return Array.from(set);
     }, [jobs]);
+
+    // Helper to normalize salary to Millions for filtering
+    const getSalaryInMillions = (val?: number | null) => {
+        if (!val) return 0;
+        return val >= 1000000 ? val / 1000000 : val;
+    };
 
     // Filter jobs
     const filteredJobs = useMemo(() => {
@@ -44,8 +64,18 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
             const matchesCategory =
                 selectedCategory === "ALL" || job.category.name === selectedCategory;
 
-            const matchesSalary =
-                selectedSalaryStatus === "ALL" || job.salaryStatus === selectedSalaryStatus;
+            const minM = getSalaryInMillions(job.salaryMin);
+            const maxM = getSalaryInMillions(job.salaryMax) || minM;
+            const salVal = maxM || minM;
+
+            const matchesSalary = (() => {
+                if (selectedSalaryStatus === "ALL") return true;
+                if (selectedSalaryStatus === "AGREEMENT") return !job.salaryMin && !job.salaryMax;
+                if (selectedSalaryStatus === "UNDER_10M") return salVal > 0 && salVal < 10;
+                if (selectedSalaryStatus === "10M_20M") return salVal >= 10 && salVal <= 20;
+                if (selectedSalaryStatus === "OVER_20M") return salVal > 20;
+                return true;
+            })();
 
             const matchesExp =
                 selectedExp === "ALL" ||
@@ -72,15 +102,13 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
         });
     };
 
-    // Xử lý ứng tuyển
-    const handleApply = (job: JobFlash) => {
-        if (job.company?.ownerId === currentUserId) {
-            alert("⚠️ Bạn là người đăng tin tuyển dụng này nên không thể tự ứng tuyển cho chính mình!");
-            return;
-        }
+    // Xử lý tạo tin nhắn chat mang thông tin công việc
+    const handleChatJobInfo = (job: JobFlash) => {
+        const salaryText = formatJobSalary(job.salaryMin, job.salaryMax);
+        const companyName = job.company?.name || "Nhà tuyển dụng";
+        const messageText = `Xin chào! Tôi rất quan tâm và muốn trao đổi về vị trí tuyển dụng: "${job.title}" tại ${companyName} (Mức lương: ${salaryText}).`;
 
-        setApplyNotice(`✅ Nộp hồ sơ thành công vào vị trí "${job.title}" tại ${job.company?.name || ""}!`);
-        setTimeout(() => setApplyNotice(null), 4000);
+        router.push(`/candidate/messages?text=${encodeURIComponent(messageText)}`);
     };
 
     return (
@@ -117,7 +145,7 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
                     {/* Nút Đăng Tin Tuyển Dụng Nhanh */}
                     <Link
                         href={"/job-flash/create"}
-                        className="self-start md:self-center shrink-0 flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-extrabold px-6 py-4 rounded-2xl shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        className="self-start md:self-center shrink-0 flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-slate-950 font-extrabold px-6 py-4 rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                     >
                         <span className="material-symbols-outlined text-2xl">bolt</span>
                         <span>Đăng tin Flash nhanh</span>
@@ -157,9 +185,10 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
                     <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                         {[
                             { id: "ALL", label: "Tất cả lương", icon: "payments" },
-                            { id: "good", label: "Lương cao", icon: "trending_up" },
-                            { id: "average", label: "Trung bình", icon: "equalizer" },
-                            { id: "bad", label: "Cơ bản", icon: "south_east" },
+                            { id: "UNDER_10M", label: "Dưới 10tr", icon: "south_east" },
+                            { id: "10M_20M", label: "10 - 20tr", icon: "equalizer" },
+                            { id: "OVER_20M", label: "Trên 20tr", icon: "trending_up" },
+                            { id: "AGREEMENT", label: "Thỏa thuận", icon: "handshake" },
                         ].map((s) => (
                             <button
                                 key={s.id}
@@ -264,12 +293,7 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredJobs.map((job) => {
                         const isOwner = job.company?.ownerId === currentUserId;
-                        const salaryText =
-                            job.salaryMin && job.salaryMax
-                                ? `${(job.salaryMin / 1000000).toFixed(0)} - ${(job.salaryMax / 1000000).toFixed(0)} triệu`
-                                : job.salaryMin
-                                    ? `Từ ${(job.salaryMin / 1000000).toFixed(0)} triệu`
-                                    : "Thỏa thuận";
+                        const salaryText = formatJobSalary(job.salaryMin, job.salaryMax);
 
                         return (
                             <div
@@ -344,19 +368,13 @@ export default function JobFlashClient({ initialJobs, currentUserId = "user_demo
                                             </button>
                                         )}
 
-                                        {/* Nút Ứng tuyển & Kiểm tra chính chủ */}
+                                        {/* Nút Chat & Gửi thông tin công việc */}
                                         <button
-                                            onClick={() => handleApply(job)}
-                                            disabled={isOwner}
-                                            className={`flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${isOwner
-                                                ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
-                                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 active:scale-95"
-                                                }`}
+                                            onClick={() => handleChatJobInfo(job)}
+                                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-[#00b14f] hover:bg-[#009940] text-white shadow-md shadow-[#00b14f]/20 active:scale-95 transition-all cursor-pointer"
                                         >
-                                            <span className="material-symbols-outlined text-sm">
-                                                {isOwner ? "block" : "send"}
-                                            </span>
-                                            <span>{isOwner ? "Không thể ứng tuyển" : "Ứng tuyển ngay"}</span>
+                                            <span className="material-symbols-outlined text-base">chat</span>
+                                            <span>Nhắn tin & Gửi TT công việc</span>
                                         </button>
                                     </div>
                                 </div>

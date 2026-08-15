@@ -520,6 +520,12 @@ enum CandidateInterviewStatus {
   DECLINED // Candidate từ chối
 }
 
+enum InterviewResult {
+  PENDING // Chưa chấm kết quả
+  PASSED // Đậu phỏng vấn
+  FAILED // Rớt phỏng vấn
+}
+
 model Interview {
   id              String                   @id @default(cuid())
   applicationId   String                   @unique
@@ -529,6 +535,7 @@ model Interview {
   notes           String?                  @db.Text
   status          InterviewStatus          @default(SCHEDULED)
   candidateStatus CandidateInterviewStatus @default(PENDING) // thêm dòng này
+  result          InterviewResult          @default(PENDING) // Kết quả phỏng vấn: PENDING, PASSED, FAILED
   declineReason   String?                  @db.Text // lý do từ chối
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt

@@ -69,6 +69,7 @@ export async function POST(req: Request) {
             notes,
             status: 'SCHEDULED',
             candidateStatus: 'PENDING', // reset khi đổi lịch
+            result: 'PENDING',
         },
     });
 

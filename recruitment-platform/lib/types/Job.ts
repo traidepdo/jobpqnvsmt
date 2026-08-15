@@ -11,6 +11,7 @@ export interface Job {
     createdAt: Date | string;
     categoryId: string;
     wardId: string | null;
+    jobflash?: boolean;
     company: {
         id: string;
         name: string;

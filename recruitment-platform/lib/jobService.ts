@@ -265,6 +265,7 @@ export async function getJobsListData(params: JobSearchParams, token?: string) {
   const now = new Date();
   const where = {
     status: JobStatus.ACTIVE,
+    jobflash: false,
     OR: [
       { deadline: null },
       { deadline: { gte: now } }
@@ -295,7 +296,7 @@ export async function getJobsListData(params: JobSearchParams, token?: string) {
         deadline: true,
         createdAt: true,
         categoryId: true,
-        wardId: true,
+        jobflash: true,
         company: { select: companyCardSelect },
         category: { select: { name: true, slug: true } },
         ward: { select: { name: true } },

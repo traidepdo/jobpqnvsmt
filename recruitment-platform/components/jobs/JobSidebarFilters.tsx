@@ -167,6 +167,59 @@ export default function JobSidebarFilters({
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      {/* Banner Việc làm Job Flash với hiệu ứng ngọn lửa cháy rực rỡ */}
+      <div className="p-3 border-b border-orange-200/50 bg-gradient-to-br from-amber-500/10 via-red-500/10 to-orange-500/10 relative overflow-hidden">
+        <Link
+          href="/job-flash"
+          className="relative flex items-center justify-between px-3.5 py-3 rounded-xl text-white shadow-md overflow-hidden transition-all duration-300 group hover:shadow-orange-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            background: 'linear-gradient(135deg, #e63946 0%, #ff4500 40%, #ff8c00 70%, #d90429 100%)',
+            backgroundSize: '200% 200%',
+            animation: 'firePulse 3s ease infinite alternate'
+          }}
+        >
+          {/* Flame aura glowing background effect */}
+          <div className="absolute -top-4 -left-4 w-16 h-16 bg-yellow-300/40 rounded-full blur-md animate-pulse pointer-events-none" />
+          <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-red-600/40 rounded-full blur-md animate-pulse pointer-events-none" />
+
+          {/* Flame shine overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+          <div className="flex items-center gap-2 z-10 min-w-0">
+            {/* Animated Fire Emoji / Icon */}
+            <span className="text-xl animate-bounce leading-none drop-shadow-md select-none shrink-0">🔥</span>
+
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] font-black uppercase tracking-wider text-yellow-200 drop-shadow-sm leading-tight">Việc Làm</span>
+              <span className="text-xs font-black uppercase tracking-wide text-white drop-shadow-sm leading-tight">JobFlash</span>
+              <span className="text-[9px] font-medium text-orange-100 opacity-90 leading-tight mt-0.5 whitespace-nowrap">⚡ Tuyển gấp trong 24h</span>
+            </div>
+          </div>
+
+          <span className="z-10 shrink-0 bg-white/20 group-hover:bg-white text-white group-hover:text-red-600 text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-all duration-300 shadow-xs ml-2">
+            Xem ngay &rarr;
+          </span>
+        </Link>
+
+        {/* Inline CSS Keyframes */}
+        <style jsx>{`
+          @keyframes firePulse {
+            0% {
+              background-position: 0% 50%;
+              box-shadow: 0 4px 14px rgba(255, 69, 0, 0.4);
+            }
+            50% {
+              background-position: 100% 50%;
+              box-shadow: 0 6px 20px rgba(255, 140, 0, 0.6);
+            }
+            100% {
+              background-position: 0% 50%;
+              box-shadow: 0 4px 14px rgba(230, 57, 70, 0.4);
+            }
+          }
+        `}</style>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
         <div className="flex items-center gap-2">

@@ -30,6 +30,7 @@ export const getInterviewsByCandidateId = {
             notes: i.notes,
             status: i.status,
             candidateStatus: i.candidateStatus,
+            result: i.result ?? 'PENDING',
             declineReason: i.declineReason,
             application: {
                 id: i.application.id,

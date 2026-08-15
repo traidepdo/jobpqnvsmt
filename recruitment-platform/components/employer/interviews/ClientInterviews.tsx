@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApprovedApplication, Interview, InterviewStatus, CandidateInterviewStatus, Job } from '@/lib/types/employer/interviews';
 import { getApplication } from '@/server/actions/employer/application.action';
-import { STATUS_CFG, CANDIDATE_CFG } from '@/lib/jobLabelsInterviews';
+import { STATUS_CFG, CANDIDATE_CFG, RESULT_CFG } from '@/lib/jobLabelsInterviews';
 
 const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -92,8 +92,32 @@ export default function EmployerInterviewsPage({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status }),
             });
+            const d = await res.json();
             if (res.ok) {
                 setInterviews(prev => prev.map(iv => iv.id === id ? { ...iv, status } : iv));
+            } else {
+                alert(d.error ?? 'Lỗi khi cập nhật trạng thái');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const gradeInterview = async (id: string, result: 'PASSED' | 'FAILED') => {
+        setUpdatingId(id);
+        try {
+            const res = await fetch(`/api/employer/interviews/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ result }),
+            });
+            const d = await res.json();
+            if (res.ok) {
+                setInterviews(prev => prev.map(iv => iv.id === id ? { ...iv, status: 'COMPLETED', result } : iv));
+            } else {
+                alert(d.error ?? 'Đã xảy ra lỗi khi chấm phỏng vấn');
             }
         } catch (e) {
             console.error(e);
@@ -360,6 +384,8 @@ export default function EmployerInterviewsPage({
                                 ? { label: 'Hết hạn', color: '#DE350B', bg: '#FFEBE6', border: '#FFBDAD', icon: 'history' }
                                 : STATUS_CFG[iv.status];
                             const cCfg = CANDIDATE_CFG[iv.candidateStatus];
+                            const rCfg = RESULT_CFG[iv.result || 'PENDING'];
+                            const isConfirmed = iv.candidateStatus === 'CONFIRMED';
 
                             return (
                                 <div key={iv.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -396,7 +422,7 @@ export default function EmployerInterviewsPage({
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+                                        <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                                             <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 bg-slate-50/70"
                                                 style={{ color: sCfg.color, borderColor: sCfg.border }}>
                                                 <span className="material-symbols-outlined text-[13px]">{sCfg.icon}</span>
@@ -406,6 +432,11 @@ export default function EmployerInterviewsPage({
                                                 style={{ color: cCfg.color, borderColor: 'transparent' }}>
                                                 <span className="material-symbols-outlined text-[13px]">{cCfg.icon}</span>
                                                 {cCfg.label}
+                                            </span>
+                                            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5"
+                                                style={{ color: rCfg.color, background: rCfg.bg, borderColor: rCfg.border }}>
+                                                <span className="material-symbols-outlined text-[13px]">{rCfg.icon}</span>
+                                                {rCfg.label}
                                             </span>
                                         </div>
                                     </div>
@@ -425,39 +456,57 @@ export default function EmployerInterviewsPage({
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            {iv.status === 'SCHEDULED' && (
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {/* Chấm ĐẬU / RỚT buttons */}
+                                            {isConfirmed ? (
                                                 <>
                                                     <button
-                                                        onClick={() => router.push(`/employer/interviews/${iv.application.id}`)}
-                                                        className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#0052CC] border border-[#0052CC]/20 hover:bg-[#0052CC]/5 rounded-lg cursor-pointer transition-colors shadow-sm"
+                                                        onClick={() => gradeInterview(iv.id, 'PASSED')}
+                                                        disabled={updatingId === iv.id}
+                                                        className={`h-8 px-3 inline-flex items-center gap-1 text-[11px] font-extrabold rounded-lg cursor-pointer transition-all shadow-sm active:scale-95 disabled:opacity-55
+                                                            ${iv.result === 'PASSED'
+                                                                ? 'bg-emerald-600 text-white'
+                                                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white'}`}
                                                     >
-                                                        <span className="material-symbols-outlined text-[13px]">edit</span>
-                                                        Sửa lịch
+                                                        <span className="material-symbols-outlined text-[14px]">verified</span>
+                                                        {iv.result === 'PASSED' ? 'Đã chấm: ĐẬU' : 'Chấm ĐẬU'}
                                                     </button>
                                                     <button
-                                                        onClick={() => updateStatus(iv.id, 'COMPLETED')}
+                                                        onClick={() => gradeInterview(iv.id, 'FAILED')}
                                                         disabled={updatingId === iv.id}
-                                                        className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 border border-emerald-250 hover:bg-emerald-50 rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-55"
+                                                        className={`h-8 px-3 inline-flex items-center gap-1 text-[11px] font-extrabold rounded-lg cursor-pointer transition-all shadow-sm active:scale-95 disabled:opacity-55
+                                                            ${iv.result === 'FAILED'
+                                                                ? 'bg-rose-600 text-white'
+                                                                : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white'}`}
                                                     >
-                                                        <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                                                        Hoàn thành
-                                                    </button>
-                                                    <button
-                                                        onClick={() => updateStatus(iv.id, 'CANCELLED')}
-                                                        disabled={updatingId === iv.id}
-                                                        className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 border border-rose-250 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-55"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[13px]">cancel</span>
-                                                        Hủy
+                                                        <span className="material-symbols-outlined text-[14px]">cancel</span>
+                                                        {iv.result === 'FAILED' ? 'Đã chấm: RỚT' : 'Chấm RỚT'}
                                                     </button>
                                                 </>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60 flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[13px]">lock</span>
+                                                    Chờ ứng viên xác nhận để chấm
+                                                </span>
                                             )}
-                                            {iv.application.user.email && (
-                                                <a href={`mailto:${iv.application.user.email}`} className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-[#0052CC] hover:bg-white border border-slate-100 hover:border-slate-200 rounded-lg cursor-pointer transition-all shadow-sm">
-                                                    <span className="material-symbols-outlined text-[13px]">mail</span>
-                                                    Email
-                                                </a>
+
+                                            <button
+                                                onClick={() => router.push(`/employer/interviews/${iv.application.id}`)}
+                                                className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#0052CC] border border-[#0052CC]/20 hover:bg-[#0052CC]/5 rounded-lg cursor-pointer transition-colors shadow-sm"
+                                            >
+                                                <span className="material-symbols-outlined text-[13px]">edit</span>
+                                                Chi tiết / Sửa
+                                            </button>
+
+                                            {iv.status === 'SCHEDULED' && (
+                                                <button
+                                                    onClick={() => updateStatus(iv.id, 'CANCELLED')}
+                                                    disabled={updatingId === iv.id}
+                                                    className="h-8 px-3 inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 border border-slate-200 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-55"
+                                                >
+                                                    <span className="material-symbols-outlined text-[13px]">cancel</span>
+                                                    Hủy
+                                                </button>
                                             )}
                                         </div>
                                     </div>

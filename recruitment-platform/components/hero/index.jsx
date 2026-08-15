@@ -11,10 +11,20 @@ const HERO_IMAGES = [
     'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1400&auto=format&fit=crop&q=80',
 ];
 
-export default function Hero({ wards }) {
+export default function Hero({ wards, stats }) {
     const heroRef = useRef(null);
     const [heroImg, setHeroImg] = useState(0);
     const [scrollY, setScrollY] = useState(0);
+
+    const formattedJobs = (stats?.jobs || 0).toLocaleString();
+    const formattedCompanies = (stats?.companies || 0).toLocaleString();
+    const formattedCandidates = (stats?.candidates || 0).toLocaleString();
+
+    const statItems = [
+        [`${formattedJobs}+`, 'Việc làm'],
+        [`${formattedCompanies}+`, 'Nhà tuyển dụng'],
+        [`${formattedCandidates}+`, 'Ứng viên']
+    ];
 
     // Kích hoạt hiệu ứng slide và parallax scroll
     useEffect(() => {
@@ -63,7 +73,7 @@ export default function Hero({ wards }) {
                             boxShadow: '0 4px 20px rgba(22,163,74,0.15)',
                         }}>
                         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        5000+ việc làm đang tuyển tại Phú Quốc
+                        {formattedJobs} việc làm đang tuyển tại Phú Quốc
                         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     </span>
                 </div>
@@ -85,7 +95,7 @@ export default function Hero({ wards }) {
 
                 {/* Stats */}
                 <div className="fade-up d-500 flex justify-center gap-10 mt-10 relative z-10">
-                    {[['1,200+', 'Việc làm'], ['350+', 'Nhà tuyển dụng'], ['8,000+', 'Ứng viên']].map(([n, l], i) => (
+                    {statItems.map(([n, l], i) => (
                         <div key={l} className="text-center" style={{ animationDelay: `${0.5 + i * 0.1}s` }}>
                             <div className="text-2xl font-extrabold text-white mb-0.5" style={{ textShadow: '0 0 20px rgba(34,197,94,0.5)' }}>{n}</div>
                             <div className="text-xs text-white/50 font-medium tracking-wide">{l}</div>

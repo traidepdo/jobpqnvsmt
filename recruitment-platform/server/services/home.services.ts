@@ -7,7 +7,7 @@ import { verifyToken } from "@/lib/auth";
 export async function getdatahome() {
     try {
         // 1. Fetch song song dữ liệu từ Database (sử dụng groupBy để đếm và lọc trực tiếp trên DB)
-        const [categoryJobCounts, companyJobCounts, wards] = await Promise.all([
+        const [categoryJobCounts, companyJobCounts, wards, totalActiveJobs, totalApprovedCompanies, totalCandidateUsers] = await Promise.all([
             prisma.job.groupBy({
                 by: ['categoryId'],
                 _count: {
@@ -44,6 +44,15 @@ export async function getdatahome() {
             }),
             prisma.ward.findMany({
                 select: { id: true, name: true }
+            }),
+            prisma.job.count({
+                where: { status: 'ACTIVE' }
+            }),
+            prisma.company.count({
+                where: { isApproved: true, isActive: true }
+            }),
+            prisma.user.count({
+                where: { role: 'CANDIDATE' }
             })
         ]);
 
@@ -121,6 +130,11 @@ export async function getdatahome() {
                 categories: sortedCategories,
                 companies: sortedCompanies,
                 wards,
+                stats: {
+                    jobs: totalActiveJobs,
+                    companies: totalApprovedCompanies,
+                    candidates: totalCandidateUsers
+                },
                 isLoggedIn,
                 isEmployer
             }
@@ -131,7 +145,7 @@ export async function getdatahome() {
         return {
             success: false,
             error: "Internal Server Error",
-            data: { categories: [], companies: [], wards: [], isLoggedIn: false, isEmployer: false },
+            data: { categories: [], companies: [], wards: [], stats: { jobs: 0, companies: 0, candidates: 0 }, isLoggedIn: false, isEmployer: false },
         };
     }
 }

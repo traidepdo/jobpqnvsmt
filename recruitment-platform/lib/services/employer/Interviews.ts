@@ -106,6 +106,7 @@ export async function getInterviews(companyId: string): Promise<Interview[]> {
         notes: iv.notes,
         status: iv.status,
         candidateStatus: iv.candidateStatus,
+        result: iv.result ?? 'PENDING',
         declineReason: iv.declineReason,
         application: {
             id: iv.application.id,
