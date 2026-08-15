@@ -20,6 +20,10 @@ export interface Query {
     page?: number;
     limit?: number;
     query?: string;
+    fromDate?: string;
+    toDate?: string;
+    period?: string;
+    category?: string;
 }
 export interface SavedJobsResponse {
     items: SavedItem[];

@@ -3,7 +3,7 @@ import { Query, SavedJobsResponse, SavedItem, SaveJobInput } from "@/lib/types/c
 
 export const saveJobService = {
     async getSavedJobs(id: string,
-        { page = 1, limit = 12, query }: Query): Promise<SavedJobsResponse> {
+        { page = 1, limit = 12, query, fromDate, toDate, period, category }: Query): Promise<SavedJobsResponse> {
         try {
             const where: any = {
                 userId: id,
@@ -16,6 +16,48 @@ export const saveJobService = {
                     { job: { category: { name: { contains: normalizedQuery, mode: 'insensitive' } } } },
                     { job: { ward: { name: { contains: normalizedQuery, mode: 'insensitive' } } } },
                 ];
+            }
+            if (category && category.trim()) {
+                where.job = {
+                    ...(where.job || {}),
+                    category: {
+                        OR: [
+                            { slug: category.trim() },
+                            { id: category.trim() }
+                        ]
+                    }
+                };
+            }
+
+            // Xử lý lọc theo ngày / khoảng thời gian
+            let startDate: Date | undefined;
+            let endDate: Date | undefined;
+
+            if (period) {
+                const now = new Date();
+                if (period === 'today') {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+                    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+                } else if (period === '7days') {
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                } else if (period === '30days') {
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                } else if (period === 'thisMonth') {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+                }
+            } else {
+                if (fromDate) {
+                    startDate = new Date(`${fromDate}T00:00:00.000Z`);
+                }
+                if (toDate) {
+                    endDate = new Date(`${toDate}T23:59:59.999Z`);
+                }
+            }
+
+            if (startDate || endDate) {
+                where.createdAt = {};
+                if (startDate) where.createdAt.gte = startDate;
+                if (endDate) where.createdAt.lte = endDate;
             }
             const [data, total] = await Promise.all([
                 prisma.savedJob.findMany({

@@ -80,13 +80,18 @@ def parse_db_resume(resume_id):
                 else:
                     parts.append(f"- {str(proj)}")
                     
-        # Parse cvData fallback if text is sparse
-        if resume.cvdata:
-            parts.append(f"\nDữ liệu CV bổ sung: {json.dumps(resume.cvdata, ensure_ascii=False)}")
+        # Parse cvData custom fields safely without dumping raw JSON metadata
+        if isinstance(resume.cvdata, dict):
+            for k in ['skills', 'summary', 'about', 'objective']:
+                val = resume.cvdata.get(k)
+                if val and isinstance(val, str) and len(val.strip()) > 3:
+                    if "Tóm tắt" not in val and "kỹ năng" not in val and "Địa chỉ" not in val:
+                        parts.append(f"{k}: {val.strip()}")
 
         res_text = "\n".join(parts).strip()
-        if not res_text:
-            res_text = f"Hồ sơ ứng viên {resume.title or resume.id}"
+        if not res_text and resume.title:
+            res_text = f"Tiêu đề hồ sơ: {resume.title}"
+        return res_text
         return res_text
     except Exception as err:
         print(f"Error parsing resume {resume_id}: {err}")
@@ -217,7 +222,7 @@ Trả về kết quả ở định dạng JSON chính xác theo cấu trúc sau:
 """
 
     # 5. Call Gemini API
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -311,7 +316,7 @@ def get_general_chat_response(message, history=None):
         }
     }
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
 
     try:
@@ -326,4 +331,64 @@ def get_general_chat_response(message, history=None):
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
         return {"response": "Không thể kết nối với hệ thống AI. Vui lòng kiểm tra lại kết nối mạng."}
+
+def evaluate_cv_with_gemini(cv_text: str, job_text: str) -> int:
+    """
+    Hybrid AI Evaluation: Combines local PhoRanker Cross-Encoder Transformer (40%)
+    with Cloud Gemini 2.5 Flash LLM (60%) for ultimate accuracy.
+    """
+    if not cv_text or not cv_text.strip() or len(cv_text.strip()) < 10:
+        return 0
+
+    from .cross_encoder import calculate_match_score
+    phoranker_score = calculate_match_score(cv_text, job_text)
+
+    api_key = getattr(settings, 'GEMINI_API_KEY', '')
+    gemini_score = phoranker_score
+
+    if api_key:
+        prompt = f"""
+Bạn là chuyên gia tuyển dụng HR AI hàng đầu. Hãy phân tích CV của ứng viên và Mô tả công việc dưới đây để chấm điểm mức độ phù hợp từ 0 đến 100.
+
+[Mô tả công việc]
+{job_text}
+
+[CV Ứng viên]
+{cv_text}
+
+Quy tắc chấm điểm nghiêm ngặt:
+1. Nếu CV trống, sơ sài, thiếu kinh nghiệm/dự án/kỹ năng thực tế hoặc chỉ là mẫu câu sơ sài: Chấm 0 đến 20 điểm.
+2. Nếu CV thuộc ngành nghề hoàn toàn khác (ví dụ Lái xe/Bảo vệ ứng tuyển Lập trình viên): Chấm 0 đến 10 điểm.
+3. Nếu CV phù hợp đúng ngành nghề và có bằng cấp/kỹ năng/kinh nghiệm tương ứng: Chấm 75 đến 98 điểm.
+
+Chỉ trả về MỘT SỐ NGUYÊN DUY NHẤT đại diện cho điểm số (từ 0 đến 100), không viết thêm chữ hay giải thích gì khác.
+Ví dụ: 85
+"""
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
+            if response.ok:
+                resp_data = response.json()
+                if 'candidates' in resp_data and resp_data['candidates']:
+                    raw_txt = resp_data['candidates'][0]['content']['parts'][0]['text'].strip()
+                    import re
+                    nums = re.findall(r'\d+', raw_txt)
+                    if nums:
+                        gemini_score = int(nums[0])
+        except Exception as e:
+            print(f"Gemini CV eval error: {e}")
+
+    # If either model detects an empty/unrelated CV (score <= 5), cap score
+    if phoranker_score <= 5 or gemini_score <= 5:
+        final_score = min(phoranker_score, gemini_score)
+    else:
+        final_score = int(round((phoranker_score * 0.4) + (gemini_score * 0.6)))
+
+    print(f"[Hybrid AI Eval] PhoRanker: {phoranker_score}%, Gemini: {gemini_score}% -> Final Hybrid Score: {final_score}%")
+    return max(0, min(100, final_score))
+
 

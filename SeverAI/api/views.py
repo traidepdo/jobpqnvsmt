@@ -147,8 +147,10 @@ def evaluate_cv_api(request):
             job_text = f"Tiêu đề: {job.title}\nMô tả công việc: {job.description or ''}\nYêu cầu: {job.requirements or ''}"
             
             cv_text = ""
+            if getattr(app, 'coverletter', None):
+                cv_text = f"Thư giới thiệu: {app.coverletter}\n"
             if app.resumeid:
-                cv_text = parse_db_resume(app.resumeid)
+                cv_text += parse_db_resume(app.resumeid)
             
             download_url = cv_url or app.cvurl
             if download_url:
@@ -170,11 +172,14 @@ def evaluate_cv_api(request):
             return JsonResponse({'error': 'Không tìm thấy đơn ứng tuyển.'}, status=404)
 
     if not cv_text or not cv_text.strip():
-        cv_text = "Hồ sơ ứng viên có kinh nghiệm phù hợp với vị trí công việc."
+        if application_id:
+            Application.objects.filter(id=application_id).update(matchscore=0)
+        return JsonResponse({'score': 0})
     if not job_text or not job_text.strip():
         job_text = "Tin tuyển dụng công việc."
         
     try:
+        from .cross_encoder import calculate_match_score
         print(f"[API evaluate-cv] Request received. App ID: {application_id}, CV text length: {len(cv_text)}, Job text length: {len(job_text)}")
         score = calculate_match_score(cv_text, job_text)
         

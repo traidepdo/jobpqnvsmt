@@ -185,9 +185,10 @@ function EmployerMessagesPageContent() {
         loadConversations();
         loadGroupConversations();
         const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
             loadConversations();
             loadGroupConversations();
-        }, 5000);
+        }, 20000);
         return () => clearInterval(interval);
     }, []);
 
@@ -216,11 +217,12 @@ function EmployerMessagesPageContent() {
             markRead(activeId);
         }
         pollRef.current = setInterval(async () => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
             await loadMessages(activeId, activeType);
             if (activeType === "direct") {
                 await markRead(activeId);
             }
-        }, 3000);
+        }, 10000);
         return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, [activeId, activeType]);
 

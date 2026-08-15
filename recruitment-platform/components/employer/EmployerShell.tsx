@@ -79,10 +79,11 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
     loadUnreadNotifications();
     const interval = setInterval(
       () => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
         loadUnreadSupport();
         loadUnreadNotifications();
       },
-      pathname.startsWith('/employer/support') ? 3000 : 15000
+      60000
     );
 
     const onNotifRead = () => loadUnreadNotifications();
@@ -109,7 +110,10 @@ export default function EmployerShell({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     loadUnread();
-    const interval = setInterval(loadUnread, 10000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      loadUnread();
+    }, 60000);
 
     const onRead = () => loadUnread();
     window.addEventListener('messages:read', onRead);

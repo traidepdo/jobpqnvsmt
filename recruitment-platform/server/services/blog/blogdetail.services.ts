@@ -106,16 +106,16 @@ export async function getBlogPostDetailServer(slug: string) {
 
     if (!postExists) return null;
 
-    // Increment views
-    const post = await prisma.blog.update({
+    const post = await prisma.blog.findUnique({
         where: { id: postExists.id },
-        data: { views: { increment: 1 } },
         include: {
             author: { select: { name: true } },
             category: { select: { name: true, slug: true } },
             tags: { include: { tag: { select: { name: true, slug: true } } } },
         },
     });
+
+    if (!post) return null;
 
     const { toc, content } = parseToc(post.content);
 

@@ -177,7 +177,8 @@ export default function TemplateClassic({
                                     type="email"
                                     value={userData.email}
                                     onChange={(e) => handleUserChange("email", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 w-48 text-sm"
+                                    size={Math.max(1, (userData.email || "Email").length)}
+                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 min-w-[80px] text-sm"
                                     placeholder="Email"
                                 />
                             </span>
@@ -187,7 +188,8 @@ export default function TemplateClassic({
                                     type="text"
                                     value={userData.phone}
                                     onChange={(e) => handleUserChange("phone", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 w-36 text-sm"
+                                    size={Math.max(1, (userData.phone || "Số điện thoại").length)}
+                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 min-w-[90px] text-sm"
                                     placeholder="Số điện thoại"
                                 />
                             </span>
@@ -197,7 +199,8 @@ export default function TemplateClassic({
                                     type="text"
                                     value={resumeData.address}
                                     onChange={(e) => handleResumeChange("address", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 w-56 text-sm"
+                                    size={Math.max(1, (resumeData.address || "Địa chỉ").length)}
+                                    className="bg-transparent border-none outline-none text-stone-300 rounded focus:bg-stone-700/50 px-1 focus:ring-1 focus:ring-stone-400 min-w-[100px] text-sm"
                                     placeholder="Địa chỉ"
                                 />
                             </span>
@@ -246,6 +249,7 @@ export default function TemplateClassic({
                             <Section
                                 key="education"
                                 title="Học vấn"
+                                isEmpty={!resumeData.education || resumeData.education.length === 0}
                                 onAdd={() => addArrayItem("education", { school: "Tên trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "2024", GPA: "", description: "" })}
                             >
                                 {resumeData.education.map((e, i) => (
@@ -318,7 +322,7 @@ export default function TemplateClassic({
                             </Section>
                         ),
                         languages: (
-                            <Section key="languages" title="Ngôn ngữ">
+                            <Section key="languages" title="Ngôn ngữ" isEmpty={!resumeData.languages?.trim()}>
                                 <textarea
                                     value={resumeData.languages}
                                     onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -329,7 +333,7 @@ export default function TemplateClassic({
                             </Section>
                         ),
                         summary: (
-                            <Section key="summary" title="Tóm tắt">
+                            <Section key="summary" title="Tóm tắt" isEmpty={!resumeData.summary?.trim()}>
                                 <textarea
                                     value={resumeData.summary}
                                     onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -343,6 +347,7 @@ export default function TemplateClassic({
                             <Section
                                 key="experience"
                                 title="Kinh nghiệm làm việc"
+                                isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                                 onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Tên công ty", startYear: "01/2023", endYear: "", description: "" })}
                             >
                                 {resumeData.experience.map((exp, i) => (
@@ -401,6 +406,7 @@ export default function TemplateClassic({
                             <Section
                                 key="projects"
                                 title="Dự án"
+                                isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                                 onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                             >
                                 {resumeData.projects.map((p, i) => (
@@ -480,9 +486,9 @@ export default function TemplateClassic({
 }
 
 /* ── Reusable section heading ──────────────────────────────── */
-function Section({ title, children, onAdd }) {
+function Section({ title, children, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <div className="flex justify-between items-center mb-3 border-b-2 border-stone-400 pb-1">
                 <h2 className="text-xs uppercase tracking-widest font-bold text-stone-600">
                     {title}

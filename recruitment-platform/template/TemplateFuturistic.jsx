@@ -161,7 +161,8 @@ export default function TemplateFuturistic({
                                     type="email"
                                     value={userData.email}
                                     onChange={(e) => handleUserChange("email", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-200 w-36 ml-0.5 placeholder-slate-500"
+                                    size={Math.max(1, (userData.email || "Email").length)}
+                                    className="bg-transparent border-none outline-none text-slate-200 min-w-[80px] ml-0.5 placeholder-slate-500"
                                     placeholder="Email"
                                 />
                             </span>
@@ -171,7 +172,8 @@ export default function TemplateFuturistic({
                                     type="text"
                                     value={userData.phone}
                                     onChange={(e) => handleUserChange("phone", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-200 w-28 ml-0.5 placeholder-slate-500"
+                                    size={Math.max(1, (userData.phone || "Số điện thoại").length)}
+                                    className="bg-transparent border-none outline-none text-slate-200 min-w-[90px] ml-0.5 placeholder-slate-500"
                                     placeholder="Số điện thoại"
                                 />
                             </span>
@@ -181,7 +183,8 @@ export default function TemplateFuturistic({
                                     type="text"
                                     value={resumeData.address}
                                     onChange={(e) => handleResumeChange("address", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-200 w-44 ml-0.5 placeholder-slate-500"
+                                    size={Math.max(1, (resumeData.address || "Địa chỉ").length)}
+                                    className="bg-transparent border-none outline-none text-slate-200 min-w-[100px] ml-0.5 placeholder-slate-500"
                                     placeholder="Địa chỉ"
                                 />
                             </span>
@@ -221,7 +224,7 @@ export default function TemplateFuturistic({
                     {/* Left Column (Experiences & Projects) */}
                     <div className="space-y-8">
                         {/* Summary */}
-                        <Section title="Về bản thân" icon="person_search">
+                        <Section title="Về bản thân" icon="person_search" isEmpty={!resumeData.summary?.trim()}>
                             <textarea
                                 value={resumeData.summary}
                                 onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -235,6 +238,7 @@ export default function TemplateFuturistic({
                         <Section 
                             title="Quá trình làm việc" 
                             icon="timeline"
+                            isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                             onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Công ty", startYear: "2023", endYear: "", description: "" })}
                         >
                             <div className="space-y-6">
@@ -295,6 +299,7 @@ export default function TemplateFuturistic({
                         <Section 
                             title="Dự án phát triển" 
                             icon="terminal"
+                            isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                             onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -345,7 +350,7 @@ export default function TemplateFuturistic({
                     {/* Right Column (Sidebar/Tech Info) */}
                     <div className="space-y-8 bg-slate-850 p-6 rounded-xl border border-slate-800">
                         {/* Social */}
-                        <Section title="Social Networks" icon="connect_without_contact">
+                        <Section title="Social Networks" icon="connect_without_contact" isEmpty={!resumeData.socicallink || resumeData.socicallink.length === 0}>
                             <div className="space-y-2">
                                 {resumeData.socicallink.map((s, i) => (
                                     <div key={i} className="flex items-center gap-1 bg-slate-800/80 p-2 rounded border border-slate-700 relative group/link shadow-sm">
@@ -383,7 +388,7 @@ export default function TemplateFuturistic({
                         </Section>
 
                         {/* Languages / Skills */}
-                        <Section title="Kỹ năng & Skill" icon="offline_bolt">
+                        <Section title="Kỹ năng & Skill" icon="offline_bolt" isEmpty={!resumeData.languages?.trim()}>
                             <textarea
                                 value={resumeData.languages}
                                 onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -397,6 +402,7 @@ export default function TemplateFuturistic({
                         <Section 
                             title="Học vấn" 
                             icon="auto_stories"
+                            isEmpty={!resumeData.education || resumeData.education.length === 0}
                             onAdd={() => addArrayItem("education", { school: "Trường", degree: "Bằng", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
                         >
                             <div className="space-y-4">
@@ -477,9 +483,9 @@ export default function TemplateFuturistic({
 }
 
 /* ── Reusable section component ──────────────────────────────── */
-function Section({ title, icon, children, onAdd }) {
+function Section({ title, icon, children, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
                 <span className="flex items-center gap-1.5 text-cyan-400">
                     {icon && <span className="material-symbols-outlined text-lg leading-none">{icon}</span>}

@@ -217,7 +217,7 @@ export default function TemplateElegant({
                     {/* Left Column (Main content) */}
                     <div className="space-y-8">
                         {/* Summary */}
-                        <Section title="Hồ sơ tóm tắt" icon="badge">
+                        <Section title="Hồ sơ tóm tắt" icon="badge" isEmpty={!resumeData.summary?.trim()}>
                             <textarea
                                 value={resumeData.summary}
                                 onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -231,6 +231,7 @@ export default function TemplateElegant({
                         <Section 
                             title="Kinh nghiệm nghề nghiệp" 
                             icon="work_history"
+                            isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                             onAdd={() => addArrayItem("experience", { position: "Chức danh", company: "Tên công ty", startYear: "2023", endYear: "", description: "" })}
                         >
                             <div className="space-y-6">
@@ -291,6 +292,7 @@ export default function TemplateElegant({
                         <Section 
                             title="Dự án nổi bật" 
                             icon="assignment"
+                            isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                             onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                         >
                             <div className="space-y-4">
@@ -341,7 +343,7 @@ export default function TemplateElegant({
                     {/* Right Column (Sidebar content) */}
                     <div className="space-y-8 bg-stone-50/50 p-6 rounded-xl border border-stone-200/50">
                         {/* Social */}
-                        <Section title="Kết nối" icon="share">
+                        <Section title="Kết nối" icon="share" isEmpty={!resumeData.socicallink || resumeData.socicallink.length === 0}>
                             <div className="space-y-2">
                                 {resumeData.socicallink.map((s, i) => (
                                     <div key={i} className="flex items-center gap-1 border-b border-stone-200/60 pb-1.5 relative group/link">
@@ -378,7 +380,7 @@ export default function TemplateElegant({
                         </Section>
 
                         {/* Languages / Skills */}
-                        <Section title="Kỹ năng & Ngôn ngữ" icon="translate">
+                        <Section title="Kỹ năng & Ngôn ngữ" icon="translate" isEmpty={!resumeData.languages?.trim()}>
                             <textarea
                                 value={resumeData.languages}
                                 onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -392,6 +394,7 @@ export default function TemplateElegant({
                         <Section 
                             title="Học vấn" 
                             icon="school"
+                            isEmpty={!resumeData.education || resumeData.education.length === 0}
                             onAdd={() => addArrayItem("education", { school: "Trường", degree: "Bằng", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
                         >
                             <div className="space-y-4">
@@ -472,9 +475,9 @@ export default function TemplateElegant({
 }
 
 /* ── Reusable section component ──────────────────────────────── */
-function Section({ title, icon, children, onAdd }) {
+function Section({ title, icon, children, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-stone-400 flex items-center justify-between gap-2 border-b border-stone-200 pb-2">
                 <span className="flex items-center gap-1.5 text-stone-800">
                     {icon && <span className="material-symbols-outlined text-lg leading-none text-amber-700">{icon}</span>}

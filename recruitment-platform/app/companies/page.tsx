@@ -76,7 +76,7 @@ export default async function CompaniesPage({ searchParams }: RouteParams) {
     };
 
     return (
-        <main className="max-w-[1300px] w-full mx-auto px-4 py-10 min-h-screen bg-gray-50/50">
+        <main className="max-w-[1300px] w-full mx-auto px-4 py-20 min-h-screen bg-gray-50/50">
             {/* JSON-LD Structured Data for SEO */}
             <script
                 type="application/ld+json"

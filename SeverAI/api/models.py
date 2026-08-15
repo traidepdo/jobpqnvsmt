@@ -64,6 +64,7 @@ class Application(models.Model):
     resumeid = models.CharField(db_column='resumeId', max_length=191, blank=True, null=True)
     status = models.CharField(max_length=50)
     matchscore = models.IntegerField(db_column='matchScore', blank=True, null=True)
+    coverletter = models.TextField(db_column='coverLetter', blank=True, null=True)
     createdat = models.DateTimeField(db_column='createdAt')
     updatedat = models.DateTimeField(db_column='updatedAt')
 

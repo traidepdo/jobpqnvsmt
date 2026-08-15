@@ -126,13 +126,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     useEffect(() => {
         loadUnread();
-        const interval = setInterval(loadUnread, pathname.startsWith('/admin/messages') ? 3000 : 15000);
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+            loadUnread();
+        }, 60000);
         return () => clearInterval(interval);
     }, [pathname]);
 
     useEffect(() => {
         loadNotifications();
-        const interval = setInterval(loadNotifications, 15000);
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+            loadNotifications();
+        }, 60000);
         return () => clearInterval(interval);
     }, []);
 

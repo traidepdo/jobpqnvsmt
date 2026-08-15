@@ -1,9 +1,4 @@
 import { prisma } from './prisma';
-import { RidgeRegression, setBackend } from 'scikitjs';
-import * as tf from '@tensorflow/tfjs';
-
-// Set tensorflow backend for scikitjs
-setBackend(tf);
 
 interface JobFeatureData {
   salaryMin: number | null;
@@ -108,6 +103,11 @@ async function trainSingleModel(jobs: JobFeatureData[], categoryId: string | nul
   }
 
   try {
+    // Dynamic import to prevent loading heavy TensorFlow.js into RAM during app startup
+    const tf = await import('@tensorflow/tfjs');
+    const { RidgeRegression, setBackend } = await import('scikitjs');
+    setBackend(tf);
+
     const ridge = new RidgeRegression({ alpha: 0.5 });
     await ridge.fit(X, y);
 

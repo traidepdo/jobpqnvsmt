@@ -7,6 +7,10 @@ interface Metadata {
     page: number;
     limit: number;
     query?: string;
+    category?: string;
+    fromDate?: string;
+    toDate?: string;
+    period?: string;
     totalPages: number;
 }
 
@@ -15,14 +19,26 @@ export function useSavedJob(initialItems: SavedItem[], metadata: Metadata, userI
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<SavedItem[]>(initialItems);
     const [searchQuery, setSearchQuery] = useState(metadata.query || '');
+    const [fromDate, setFromDate] = useState(metadata.fromDate || '');
+    const [toDate, setToDate] = useState(metadata.toDate || '');
+    const [period, setPeriod] = useState(metadata.period || 'all');
+
+    const [category, setCategory] = useState(metadata.category || '');
 
     useEffect(() => {
         setItems(initialItems);
         setLoading(false);
     }, [initialItems]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        setFromDate(metadata.fromDate || '');
+        setToDate(metadata.toDate || '');
+        setPeriod(metadata.period || (metadata.fromDate || metadata.toDate ? 'custom' : 'all'));
+        setCategory(metadata.category || '');
+    }, [metadata.fromDate, metadata.toDate, metadata.period, metadata.category]);
+
+    const handleSearch = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         const params = new URLSearchParams(window.location.search);
         params.set('page', '1');
         if (searchQuery.trim()) {
@@ -31,6 +47,56 @@ export function useSavedJob(initialItems: SavedItem[], metadata: Metadata, userI
             params.delete('query');
         }
         router.push(`/candidate/saved?${params.toString()}`);
+    };
+
+    const handleCategoryChange = (newCategory: string) => {
+        setCategory(newCategory);
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', '1');
+        if (newCategory && newCategory !== 'all') {
+            params.set('category', newCategory);
+        } else {
+            params.delete('category');
+        }
+        router.push(`/candidate/saved?${params.toString()}`);
+    };
+
+    const handlePeriodChange = (newPeriod: string) => {
+        setPeriod(newPeriod);
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', '1');
+        params.delete('fromDate');
+        params.delete('toDate');
+
+        if (newPeriod && newPeriod !== 'all' && newPeriod !== 'custom') {
+            params.set('period', newPeriod);
+        } else {
+            params.delete('period');
+        }
+        router.push(`/candidate/saved?${params.toString()}`);
+    };
+
+    const handleDateRangeApply = (from: string, to: string) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', '1');
+        params.delete('period');
+
+        if (from) params.set('fromDate', from);
+        else params.delete('fromDate');
+
+        if (to) params.set('toDate', to);
+        else params.delete('toDate');
+
+        router.push(`/candidate/saved?${params.toString()}`);
+    };
+
+    const handleResetFilters = () => {
+        setSearchQuery('');
+        setFromDate('');
+        setToDate('');
+        setPeriod('all');
+        setCategory('');
+        router.push('/candidate/saved');
     };
 
     const handlePageChange = (newPage: number) => {
@@ -62,5 +128,25 @@ export function useSavedJob(initialItems: SavedItem[], metadata: Metadata, userI
         return pages;
     };
 
-    return { items, searchQuery, setSearchQuery, handleSearch, handlePageChange, handleUnsave, getPageNumbers, router }
+    return {
+        items,
+        searchQuery,
+        setSearchQuery,
+        fromDate,
+        setFromDate,
+        toDate,
+        setToDate,
+        period,
+        category,
+        setCategory,
+        handleSearch,
+        handleCategoryChange,
+        handlePeriodChange,
+        handleDateRangeApply,
+        handleResetFilters,
+        handlePageChange,
+        handleUnsave,
+        getPageNumbers,
+        router
+    };
 }

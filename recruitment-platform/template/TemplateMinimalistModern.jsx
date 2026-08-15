@@ -158,7 +158,8 @@ export default function TemplateMinimalistModern({
                                     type="email"
                                     value={userData.email}
                                     onChange={(e) => handleUserChange("email", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-600 w-44 rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
+                                    size={Math.max(1, (userData.email || "Email").length)}
+                                    className="bg-transparent border-none outline-none text-slate-600 min-w-[80px] rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
                                     placeholder="Email"
                                 />
                             </span>
@@ -168,7 +169,8 @@ export default function TemplateMinimalistModern({
                                     type="text"
                                     value={userData.phone}
                                     onChange={(e) => handleUserChange("phone", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-600 w-28 rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
+                                    size={Math.max(1, (userData.phone || "Số điện thoại").length)}
+                                    className="bg-transparent border-none outline-none text-slate-600 min-w-[90px] rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
                                     placeholder="Số điện thoại"
                                 />
                             </span>
@@ -178,7 +180,8 @@ export default function TemplateMinimalistModern({
                                     type="text"
                                     value={resumeData.address}
                                     onChange={(e) => handleResumeChange("address", e.target.value)}
-                                    className="bg-transparent border-none outline-none text-slate-600 w-40 rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
+                                    size={Math.max(1, (resumeData.address || "Địa chỉ").length)}
+                                    className="bg-transparent border-none outline-none text-slate-600 min-w-[100px] rounded focus:bg-slate-50 px-1 focus:ring-1 focus:ring-slate-300"
                                     placeholder="Địa chỉ"
                                 />
                             </span>
@@ -215,7 +218,7 @@ export default function TemplateMinimalistModern({
                 <div className="pt-8 space-y-10">
                     
                     {/* Summary */}
-                    <Section title="Về tôi" icon="subject">
+                    <Section title="Về tôi" icon="subject" isEmpty={!resumeData.summary?.trim()}>
                         <textarea
                             value={resumeData.summary}
                             onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -229,6 +232,7 @@ export default function TemplateMinimalistModern({
                     <Section 
                         title="Kinh nghiệm" 
                         icon="work"
+                        isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                         onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Tên doanh nghiệp", startYear: "2023", endYear: "", description: "" })}
                     >
                         <div className="space-y-6">
@@ -292,6 +296,7 @@ export default function TemplateMinimalistModern({
                     <Section 
                         title="Dự án" 
                         icon="code"
+                        isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                         onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                     >
                         <div className="space-y-6">
@@ -347,6 +352,7 @@ export default function TemplateMinimalistModern({
                         <Section 
                             title="Học vấn" 
                             icon="school"
+                            isEmpty={!resumeData.education || resumeData.education.length === 0}
                             onAdd={() => addArrayItem("education", { school: "Tên trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
                         >
                             <div className="space-y-4">
@@ -413,7 +419,7 @@ export default function TemplateMinimalistModern({
 
                         {/* Skills / Languages */}
                         <div className="space-y-8">
-                            <Section title="Kỹ năng & Ngoại ngữ" icon="military_tech">
+                            <Section title="Kỹ năng & Ngoại ngữ" icon="military_tech" isEmpty={!resumeData.languages?.trim()}>
                                 <textarea
                                     value={resumeData.languages}
                                     onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -424,7 +430,7 @@ export default function TemplateMinimalistModern({
                             </Section>
 
                             {/* Social platform connections */}
-                            <Section title="Liên kết" icon="public">
+                            <Section title="Liên kết" icon="public" isEmpty={!resumeData.socicallink || resumeData.socicallink.length === 0}>
                                 <div className="space-y-2">
                                     {resumeData.socicallink.map((s, i) => (
                                         <div key={i} className="flex items-center gap-1 border-b border-slate-100 pb-1 relative group/link">
@@ -476,9 +482,9 @@ export default function TemplateMinimalistModern({
 }
 
 /* ── Reusable section component ──────────────────────────────── */
-function Section({ title, icon, children, onAdd }) {
+function Section({ title, icon, children, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-400 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
                 <span className="flex items-center gap-1 text-slate-800">
                     {icon && <span className="material-symbols-outlined text-sm leading-none text-slate-500">{icon}</span>}

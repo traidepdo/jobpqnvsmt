@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDateVi, formatSalary, getJobTypeLabel } from '@/lib/jobLabels';
 import { SavedItem } from '@/lib/types/candidate/SavedJob';
+import { Category } from '@/lib/types/category';
 import { useSavedJob } from '@/lib/hooks/useSavedJob';
 
 interface Metadata {
@@ -12,81 +13,248 @@ interface Metadata {
     page: number;
     limit: number;
     query?: string;
+    fromDate?: string;
+    toDate?: string;
+    period?: string;
+    category?: string;
     totalPages: number;
 }
 
 export default function ClientSavedJob({
     initialItems,
+    categories = [],
     metadata,
     userId
 }: {
     initialItems: SavedItem[];
+    categories?: Category[];
     metadata: Metadata;
     userId: string;
 }) {
-    const { items, searchQuery, setSearchQuery, handleSearch, handlePageChange, handleUnsave, getPageNumbers, router } = useSavedJob(initialItems, metadata, userId);
+    const {
+        items,
+        searchQuery,
+        setSearchQuery,
+        fromDate,
+        setFromDate,
+        toDate,
+        setToDate,
+        period,
+        category,
+        handleSearch,
+        handleCategoryChange,
+        handlePeriodChange,
+        handleDateRangeApply,
+        handleResetFilters,
+        handlePageChange,
+        handleUnsave,
+        getPageNumbers,
+        router
+    } = useSavedJob(initialItems, metadata, userId);
 
     return (
         <div className="w-full space-y-8 animate-fadeIn">
             {/* Header Section with subtle gradient background */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent p-6 sm:p-8 border border-emerald-500/10">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600/10 via-teal-500/10 to-emerald-500/5 p-6 sm:p-8 border border-emerald-500/20 shadow-sm backdrop-blur-md">
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="material-symbols-outlined text-[#00b14f] font-bold">bookmark</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#009940]">Ứng viên</span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00b14f]/10 text-[#008f40] text-xs font-extrabold uppercase tracking-wider mb-2">
+                            <span className="material-symbols-outlined text-sm">bookmark</span>
+                            <span>Danh sách lưu trữ</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
                             Việc làm đã lưu
                         </h1>
-                        <p className="text-sm text-slate-500 mt-1">
-                            Theo dõi và ứng tuyển nhanh các tin tuyển dụng bạn đã lưu
+                        <p className="text-sm text-slate-500 font-medium mt-1">
+                            Theo dõi, so sánh và ứng tuyển nhanh các vị trí hấp dẫn bạn đã lưu
                         </p>
                     </div>
-                    <div className="bg-white/80 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-2 self-start sm:self-auto">
-                        <span className="text-sm font-medium text-slate-600">Tổng số tin:</span>
-                        <span className="text-lg font-bold text-[#00b14f]">{metadata.total}</span>
+                    <div className="bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-emerald-100 shadow-md shadow-emerald-500/5 flex items-center gap-3 self-start sm:self-auto">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#00b14f] flex items-center justify-center font-bold">
+                            <span className="material-symbols-outlined">work_history</span>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng số tin</p>
+                            <p className="text-xl font-black text-[#00b14f] leading-none mt-0.5">{metadata.total}</p>
+                        </div>
                     </div>
                 </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#00b14f]/5 rounded-full blur-3xl -translate-y-12 translate-x-12" />
+                <div className="absolute -top-12 -right-12 w-56 h-56 bg-[#00b14f]/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-12 -left-12 w-56 h-56 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* Search Bar - modern card style */}
-            <form onSubmit={handleSearch} className="group relative flex gap-2 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-md shadow-slate-100 focus-within:border-[#00b14f]/50 focus-within:shadow-[#00b14f]/5 transition-all duration-300">
-                <div className="relative flex-1">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#00b14f] transition-colors">
+            {/* Search Bar - Ultra modern design */}
+            <form onSubmit={handleSearch} className="group relative flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm focus-within:border-[#00b14f] focus-within:ring-4 focus-within:ring-[#00b14f]/15 transition-all duration-300">
+                <div className="relative flex-1 flex items-center">
+                    <span className="material-symbols-outlined absolute left-4 text-slate-400 group-focus-within:text-[#00b14f] transition-colors text-xl">
                         search
                     </span>
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Tìm theo tiêu đề công việc, công ty, ngành nghề..."
-                        className="w-full pl-11 pr-4 py-3 text-sm bg-transparent border-0 rounded-xl focus:outline-none focus:ring-0 text-slate-800 placeholder-slate-400"
+                        placeholder="Tìm kiếm vị trí công việc, tên công ty, kỹ năng..."
+                        className="w-full pl-11 pr-4 py-3 text-sm font-medium bg-transparent border-0 rounded-xl focus:outline-none text-slate-800 placeholder-slate-400"
                     />
+                    {searchQuery && (
+                        <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            className="mr-2 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                        >
+                            <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    )}
                 </div>
                 <button
                     type="submit"
-                    className="px-6 py-2.5 text-sm font-bold text-white bg-[#00b14f] hover:bg-[#009940] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    className="px-6 py-3 text-sm font-extrabold text-white bg-gradient-to-r from-[#00b14f] to-[#009940] hover:from-[#009940] hover:to-[#008035] rounded-xl transition-all duration-200 shadow-md shadow-[#00b14f]/20 hover:shadow-lg hover:shadow-[#00b14f]/30 active:scale-95 cursor-pointer flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined text-base">search</span>
-                    Tìm kiếm
+                    <span>Tìm kiếm</span>
                 </button>
             </form>
 
-            {/* Reset Filter Action */}
-            {metadata.query && (
-                <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 self-start w-fit animate-slideIn">
-                    <span>Kết quả tìm kiếm cho từ khóa: <strong>"{metadata.query}"</strong></span>
+            {/* Category & Time Range Toolbar */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    {/* Category Selector */}
+                    <div className="flex items-center gap-2 text-xs">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#00b14f] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-base">category</span>
+                        </div>
+                        <span className="font-extrabold uppercase tracking-wider text-slate-700">Ngành nghề:</span>
+                        <select
+                            value={category || 'all'}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
+                            className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00b14f]/20 focus:border-[#00b14f] cursor-pointer"
+                        >
+                            <option value="all">Tất cả ngành nghề </option>
+                            {categories.map((c) => (
+                                <option key={c.id} value={c.slug}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Time Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2 text-slate-700">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#00b14f] flex items-center justify-center">
+                                <span className="material-symbols-outlined text-base">calendar_month</span>
+                            </div>
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700">Thời gian lưu:</span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/70 rounded-2xl border border-slate-200/50">
+                            {[
+                                { id: 'all', label: 'Tất cả' },
+                                { id: 'today', label: 'Hôm nay' },
+                                { id: '7days', label: '7 ngày qua' },
+                                { id: '30days', label: '30 ngày qua' },
+                                { id: 'thisMonth', label: 'Tháng này' },
+                                { id: 'custom', label: 'Tùy chọn' },
+                            ].map((p) => {
+                                const isActive = period === p.id;
+                                return (
+                                    <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => handlePeriodChange(p.id)}
+                                        className={`px-3.5 py-1.5 text-xs font-extrabold rounded-xl transition-all duration-200 cursor-pointer ${isActive
+                                            ? 'bg-gradient-to-r from-[#00b14f] to-[#009940] text-white shadow-md shadow-[#00b14f]/25 scale-[1.02]'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                                            }`}
+                                    >
+                                        {p.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Custom Date Range Inputs */}
+                {(period === 'custom' || fromDate || toDate) && (
+                    <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs animate-fadeIn">
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                            <span className="text-slate-500 font-semibold">Từ:</span>
+                            <input
+                                type="date"
+                                value={fromDate}
+                                onChange={(e) => setFromDate(e.target.value)}
+                                className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                            <span className="text-slate-500 font-semibold">Đến:</span>
+                            <input
+                                type="date"
+                                value={toDate}
+                                onChange={(e) => setToDate(e.target.value)}
+                                className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => handleDateRangeApply(fromDate, toDate)}
+                            className="px-4 py-2 bg-[#00b14f] hover:bg-[#009940] text-white font-extrabold rounded-xl transition cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                        >
+                            <span className="material-symbols-outlined text-sm">filter_alt</span>
+                            <span>Áp dụng lọc</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Active Filters Summary & Reset */}
+            {(metadata.query || metadata.category || metadata.period || metadata.fromDate || metadata.toDate) && (
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 bg-emerald-50/50 p-3 px-4 rounded-xl border border-emerald-100 animate-slideIn">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-slate-700">Đang lọc theo:</span>
+
+                        {metadata.query && (
+                            <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-semibold text-slate-800 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-slate-500">search</span>
+                                <span>"{metadata.query}"</span>
+                            </span>
+                        )}
+
+                        {metadata.category && metadata.category !== 'all' && (
+                            <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-bold text-[#00b14f] flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-[#00b14f]">category</span>
+                                <span>{categories.find(c => c.slug === metadata.category || c.id === metadata.category)?.name || metadata.category}</span>
+                            </span>
+                        )}
+
+                        {metadata.period && metadata.period !== 'all' && metadata.period !== 'custom' && (
+                            <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-semibold text-[#00b14f] flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-[#00b14f]">calendar_month</span>
+                                <span>
+                                    {metadata.period === 'today' ? 'Hôm nay' :
+                                        metadata.period === '7days' ? '7 ngày qua' :
+                                            metadata.period === '30days' ? '30 ngày qua' :
+                                                metadata.period === 'thisMonth' ? 'Tháng này' : metadata.period}
+                                </span>
+                            </span>
+                        )}
+
+                        {(metadata.fromDate || metadata.toDate) && (
+                            <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-semibold text-[#00b14f] flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px] text-[#00b14f]">date_range</span>
+                                <span>{metadata.fromDate || '...'} ➔ {metadata.toDate || '...'}</span>
+                            </span>
+                        )}
+                    </div>
+
                     <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            router.push('/candidate/saved');
-                        }}
-                        className="flex items-center gap-0.5 text-xs text-rose-500 hover:text-rose-600 font-semibold cursor-pointer border-l border-slate-200 pl-2 ml-1"
+                        type="button"
+                        onClick={handleResetFilters}
+                        className="flex items-center gap-1 text-rose-600 hover:text-rose-700 font-bold cursor-pointer hover:underline"
                     >
-                        <span className="material-symbols-outlined text-xs">close</span>
-                        Xóa lọc
+                        <span className="material-symbols-outlined text-xs">restart_alt</span>
+                        Xóa tất cả lọc
                     </button>
                 </div>
             )}
@@ -173,7 +341,7 @@ export default function ClientSavedJob({
                                             <span className="material-symbols-outlined text-[14px]">location_on</span>
                                             {item.job.ward?.name || 'Phú Quốc'}
                                         </span>
-                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50/40 text-indigo-600 font-semibold">
+                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50/40 text-indigo-700 font-semibold">
                                             <span className="material-symbols-outlined text-[14px]">work</span>
                                             {getJobTypeLabel(item.job.type)}
                                         </span>

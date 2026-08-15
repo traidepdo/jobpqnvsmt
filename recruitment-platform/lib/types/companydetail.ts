@@ -33,8 +33,13 @@ export interface JobItem {
     salaryMin: number | null;
     salaryMax: number | null;
     experience: string | null;
+    type?: string | null;
+    status?: string | null;
     deadline: Date | string | null;
     category: {
+        name: string;
+    };
+    ward?: {
         name: string;
     };
 }

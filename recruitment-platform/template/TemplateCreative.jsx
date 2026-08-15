@@ -187,7 +187,8 @@ export default function TemplateCreative({
                                         type="email"
                                         value={userData.email}
                                         onChange={(e) => handleUserChange("email", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white w-36 ml-1 placeholder-violet-200"
+                                        size={Math.max(1, (userData.email || "Email").length)}
+                                        className="bg-transparent border-none outline-none text-white min-w-[80px] ml-1 placeholder-violet-200"
                                         placeholder="Email"
                                     />
                                 </span>
@@ -197,7 +198,8 @@ export default function TemplateCreative({
                                         type="text"
                                         value={userData.phone}
                                         onChange={(e) => handleUserChange("phone", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white w-28 ml-1 placeholder-violet-200"
+                                        size={Math.max(1, (userData.phone || "Số điện thoại").length)}
+                                        className="bg-transparent border-none outline-none text-white min-w-[90px] ml-1 placeholder-violet-200"
                                         placeholder="Số điện thoại"
                                     />
                                 </span>
@@ -207,7 +209,8 @@ export default function TemplateCreative({
                                         type="text"
                                         value={resumeData.address}
                                         onChange={(e) => handleResumeChange("address", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white w-40 ml-1 placeholder-violet-200"
+                                        size={Math.max(1, (resumeData.address || "Địa chỉ").length)}
+                                        className="bg-transparent border-none outline-none text-white min-w-[100px] ml-1 placeholder-violet-200"
                                         placeholder="Địa chỉ"
                                     />
                                 </span>
@@ -260,7 +263,7 @@ export default function TemplateCreative({
                         </Section>
 
                         {/* Languages / Skills */}
-                        <Section title="Kỹ năng & Ngôn ngữ" icon="psychology">
+                        <Section title="Kỹ năng & Ngôn ngữ" icon="psychology" isEmpty={!resumeData.languages?.trim()}>
                             <textarea
                                 value={resumeData.languages}
                                 onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -274,6 +277,7 @@ export default function TemplateCreative({
                         <Section 
                             title="Học vấn" 
                             icon="school"
+                            isEmpty={!resumeData.education || resumeData.education.length === 0}
                             onAdd={() => addArrayItem("education", { school: "Tên trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
                         >
                             <div className="space-y-4">
@@ -342,7 +346,7 @@ export default function TemplateCreative({
                     {/* Content Column / Right */}
                     <main className="p-8 space-y-8 bg-white">
                         {/* Summary */}
-                        <Section title="Giới thiệu bản thân" icon="account_circle">
+                        <Section title="Giới thiệu bản thân" icon="account_circle" isEmpty={!resumeData.summary?.trim()}>
                             <textarea
                                 value={resumeData.summary}
                                 onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -356,6 +360,7 @@ export default function TemplateCreative({
                         <Section 
                             title="Kinh nghiệm làm việc" 
                             icon="work"
+                            isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                             onAdd={() => addArrayItem("experience", { position: "Chức danh", company: "Tên công ty", startYear: "2023", endYear: "", description: "" })}
                         >
                             <div className="space-y-6">
@@ -416,6 +421,7 @@ export default function TemplateCreative({
                         <Section 
                             title="Dự án thực tế" 
                             icon="article"
+                            isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                             onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -477,9 +483,9 @@ export default function TemplateCreative({
 }
 
 /* ── Reusable section component ──────────────────────────────── */
-function Section({ title, icon, children, onAdd }) {
+function Section({ title, icon, children, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <h2 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center justify-between gap-2 border-b border-violet-100/50 pb-2">
                 <span className="flex items-center gap-1.5 text-violet-700">
                     {icon && <span className="material-symbols-outlined text-lg leading-none">{icon}</span>}

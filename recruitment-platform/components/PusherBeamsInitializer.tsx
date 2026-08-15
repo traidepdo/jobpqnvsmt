@@ -54,7 +54,7 @@ export default function PusherBeamsInitializer({ userId }: PusherBeamsInitialize
       .catch((err: any) => {
         // Handle user rejection/permission denial gracefully
         if (err.name === 'NotAllowedError' || err.message?.includes('permission')) {
-          console.warn('Pusher Beams registration skipped: Notification permission denied.');
+          // Silent skip
         } else {
           console.error('Pusher Beams initialization error:', err);
         }

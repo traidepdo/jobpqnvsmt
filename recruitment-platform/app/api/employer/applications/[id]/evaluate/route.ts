@@ -29,7 +29,7 @@ export async function POST(
     const signedCvUrl = application.cvUrl ? signCloudinaryCvUrl(application.cvUrl) : null;
 
     // 2. Call Django AI Server to evaluate
-    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
+    const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://127.0.0.1:8000';
     const response = await fetch(`${djangoUrl}/api/evaluate-cv/`, {
       method: 'POST',
       headers: {
@@ -43,8 +43,8 @@ export async function POST(
     });
 
     if (!response.ok) {
-      console.warn(`SeverAI evaluate response not OK (${response.status}). Performing fallback match score calculation...`);
-      const fallbackScore = Math.floor(Math.random() * 25) + 65; // Fallback score 65-90%
+      console.warn(`SeverAI evaluate response not OK (${response.status}). Setting match score to 0.`);
+      const fallbackScore = 0;
       await prisma.application.update({
         where: { id },
         data: { matchScore: fallbackScore }
@@ -56,7 +56,7 @@ export async function POST(
     }
 
     const result = await response.json();
-    const finalScore = typeof result.score === 'number' ? result.score : 70;
+    const finalScore = typeof result.score === 'number' ? result.score : 0;
     await prisma.application.update({
       where: { id },
       data: { matchScore: finalScore }
@@ -68,7 +68,7 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('Error in evaluate endpoint:', error);
-    const fallbackScore = Math.floor(Math.random() * 25) + 65;
+    const fallbackScore = 0;
     try {
       await prisma.application.update({
         where: { id },

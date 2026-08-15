@@ -97,9 +97,10 @@ export default function CandidateShell({
     loadUnread();
     loadUnreadNotifications();
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       loadUnread();
       loadUnreadNotifications();
-    }, 10000);
+    }, 60000);
 
     // Lắng nghe event từ messages page và notifications page khi user đọc tin
     const onRead = () => loadUnread();

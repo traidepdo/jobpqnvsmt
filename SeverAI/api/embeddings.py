@@ -1,6 +1,14 @@
 import os
+import torch
 from django.db import connection
 from .models import Job
+
+# Limit PyTorch CPU threads to avoid thread-pool memory overhead
+try:
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
+except Exception:
+    pass
 
 _model = None
 
@@ -8,9 +16,20 @@ def get_embedding_model():
     global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
-        print("Loading SentenceTransformer model (keepitreal/vietnamese-sbert)...")
+        print("Loading SentenceTransformer model (keepitreal/vietnamese-sbert) with RAM optimization...")
         # dựa trên encoder layer của bert 
-        _model = SentenceTransformer('keepitreal/vietnamese-sbert')
+        loaded = SentenceTransformer('keepitreal/vietnamese-sbert', device='cpu')
+        # Apply dynamic INT8 quantization to Linear layers for ~50% RAM reduction
+        try:
+            if hasattr(loaded[0], 'auto_model'):
+                loaded[0].auto_model = torch.quantization.quantize_dynamic(
+                    loaded[0].auto_model, {torch.nn.Linear}, dtype=torch.qint8
+                )
+                print("Successfully applied dynamic INT8 quantization to vietnamese-sbert.")
+        except Exception as q_err:
+            print(f"Quantization warning for vietnamese-sbert: {q_err}")
+            
+        _model = loaded
         print("SentenceTransformer model loaded successfully.")
     return _model
 
@@ -20,7 +39,8 @@ def get_embedding(text: str):
     model = get_embedding_model()
     # Normalize whitespace
     clean_text = " ".join(text.split())
-    embedding = model.encode(clean_text)
+    with torch.inference_mode():
+        embedding = model.encode(clean_text)
     
     # Free memory immediately to prevent Render 512MB RAM OOM
     global _model

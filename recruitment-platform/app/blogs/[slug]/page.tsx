@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import HtmlViewer from './_components/HtmlViewer';
+import BlogViewTracker from '@/components/blogs/BlogViewTracker';
 import { getBlogPostDetailServer, getBlogPostMetadataServer } from '@/server/services/blog/blogdetail.services';
 
 interface Props { params: Promise<{ slug: string }> }
@@ -80,6 +81,7 @@ export default async function BlogPostPage({ params }: Props) {
 
     return (
         <>
+            <BlogViewTracker blogId={post.id} />
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}

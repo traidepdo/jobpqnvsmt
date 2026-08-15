@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { TEMPLATE_MAP } from '@/template/index';
 import SectionOrderManager from '@/components/candidate/SectionOrderManager';
-import { FaUser, FaListUl, FaBriefcase, FaSave, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaUser, FaListUl, FaBriefcase, FaSave, FaPlus, FaTrash, FaCheckCircle, FaExternalLinkAlt, FaTimes } from 'react-icons/fa';
 
 interface ResumeTemplate {
   id: string;
@@ -38,6 +38,7 @@ export default function TaoCvSlugPage() {
   const [activeTab, setActiveTab] = useState<'info' | 'sections' | 'details'>('info');
   const [cvTitle, setCvTitle] = useState('Hồ sơ của tôi');
   const [isDefault, setIsDefault] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Unified builder states
   const [userData, setUserData] = useState<any>({
@@ -114,7 +115,7 @@ export default function TaoCvSlugPage() {
               const reordered = orderedIds
                 .map((id: string) => DEFAULT_SECTIONS.find(s => s.id === id))
                 .filter(Boolean) as SectionItem[];
-              
+
               // append any missing default sections
               DEFAULT_SECTIONS.forEach(ds => {
                 if (!reordered.some(s => s.id === ds.id)) {
@@ -135,7 +136,7 @@ export default function TaoCvSlugPage() {
                 phone: userData.user.phone || '',
                 avatar: userData.user.avatar || 'https://i.pravatar.cc/150?img=12',
               });
-              
+
               const mappedExperience = (userData.user.profileExperience || []).map((exp: any) => ({
                 company: exp.company || '',
                 position: exp.position || '',
@@ -230,8 +231,7 @@ export default function TaoCvSlugPage() {
       });
 
       if (res.ok) {
-        alert(resumeId ? 'Cập nhật CV thành công!' : 'Lưu CV thành công!');
-        router.push('/candidate/resumes');
+        setShowSuccessModal(true);
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.error || 'Không thể lưu CV.');
@@ -298,84 +298,84 @@ export default function TaoCvSlugPage() {
       {/* Interactive Editor - Hidden during Print */}
       <div className="flex-grow flex flex-col overflow-hidden print:hidden">
         {/* Editor Header Toolbar */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-150 px-6 py-4 flex items-center justify-between shadow-[0_2px_15px_rgba(0,0,0,0.02)] print:hidden">
-        <div className="flex items-center gap-4 shrink-0">
-          <button
-            onClick={() => {
-              if (confirm('Quay lại danh sách? Các chỉnh sửa chưa lưu sẽ bị mất.')) {
-                router.push('/candidate/resumes');
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition cursor-pointer"
-          >
-            ← Quay lại
-          </button>
-          <div className="h-4 w-px bg-gray-200" />
-          <h1 className="text-xs font-black uppercase tracking-wider text-gray-400">
-            {resumeId ? 'Cập nhật hồ sơ' : 'Tạo mới hồ sơ'}
-          </h1>
-        </div>
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-150 px-6 py-4 flex items-center justify-between shadow-[0_2px_15px_rgba(0,0,0,0.02)] print:hidden">
+          <div className="flex items-center gap-4 shrink-0">
+            <button
+              onClick={() => {
+                if (confirm('Quay lại danh sách? Các chỉnh sửa chưa lưu sẽ bị mất.')) {
+                  router.push('/tao-cv');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+            >
+              ← Quay lại
+            </button>
+            <div className="h-4 w-px bg-gray-200" />
+            <h1 className="text-xs font-black uppercase tracking-wider text-gray-400">
+              {resumeId ? 'Cập nhật hồ sơ' : 'Tạo mới hồ sơ'}
+            </h1>
+          </div>
 
-        {/* Nhập tên CV & Mặc định */}
-        <div className="flex items-center gap-4 flex-grow max-w-sm mx-4">
-          <input
-            type="text"
-            value={cvTitle}
-            onChange={(e) => setCvTitle(e.target.value)}
-            className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none placeholder-gray-450 bg-gray-50/50 transition-all"
-            placeholder="Đặt tên cho CV này..."
-            title="Tên CV / Hồ sơ"
-          />
-          <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+          {/* Nhập tên CV & Mặc định */}
+          <div className="flex items-center gap-4 flex-grow max-w-sm mx-4">
             <input
-              type="checkbox"
-              checked={isDefault}
-              onChange={(e) => setIsDefault(e.target.checked)}
-              className="rounded border-gray-300 text-[#00b14f] focus:ring-[#00b14f] h-4 w-4 cursor-pointer transition-all"
+              type="text"
+              value={cvTitle}
+              onChange={(e) => setCvTitle(e.target.value)}
+              className="w-full text-xs font-bold text-gray-700 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:border-[#00b14f] focus:ring-4 focus:ring-[#00b14f]/5 focus:outline-none placeholder-gray-450 bg-gray-50/50 transition-all"
+              placeholder="Đặt tên cho CV này..."
+              title="Tên CV / Hồ sơ"
             />
-            <span className="text-xs font-bold text-gray-600">Đặt làm mặc định</span>
-          </label>
-        </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+                className="rounded border-gray-300 text-[#00b14f] focus:ring-[#00b14f] h-4 w-4 cursor-pointer transition-all"
+              />
+              <span className="text-xs font-bold text-gray-600">Đặt làm mặc định</span>
+            </label>
+          </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4">
-          {templates.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500">Mẫu thiết kế:</span>
-              <select
-                value={slug}
-                onChange={(e) => handleTemplateChange(e.target.value)}
-                className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#00b14f] cursor-pointer transition-all"
-              >
-                {templates.map(t => (
-                  <option key={t.slug} value={t.slug}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            {templates.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-500">Mẫu thiết kế:</span>
+                <select
+                  value={slug}
+                  onChange={(e) => handleTemplateChange(e.target.value)}
+                  className="text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#00b14f] cursor-pointer transition-all"
+                >
+                  {templates.map(t => (
+                    <option key={t.slug} value={t.slug}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={() => handleSave()}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#00b14f] hover:bg-[#009241] text-white text-xs font-bold rounded-xl transition shadow-[0_4px_12px_rgba(0,177,79,0.15)] hover:shadow-[0_6px_16px_rgba(0,177,79,0.25)] cursor-pointer"
+            >
+              <FaSave size={12} />
+              <span>Lưu hồ sơ</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Editor Layout */}
+        <div className="flex-grow flex overflow-hidden relative print:block print:overflow-visible">
+          {saving && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-2xl flex items-center gap-3.5 shadow-2xl border border-gray-100">
+                <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
+                <span className="text-sm font-bold text-gray-800">Đang lưu trữ dữ liệu...</span>
+              </div>
             </div>
           )}
-
-          <button
-            onClick={() => handleSave()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#00b14f] hover:bg-[#009241] text-white text-xs font-bold rounded-xl transition shadow-[0_4px_12px_rgba(0,177,79,0.15)] hover:shadow-[0_6px_16px_rgba(0,177,79,0.25)] cursor-pointer"
-          >
-            <FaSave size={12} />
-            <span>Lưu hồ sơ</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Editor Layout */}
-      <div className="flex-grow flex overflow-hidden relative print:block print:overflow-visible">
-        {saving && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-2xl flex items-center gap-3.5 shadow-2xl border border-gray-100">
-              <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00b14f] rounded-full animate-spin" />
-              <span className="text-sm font-bold text-gray-800">Đang lưu trữ dữ liệu...</span>
-            </div>
-          </div>
-        )}
 
           <>
             {/* Left Column: Editor Sidebar */}
@@ -384,25 +384,22 @@ export default function TaoCvSlugPage() {
               <div className="flex bg-gray-50 border border-gray-150/70 p-1 rounded-xl text-center text-[11px] font-bold text-gray-500 shrink-0 mx-4 mt-4">
                 <button
                   onClick={() => setActiveTab('info')}
-                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeTab === 'info' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
-                  }`}
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${activeTab === 'info' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
+                    }`}
                 >
                   <FaUser size={11} /> Cá nhân
                 </button>
                 <button
                   onClick={() => setActiveTab('details')}
-                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeTab === 'details' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
-                  }`}
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${activeTab === 'details' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
+                    }`}
                 >
                   <FaBriefcase size={11} /> Nội dung
                 </button>
                 <button
                   onClick={() => setActiveTab('sections')}
-                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeTab === 'sections' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
-                  }`}
+                  className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer ${activeTab === 'sections' ? 'bg-white text-[#00b14f] shadow-sm' : 'hover:text-gray-805'
+                    }`}
                 >
                   <FaListUl size={11} /> Sắp xếp
                 </button>
@@ -418,7 +415,7 @@ export default function TaoCvSlugPage() {
                         💡 Ảnh đại diện, họ tên, email và số điện thoại được đồng bộ từ thông tin tài khoản của bạn để đảm bảo tính nhất quán. Bạn có thể thay đổi riêng ảnh đại diện trực tiếp trên phần xem trước CV ở cột bên phải.
                       </p>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                       <div className="relative group shrink-0">
                         <img
@@ -742,7 +739,7 @@ export default function TaoCvSlugPage() {
               </div>
             </div>
           </>
-      </div>
+        </div>
       </div>
 
       {/* Clean CV Layout - Only visible during Print */}
@@ -757,17 +754,118 @@ export default function TaoCvSlugPage() {
         />
       </div>
 
+      {/* Modal Thông Báo Tạo / Cập Nhật CV Thành Công */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-gray-100 relative overflow-hidden text-center transform transition-all animate-scaleUp">
+            {/* Background Decorative Blur Orbs */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-400/20 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Nút đóng */}
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <FaTimes size={16} />
+            </button>
+
+            {/* Icon Checkmark Hoạt Họa */}
+            <div className="relative mx-auto mb-6 w-20 h-20 flex items-center justify-center">
+              <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-30" />
+              <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-green-400 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <FaCheckCircle className="text-white text-4xl" />
+              </div>
+            </div>
+
+            {/* Tiêu đề & Nội dung */}
+            <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight">
+              {resumeId ? 'Cập Nhật Hồ Sơ Thành Công!' : 'Tạo CV Thành Công 🎉'}
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-6">
+              Hồ sơ <span className="font-bold text-gray-800">"{cvTitle}"</span> đã được lưu an toàn vào hệ thống. Bạn có thể xem danh sách CV hoặc tải về ngay.
+            </p>
+
+            {/* Thẻ thông tin CV */}
+            <div className="bg-gray-50/80 rounded-2xl p-4 mb-6 border border-gray-150/70 text-left flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-[#00b14f] flex items-center justify-center shrink-0 font-bold text-lg">
+                📄
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-gray-800 truncate">{cvTitle}</p>
+                <p className="text-[11px] text-gray-400 truncate">Mẫu thiết kế: {template?.name || slug}</p>
+              </div>
+              {isDefault && (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                  Mặc định
+                </span>
+              )}
+            </div>
+
+            {/* Nút thao tác */}
+            <div className="space-y-2.5">
+              <button
+                onClick={() => router.push('/candidate/resumes')}
+                className="w-full py-3 px-4 bg-[#00b14f] hover:bg-[#009241] text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Xem danh sách CV đã lưu</span>
+                <FaExternalLinkAlt size={10} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setTimeout(() => window.print(), 300);
+                }}
+                className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>🖨️ Tải xuống / In CV</span>
+              </button>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                Tiếp tục chỉnh sửa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @media print {
-          body {
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+          html, body {
             background-color: white !important;
             margin: 0 !important;
             padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          @page {
-            margin: 12mm 15mm;
+          .print\\:block {
+            display: block !important;
+            width: 100% !important;
+            max-width: 210mm !important;
+            margin: 0 auto !important;
+            padding: 6mm 10mm !important;
+            box-sizing: border-box !important;
+          }
+          input, textarea, select {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+            resize: none !important;
+            overflow: visible !important;
+            font-family: inherit !important;
+            color: inherit !important;
+            field-sizing: content;
           }
           .print\\:hidden,
           button[class*="print:hidden"],

@@ -183,7 +183,8 @@ export default function TemplateModern({
                                         type="email"
                                         value={userData.email}
                                         onChange={(e) => handleUserChange("email", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 w-36 ml-0.5"
+                                        size={Math.max(1, (userData.email || "Email").length)}
+                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 min-w-[80px] max-w-full ml-0.5"
                                         placeholder="Email"
                                     />
                                 </span>
@@ -193,7 +194,8 @@ export default function TemplateModern({
                                         type="text"
                                         value={userData.phone}
                                         onChange={(e) => handleUserChange("phone", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 w-28 ml-0.5"
+                                        size={Math.max(1, (userData.phone || "Số điện thoại").length)}
+                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 min-w-[90px] max-w-full ml-0.5"
                                         placeholder="Số điện thoại"
                                     />
                                 </span>
@@ -203,7 +205,8 @@ export default function TemplateModern({
                                         type="text"
                                         value={resumeData.address}
                                         onChange={(e) => handleResumeChange("address", e.target.value)}
-                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 w-48 ml-0.5"
+                                        size={Math.max(1, (resumeData.address || "Địa chỉ").length)}
+                                        className="bg-transparent border-none outline-none text-white placeholder-blue-200 min-w-[100px] max-w-full ml-0.5"
                                         placeholder="Địa chỉ"
                                     />
                                 </span>
@@ -251,7 +254,7 @@ export default function TemplateModern({
                 {(() => {
                     const sectionsMap = {
                         summary: (
-                            <Block key="summary" title="Về tôi" accent>
+                            <Block key="summary" title="Về tôi" accent isEmpty={!resumeData.summary?.trim()}>
                                 <textarea
                                     value={resumeData.summary}
                                     onChange={(e) => handleResumeChange("summary", e.target.value)}
@@ -265,6 +268,7 @@ export default function TemplateModern({
                             <Block
                                 key="experience"
                                 title="Kinh nghiệm"
+                                isEmpty={!resumeData.experience || resumeData.experience.length === 0}
                                 onAdd={() => addArrayItem("experience", { position: "Chức vụ", company: "Công ty", startYear: "2023", endYear: "", description: "" })}
                             >
                                 <div className="space-y-6">
@@ -305,7 +309,7 @@ export default function TemplateModern({
                                                     type="text"
                                                     value={exp.company}
                                                     onChange={(eVal) => handleArrayChange("experience", i, "company", eVal.target.value)}
-                                                    className="bg-transparent border-none outline-none text-xs text-blue-600 italic font-semibold mt-0.5 focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-64"
+                                                    className="bg-transparent border-none outline-none text-xs text-blue-600 italic font-semibold mt-0.5 focus:bg-slate-50 rounded px-1 -mx-1 focus:ring-1 focus:ring-blue-500 w-[#250px] max-w-full"
                                                     placeholder="Tên công ty"
                                                 />
                                                 <textarea
@@ -331,6 +335,7 @@ export default function TemplateModern({
                             <Block
                                 key="education"
                                 title="Học vấn"
+                                isEmpty={!resumeData.education || resumeData.education.length === 0}
                                 onAdd={() => addArrayItem("education", { school: "Trường", degree: "Bằng cấp", field: "", startYear: "2020", endYear: "", GPA: "", description: "" })}
                             >
                                 <div className="space-y-6">
@@ -403,7 +408,7 @@ export default function TemplateModern({
                             </Block>
                         ),
                         languages: (
-                            <Block key="languages" title="Ngôn ngữ & kỹ năng">
+                            <Block key="languages" title="Ngôn ngữ & kỹ năng" isEmpty={!resumeData.languages?.trim()}>
                                 <textarea
                                     value={resumeData.languages}
                                     onChange={(e) => handleResumeChange("languages", e.target.value)}
@@ -417,6 +422,7 @@ export default function TemplateModern({
                             <Block
                                 key="projects"
                                 title="Dự án nổi bật"
+                                isEmpty={!resumeData.projects || resumeData.projects.length === 0}
                                 onAdd={() => addArrayItem("projects", { name: "Tên dự án", position: "Vai trò", link: "", description: "" })}
                             >
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -489,9 +495,9 @@ export default function TemplateModern({
 }
 
 /* ── Reusable block component ──────────────────────────────── */
-function Block({ title, children, accent = false, onAdd }) {
+function Block({ title, children, accent = false, onAdd, isEmpty = false }) {
     return (
-        <section className="relative group/section">
+        <section className={`relative group/section ${isEmpty ? 'print:hidden' : ''}`}>
             <h2
                 className={`mb-4 text-xs font-extrabold uppercase tracking-widest ${accent ? "text-blue-700" : "text-gray-400"
                     } flex items-center justify-between gap-2`}

@@ -6,6 +6,7 @@ import { useSalaryAnalysis } from '@/lib/hooks/useSalaryAnalysis';
 import JobDetailsClient, { JobDetails } from '@/components/jobs/JobDetailsClient';
 import { verifyToken } from '@/lib/auth';
 import { jobsDetailService } from '@/server/services/jobs/detail.services';
+import { data } from '@tensorflow/tfjs';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -21,7 +22,9 @@ export async function generateMetadata({ params }: PageProps) {
       return { title: `${job.title} | Phú Quốc Jobs`, description: job.description?.slice(0, 160) || '' };
     }
   } catch {
-    // fallback
+    return {
+          
+    }
   }
   return { title: 'Công việc | Phú Quốc Jobs', description: 'Chi tiết công việc' };
 }

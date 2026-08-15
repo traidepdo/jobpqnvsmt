@@ -17,10 +17,13 @@ export async function getCompanyDetail(slug: string): Promise<ICompanyDetail | n
                 }
             },
             jobs: {
-                where: { status: "ACTIVE" },
+                where: { status: { in: ["ACTIVE", "CLOSED"] } },
                 orderBy: { createdAt: "desc" },
                 include: {
                     category: {
+                        select: { name: true }
+                    },
+                    ward: {
                         select: { name: true }
                     }
                 }
@@ -61,10 +64,13 @@ export async function getCompanyDetail(slug: string): Promise<ICompanyDetail | n
             salaryMin: job.salaryMin,
             salaryMax: job.salaryMax,
             experience: job.experience,
+            type: job.type,
+            status: job.status,
             deadline: job.deadline,
             category: {
                 name: job.category?.name || '',
-            }
+            },
+            ward: job.ward ? { name: job.ward.name } : undefined
         }))
     };
     return result;
