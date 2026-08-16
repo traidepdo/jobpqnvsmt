@@ -74,8 +74,8 @@ def ensure_job_embeddings():
     model = get_embedding_model()
     
     for job in jobs_to_embed:
-        combined_text = f"Tiêu đề: {job.title}\nMô tả: {job.description or ''}\nYêu cầu: {job.requirements or ''}\nQuyền lợi: {job.benefits or ''}"
-        vector = get_embedding(combined_text)
+        title_text = f"Việc làm: {job.title}"
+        vector = get_embedding(title_text)
         
         with connection.cursor() as cursor:
             cursor.execute(

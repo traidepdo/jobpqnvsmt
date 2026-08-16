@@ -150,7 +150,7 @@ export default async function JobViewPage({ params }: PageProps) {
     const djangoUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'https://severai-api.onrender.com';
     const aiRes = await fetch(`${djangoUrl}/api/jobs/${jobRaw.id}/recommend/`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(8000),
     });
     if (aiRes.ok) {
       const data = await aiRes.json();
@@ -164,6 +164,15 @@ export default async function JobViewPage({ params }: PageProps) {
     }
   } catch (err) {
     console.error("Error fetching SeverAI recommendations:", err);
+  }
+
+  // Fallback if AI recommender is offline/timed out or returned 0 items
+  if (relatedJobs.length === 0) {
+    try {
+      relatedJobs = await jobsDetailService.getRelatedJobsFallback(jobRaw.categoryId, jobRaw.id, 4);
+    } catch (fallbackErr) {
+      console.error("Error fetching fallback related jobs:", fallbackErr);
+    }
   }
 
   const relatedJobsSchema = relatedJobs.length > 0 ? {

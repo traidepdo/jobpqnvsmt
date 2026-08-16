@@ -47,5 +47,22 @@ export const jobsDetailService = {
       }
     });
     return recIds.map((id: string) => dbJobs.find(j => j.id === id)).filter(Boolean);
+  },
+
+  async getRelatedJobsFallback(categoryId: string | null, currentJobId: string, limit = 4) {
+    return prisma.job.findMany({
+      where: {
+        ...(categoryId ? { categoryId } : {}),
+        id: { not: currentJobId },
+        isVisible: true,
+        status: 'ACTIVE'
+      },
+      take: limit,
+      include: {
+        company: { select: companyPublicSelect },
+        category: { select: { name: true } },
+        ward: { select: { name: true } }
+      }
+    });
   }
 };
